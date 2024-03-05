@@ -57,7 +57,7 @@ Pour lancer le bot en mode développement :
 
 Pour utiliser le chatbot llm il faut deux choses :
 - installer les dépendances [llm] du projet `poetry install --with llm`
-- éditer le fichier `.env` pour mettre `active=True`
+- éditer le fichier `.env` pour mettre `llm_active=True`
 - faire tourner un serveur Ollama en arrière-plan (cf https://github.com/jmorganca/ollama/blob/main/docs/linux.md)
 
 

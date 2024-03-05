@@ -28,6 +28,8 @@ class LlmConfig(BaseSettings):
     model: str = Field("neural-chat", description="modèle à utiliser")
     active: bool = Field(False, description="do we use a llm ?")
 
+    model_config = SettingsConfigDict(env_prefix="llm_")
+
 
 class Config(BaseSettings):
     verbose: bool = Field(False, description="Enable / disable verbose logging")
