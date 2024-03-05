@@ -4,7 +4,7 @@ SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <con
 SPDX-License-Identifier: MIT
 -->
 
-tchap_bot
+Bot Tchap
 =========
 
 La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib
@@ -14,7 +14,7 @@ La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github
 
 Contient :
 - `matrix_bot` : une bibliothèque pour pouvoir faire des bots matrix
-- `tchap_bot` : un applicatif contenant des fonctionnalités de bots utiles
+- `tchap_bot` : un applicatif contenant quelques fonctionnalités de bots utiles
 
 
 ## Installation
@@ -32,22 +32,22 @@ python3 -m venv .venv
 poetry install
 ```
 
+### Configuration
+
+Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement)
+Vous pouvez vous inspirer du fichier `.dev.env` qui est initialisé avec les valeurs par défaut 
+
+```bash
+cp .dev.env .venv
+```
 
 
 ## Utilisation
-
 
 ### Utilisation générale
 
 Pour lancer le bot en mode développement :
 
-Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement)
-```python
-matrix_home_server="[home server]"
-matrix_bot_username="[username]"
-matrix_bot_password="[pasword]"
-group_used=["basic", "room_utils"]
-```
 
 ```bash
 ./.venv/bin/python3 -m tchap_bot
@@ -57,7 +57,7 @@ group_used=["basic", "room_utils"]
 
 Pour utiliser le chatbot llm il faut deux choses :
 - installer les dépendances [llm] du projet `poetry install --with llm`
-- rajouter la variable `use_llm=True` au `.env`
+- éditer le fichier `.env` pour mettre `active=True`
 - faire tourner un serveur Ollama en arrière-plan (cf https://github.com/jmorganca/ollama/blob/main/docs/linux.md)
 
 
@@ -73,8 +73,6 @@ Avant de contribuer au dépôt, il est nécessaire d'initialiser les _hooks_ de 
 ```bash
 pre-commit install
 ```
-
-
 
 
 ## Licence

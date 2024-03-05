@@ -15,14 +15,10 @@ from .tchap_utils import get_salon_moderators, user_name_to_non_hl_user, users_p
 from .config import env_config
 
 
-if env_config.use_llm:
+if env_config.llm.active:
     from llama_index.llms import Ollama
 
-    neural_chat = Ollama(model="neural-chat")
-    PREMROMPT_DE_QUALITE = (
-        "Je suis une intelligence artificielle basé sur le modèle neural-chat. "
-        "Je reste poli avec mes interlocuteurs, et je réponds à la requête suivante du mieux que je peux :"
-    )
+    llm_model = Ollama(base_url=env_config.llm.ollama_address, model=env_config.llm.model)
 
 
 @dataclass
@@ -155,7 +151,7 @@ async def bot_tchap(room: MatrixRoom, message: Event, matrix_client: MatrixClien
     prompt = await event_parser.hl()
     await matrix_client.room_typing(room.room_id, typing_state=True, timeout=180_000)
     if env_config.use_llm:
-        llm_response = str(neural_chat.complete(PREMROMPT_DE_QUALITE + prompt))
+        llm_response = str(llm_model.complete(env_config.llm.pre_prompt + prompt))
     else:
         llm_response = "this is a nice prompt but there is no llm here"
     logger.info(f"{llm_response=}")

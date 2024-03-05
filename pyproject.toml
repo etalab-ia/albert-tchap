@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "tchap_bot"
-version = "1.0"
+version = "0.9"
 description = "Un bot pour tchap"
 authors = ["Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>"]
 license = "MIT"
