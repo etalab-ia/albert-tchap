@@ -17,13 +17,13 @@ packages = [
 python = "^3.9"
 matrix-nio = {extras = ["e2e"], version = "^0.23.0"}
 pillow = "^10.1.0"
-markdown = "^3.5.1"
+markdown = "^3.5.2"
 toml = "^0.10.2"
 cryptography = "^41.0.7"
 requests = "^2.31.0"
 structlog = "^23.2.0"
-pydantic = "^2.5.3"
-pydantic-settings = "^2.1.0"
+pydantic = "^2.6.3"
+pydantic-settings = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^5.0.0"
