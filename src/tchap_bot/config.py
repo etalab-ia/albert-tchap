@@ -16,22 +16,26 @@ DOCUMENTATION_DIR = _ROOT_PATH / "docs"
 README_PATH = _ROOT_PATH / "README.md"
 
 
-class LlmConfig(BaseSettings):
+class BaseConfig(BaseSettings):
+    # allows us to clean up the imports into multiple parts
+    # https://stackoverflow.com/questions/77328900/nested-settings-with-pydantic-settings
+    model_config = SettingsConfigDict(env_file=Path(".env"), extra="ignore")  # allows nested configs
+
+
+class LlmConfig(BaseConfig):
     pre_prompt: str = Field(
         (
             "Je suis une intelligence artificielle basé sur le modèle neural-chat. "
             "Je reste poli avec mes interlocuteurs, et je réponds à la requête suivante du mieux que je peux :"
         ),
-        description="preprompt",
+        description="pre-prompt",
     )
     ollama_address: str = Field("http://localhost:11434", description="adresse du serveur ollama")
     model: str = Field("neural-chat", description="modèle à utiliser")
-    active: bool = Field(False, description="do we use a llm ?")
-
-    model_config = SettingsConfigDict(env_prefix="llm_")
+    llm_active: bool = Field(False, description="do we use a llm ?")
 
 
-class Config(BaseSettings):
+class Config(BaseConfig):
     verbose: bool = Field(False, description="Enable / disable verbose logging")
     systemd_logging: bool = Field(True, description="Enable / disable logging with systemd.journal.JournalHandler")
     matrix_home_server: str = Field("https://matrix.agent.finances.tchap.gouv.fr", description="adresse du serveur")
@@ -39,8 +43,6 @@ class Config(BaseSettings):
     matrix_bot_password: str = Field("", description="password of our matrix bot")
     group_used: List[str] = Field(["basic"], description="listes des groupes à utiliser")
     llm: LlmConfig = Field(default_factory=LlmConfig, description="llm configuration")
-
-    model_config = SettingsConfigDict(env_file=Path(".env"))
 
 
 env_config = Config()

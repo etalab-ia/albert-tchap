@@ -15,7 +15,7 @@ from .tchap_utils import get_salon_moderators, user_name_to_non_hl_user, users_p
 from .config import env_config
 
 
-if env_config.llm.active:
+if env_config.llm.llm_active:
     from llama_index.llms import Ollama
 
     llm_model = Ollama(base_url=env_config.llm.ollama_address, model=env_config.llm.model)
@@ -150,7 +150,7 @@ async def bot_tchap(room: MatrixRoom, message: Event, matrix_client: MatrixClien
     event_parser.do_not_accept_own_message()
     prompt = await event_parser.hl()
     await matrix_client.room_typing(room.room_id, typing_state=True, timeout=180_000)
-    if env_config.use_llm:
+    if env_config.llm.llm_active:
         llm_response = str(llm_model.complete(env_config.llm.pre_prompt + prompt))
     else:
         llm_response = "this is a nice prompt but there is no llm here"
