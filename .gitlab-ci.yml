@@ -5,6 +5,8 @@
 stages:
   - check
   - test
+  - package-build
+  - package-publish
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
@@ -76,3 +78,29 @@ test:
       coverage_report:
         coverage_format: cobertura
         path: coverage.xml
+
+package-build:
+  stage: package-build
+  script:
+    - /root/.local/bin/poetry build
+  artifacts:
+    paths:
+      - "dist/"
+
+package-publish:
+  stage: package-publish
+  only:
+     - main
+  script:
+     - /root/.local/bin/poetry config repositories.gitlab "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
+     - /root/.local/bin/poetry config http-basic.gitlab -- gitlab-ci-token "$CI_JOB_TOKEN"
+     - /root/.local/bin/poetry publish --repository gitlab
+
+package-publish-central:
+  stage: package-publish
+  script:
+     - /root/.local/bin/poetry config repositories.gitlab-central "${CI_API_V4_URL}/projects/${CENTRAL_REGISTRY_ID}/packages/pypi"
+     - /root/.local/bin/poetry config http-basic.gitlab-central -- gitlab-ci-token "$CI_JOB_TOKEN"
+     - /root/.local/bin/poetry publish --repository gitlab-central
+  rules:
+     - if: $CI_COMMIT_BRANCH == "main" && $CENTRAL_REGISTRY_ID
