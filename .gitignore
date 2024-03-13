@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+#
+# SPDX-License-Identifier: CC0-1.0
+
+*.pyc
+__pycache__
+.venv/
+.vscode
+.coverage
+coverage.xml
+report.xml
+node_modules/
+.idea/
+.cache/

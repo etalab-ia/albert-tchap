@@ -1,0 +1,26 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Contact: Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+
+Files: poetry.lock
+Copyright: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+License: CC0-1.0
+
+Files: renovate.json
+Copyright: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+License: CC0-1.0
+
+Files: .pylintrc
+Copyright: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+License: CC0-1.0
+
+Files: store/*
+Copyright: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+License: CC0-1.0
+
+Files: *.ipynb
+Copyright: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+License: CC0-1.0
+
+Files: session.txt
+Copyright: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+License: CC0-1.0
