@@ -16,7 +16,7 @@ from nio.responses import UploadResponse
 from PIL import Image
 
 from .auth import AuthLogin
-from .config import bolt_lib_config, logger
+from .config import bot_lib_config, logger
 from .room_utils import room_is_direct_message
 
 
@@ -40,8 +40,8 @@ class MatrixClient(AsyncClient):
     def __init__(self, auth: AuthLogin):
         self.auth = auth
         check_valid_homeserver(self.auth.credentials.homeserver)
-        self.matrix_config = bolt_lib_config
-        os.makedirs(self.matrix_config.store_path, mode=0o750, exist_ok=True)
+        self.matrix_config = bot_lib_config
+        self.matrix_config.store_path.mkdir(mode=0o750, exist_ok=True, parents=True)
         client_config = AsyncClientConfig(
             max_limit_exceeded=0,
             max_timeouts=10,
@@ -52,7 +52,7 @@ class MatrixClient(AsyncClient):
             homeserver=self.auth.credentials.homeserver,
             user=self.auth.credentials.username,
             device_id=self.auth.device_id,
-            store_path=self.matrix_config.store_path,
+            store_path=str(self.matrix_config.store_path.resolve()),
             config=client_config,
         )
 

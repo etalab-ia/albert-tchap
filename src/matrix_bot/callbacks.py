@@ -6,7 +6,7 @@ from functools import wraps
 
 from nio import Event, InviteMemberEvent, MatrixRoom, ToDeviceEvent, UnknownEvent, MegolmEvent, RoomMessageText
 
-from .config import logger, bolt_lib_config
+from .config import logger, bot_lib_config
 from .client import MatrixClient
 
 
@@ -60,7 +60,7 @@ class Callbacks:
 
     async def setup_callbacks(self):
         """Add callbacks to async_client"""
-        if bolt_lib_config.join_on_invite:
+        if bot_lib_config.join_on_invite:
             self.matrix_client.add_event_callback(self.invite_callback, InviteMemberEvent)
 
         self.matrix_client.add_event_callback(self.decryption_failure, MegolmEvent)

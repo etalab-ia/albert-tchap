@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "tchap_bot"
-version = "0.9"
+version = "1.0"
 description = "Un bot pour tchap"
 authors = ["Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>"]
 license = "MIT"
@@ -41,6 +41,9 @@ reuse = "^2.1.0"
 [tool.poetry.group.systemd.dependencies]
 systemd-python = "^234"  # to be able to use systemd-journal and have a proper logging
 
+
+[tool.poetry.group.llm]
+optional = true
 
 [tool.poetry.group.llm.dependencies]
 llama-index = "^0.9.15.post2"

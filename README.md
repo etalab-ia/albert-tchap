@@ -44,12 +44,14 @@ poetry install
 
 ### Configuration
 
-Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement)
+Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
 Vous pouvez vous inspirer du fichier `.dev.env` qui est initialisé avec les valeurs par défaut 
 
 ```bash
 cp .dev.env .venv
 ```
+
+Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
 
 
 ## Utilisation tchap_bot

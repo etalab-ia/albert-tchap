@@ -10,7 +10,7 @@ from nio import SyncResponse
 from .client import MatrixClient
 from .auth import AuthLogin, Credentials
 from .callbacks import Callbacks
-from .config import bolt_lib_config, logger
+from .config import bot_lib_config, logger
 
 
 class MatrixBot:
@@ -26,7 +26,7 @@ class MatrixBot:
 
     async def main(self):
         await self.matrix_client.automatic_login()
-        sync = await self.matrix_client.sync(timeout=bolt_lib_config.timeout, full_state=False)  # Ignore prior messages
+        sync = await self.matrix_client.sync(timeout=bot_lib_config.timeout, full_state=False)  # Ignore prior messages
         self.print_sync_response(sync)
         await self.callbacks.setup_callbacks()
 
@@ -44,7 +44,7 @@ class MatrixBot:
             user_id=self.matrix_client.user_id,
             device_id=self.matrix_client.device_id,
         )
-        if bolt_lib_config.encryption_enabled:
+        if bot_lib_config.encryption_enabled:
             key = self.matrix_client.olm.account.identity_keys["ed25519"]
             logger.info(
                 f'This bot\'s public fingerprint ("Session key") for one-sided verification is: '

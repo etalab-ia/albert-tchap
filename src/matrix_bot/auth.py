@@ -14,9 +14,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-from matrix_bot.config import logger
-
-SALT = b"\xce,\xa1\xc6lY\x80\xe3X}\x91\xa60m\xa8N"
+from matrix_bot.config import bot_lib_config, logger
 
 
 def _get_key_from_password(password: str, salt):
@@ -25,13 +23,13 @@ def _get_key_from_password(password: str, salt):
     return base64.urlsafe_b64encode(kdf.derive(password.encode(encoding="utf-8")))
 
 
-def encrypt(data: str, password: str, salt=SALT) -> str:
+def encrypt(data: str, password: str, salt=bot_lib_config.salt) -> str:
     """encrypt the data given with the password"""
     fernet_encoder = Fernet(_get_key_from_password(password, salt))
     return fernet_encoder.encrypt(data.encode(encoding="utf-8")).decode()
 
 
-def decrypt(encrypted_data: str, password: str, salt=SALT) -> str:
+def decrypt(encrypted_data: str, password: str, salt=bot_lib_config.salt) -> str:
     """decrypt the data given with the password"""
     fernet_encoder = Fernet(_get_key_from_password(password, salt))
     return fernet_encoder.decrypt(encrypted_data.encode(encoding="utf-8")).decode()
