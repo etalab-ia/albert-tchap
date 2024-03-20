@@ -47,7 +47,7 @@ class Credentials:
     """The username of the bot to connect to"""
     password: str
     """The password of the bot to connect to"""
-    session_stored_file: str = "session.txt"
+    session_stored_file: str = bot_lib_config.session_path
     """Path to the file that will be used to store the session informations"""
 
 
