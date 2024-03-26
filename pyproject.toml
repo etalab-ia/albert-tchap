@@ -1,69 +1,24 @@
-# SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
-#
-# SPDX-License-Identifier: MIT
-
-[tool.poetry]
-name = "tchap_bot"
-version = "1.0"
-description = "Un bot pour tchap"
-authors = ["Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>"]
-license = "MIT"
-packages = [
-    { include = "tchap_bot", from = "src" },
-    { include = "matrix_bot", from = "src" },
+[project]
+name = "albert-tchapbot"
+version = "0.1"
+description = "Albert Tchap Bot"
+authors = [
+    {name = "Etalab", email = "etalab@mail.numerique.gouv.fr"},
 ]
-
-[tool.poetry.dependencies]
-python = "^3.9"
-matrix-nio = {extras = ["e2e"], version = "^0.23.0"}
-pillow = "^10.1.0"
-markdown = "^3.5.2"
-toml = "^0.10.2"
-cryptography = "^41.0.7"
-requests = "^2.31.0"
-structlog = "^23.2.0"
-pydantic = "^2.6.3"
-pydantic-settings = "^2.2.1"
-
-[tool.poetry.group.dev.dependencies]
-flake8 = "^5.0.0"
-flake8-nb = "^0.5.3"
-black = { extras = ["jupyter"], version = "^23.9.1" }
-pylint = "^2.12.2"
-pylint-exit = "^1.2.0"
-pytest = "^7.1.1"
-pytest-cov = "^3.0.0"
-coverage = "^6.3.2"
-pre-commit = "^2.20.0"
-licensecheck = ">=2023.5.1"
-reuse = "^2.1.0"
-
-[tool.poetry.group.systemd.dependencies]
-systemd-python = "^234"  # to be able to use systemd-journal and have a proper logging
-
+requires-python = ">= 3.10"
+readme = "README.md"
+license = {text = "MIT"}
+dependencies = [
+    "pillow>=10.2.0",
+    "markdown>=3.6",
+    "requests>=2.31.0",
+    "pydantic>=2.6.4",
+    "pydantic-settings>=2.2.1",
+    "matrix[e2e]>=3.0.0",
+]
 
 [tool.poetry.group.llm]
 optional = true
 
 [tool.poetry.group.llm.dependencies]
 llama-index = "^0.9.15.post2"
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.black]
-line-length = 120
-
-[tool.licensecheck]
-format = "ansi"
-zero = true
-# TODO[squelette]: Whitelist packages which have been reviewed and do not come with a license or
-# that are incorrectly flagged as incompatible.
-ignore_packages = [
-    "pylint",  # GPL but used as an external tool (not imported)
-    "reuse",  # Used as an external tool
-]
-
-[tool.pylint.'MESSAGES CONTROL']
-extension-pkg-allow-list = "pydantic"

@@ -38,14 +38,14 @@ cd tchap_bot
 python3 -m venv .venv
 
 
-# Installation des dépendances via poetry.
-poetry install
+# Installation des dépendances
+pip install .
 ```
 
 ### Configuration
 
 Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
-Vous pouvez vous inspirer du fichier `.dev.env` qui est initialisé avec les valeurs par défaut 
+Vous pouvez vous inspirer du fichier `.env.example` qui est initialisé avec les valeurs par défaut 
 
 ```bash
 cp .dev.env .venv
@@ -75,7 +75,7 @@ Pour utiliser le chatbot llm il faut deux choses :
 
 ## Utilisation matrix_bot
 
-Il faut initialiser un matrixbot et le faire tourner. Un exemple très simple pour avoir une commande qui donne l'heure  :
+Il faut initialiser un matrixbot et le faire tourner. Un exemple très simple pour avoir une commande qui donne l'heure :
 
 ```python
 import datetime
