@@ -2,8 +2,8 @@
 #
 # SPDX-License-Identifier: MIT
 from matrix_bot.bot import MatrixBot
-from .commands import command_registry
-from .config import env_config
+from commands import command_registry
+from config import env_config
 from matrix_bot.config import logger
 
 
