@@ -182,12 +182,10 @@ async def bot_albert(room: MatrixRoom, message: Event, matrix_client: MatrixClie
         # TODO: send the prompt as a HTTP request to Albert and get the response
         pass
     else:
-        llm_response = (
-            "Albert n'est pas configuré. Demandez à un admin de configurer Albert."
-        )
-    logger.info(f"{llm_response=}")
+        ALBERT_ERROR_REPONSE = "Albert n'est pas configuré. Contactez albert-contact@data.gouv.fr pour signaler cette erreur."
+    logger.info(f"{ALBERT_ERROR_REPONSE=}")
     try:  # sometimes the async code fail (when input is big) with random asyncio errors
-        await matrix_client.send_text_message(room.room_id, llm_response)
+        await matrix_client.send_text_message(room.room_id, ALBERT_ERROR_REPONSE)
     except Exception as llm_exception:  # it seems to work when we retry
-        logger.warning(f"llm response failed with {llm_exception=}. retrying")
-        await matrix_client.send_text_message(room.room_id, llm_response)
+        logger.warning(f"Albert response failed with {llm_exception=}. retrying")
+        await matrix_client.send_text_message(room.room_id, ALBERT_ERROR_REPONSE)
