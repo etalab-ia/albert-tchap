@@ -87,7 +87,7 @@ class EventParser:
 class MessageEventParser(EventParser):
     event: RoomMessageText
 
-    def _command(self, command: str, prefix="!", body=None, command_name: str = "") -> str:
+    def _command(self, command: str, prefix: str, body=None, command_name: str = "") -> str:
         command_prefix = f"{prefix}{command}"
         if not body.startswith(command_prefix):
             raise EventNotConcerned
@@ -96,7 +96,7 @@ class MessageEventParser(EventParser):
             logger.info("Handling command", command=command_name or command, command_payload=command_payload)
         return command_payload
 
-    def command(self, command: str, prefix="!", command_name: str = "") -> str:
+    def command(self, command: str, prefix: str, command_name: str = "") -> str:
         """
         if the event is concerned by the command, returns the text after the command. Raise EventNotConcerned otherwise
 

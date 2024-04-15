@@ -54,14 +54,14 @@ def register_feature(help: str, group: str):
     return decorator
 
 
-@register_feature(help="**!help** : donne l'aide", group="basic")
+@register_feature(help="**!help**: donne l'aide", group="basic")
 @properly_fail
 @ignore_when_not_concerned
 async def bot_help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     event_parser = MessageEventParser(room=room, event=message, matrix_client=matrix_client)
     event_parser.do_not_accept_own_message()
     help_message = "les commandes sont :\n - " + "\n - ".join(command_registry.get_help())
-    event_parser.command("help")
+    event_parser.command("help", prefix="!")
     logger.info("Handling command", command="help")
     await matrix_client.room_typing(room.room_id)
     await matrix_client.send_markdown_message(room.room_id, help_message)
@@ -73,7 +73,7 @@ async def bot_help(room: MatrixRoom, message: Event, matrix_client: MatrixClient
 async def heure(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     event_parser = MessageEventParser(room=room, event=message, matrix_client=matrix_client)
     event_parser.do_not_accept_own_message()
-    event_parser.command("heure")
+    event_parser.command("heure", prefix="!")
     heure = f"il est {datetime.datetime.now().strftime('%Hh%M')}"
     logger.info("Handling command", command="heure")
     await matrix_client.room_typing(room.room_id)
