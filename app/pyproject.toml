@@ -3,11 +3,13 @@ name = "albert-tchapbot"
 version = "0.1"
 description = "Albert Tchap Bot"
 authors = [
-    {name = "Etalab", email = "etalab@mail.numerique.gouv.fr"},
+    { name = "Pôle d'Expertise de la Régulation Numérique", email = "contact.peren@finances.gouv.fr" },
+    { name = "Etalab", email = "etalab@mail.numerique.gouv.fr" },
 ]
-requires-python = ">= 3.10"
+
+requires-python = ">= 3.12"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 dependencies = [
     "pillow>=10.2.0",
     "markdown>=3.6",
@@ -18,6 +20,11 @@ dependencies = [
     "cryptography>=42.0.5",
     "structlog>=24.1.0",
 ]
+
+[tool]
+rye = { dev-dependencies = [
+    "ruff>=0.3.7",
+] }
 
 [tool.setuptools]
 py-modules = []
