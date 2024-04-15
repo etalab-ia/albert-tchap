@@ -64,12 +64,11 @@ Pour lancer le bot en mode développement :
 ./.venv/bin/python3 .
 ```
 
-### Utilisation LLM
+### Utilisation d'Albert
 
-Pour utiliser le chatbot llm il faut deux choses :
-- installer les dépendances [llm] du projet `poetry install --with llm`
-- éditer le fichier `.env` pour mettre `llm_active=True` et `group_used=['chatbot']`
-- faire tourner un serveur Ollama en arrière-plan (cf https://github.com/jmorganca/ollama/blob/main/docs/linux.md)
+Pour utiliser le chatbot Albert il faut éditer le fichier `.env` pour mettre :
+- `albert_api_url` et `albert_api_key`
+- `group_used=['albert']` (permet d'activer toutes les commandes qui font partie du groupe albert)
 
 
 ## Utilisation matrix_bot

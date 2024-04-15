@@ -108,7 +108,7 @@ class MessageEventParser(EventParser):
         """
         return self._command(command=command, prefix=prefix, command_name=command_name, body=self.event.body)
 
-    async def hl(self, consider_hl_when_direct_message=True):
+    async def hl(self, consider_hl_when_direct_message=True) -> str:
         """
         if the event is a hl (highlight, i.e begins with the name of the bot),
         returns the text after the hl. Raise EventNotConcerned otherwise

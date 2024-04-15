@@ -4,6 +4,7 @@
 
 # Project-specific
 */store/*
+session.txt
 
 *.pyc
 __pycache__

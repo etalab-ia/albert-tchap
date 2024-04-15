@@ -4,7 +4,6 @@
 
 import logging
 from pathlib import Path
-from typing import List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,28 +21,16 @@ class BaseConfig(BaseSettings):
     model_config = SettingsConfigDict(env_file=Path(".env"), extra="ignore")  # allows nested configs
 
 
-class LlmConfig(BaseConfig):
-    pre_prompt: str = Field(
-        (
-            "Je suis une intelligence artificielle basé sur le modèle neural-chat. "
-            "Je reste poli avec mes interlocuteurs, et je réponds à la requête suivante du mieux que je peux :"
-        ),
-        description="pre-prompt",
-    )
-    ollama_address: str = Field("http://localhost:11434", description="adresse du serveur ollama")
-    model: str = Field("neural-chat", description="modèle à utiliser")
-    llm_active: bool = Field(False, description="do we use a llm ?")
-
-
 class Config(BaseConfig):
     verbose: bool = Field(False, description="Enable / disable verbose logging")
     systemd_logging: bool = Field(True, description="Enable / disable logging with systemd.journal.JournalHandler")
     matrix_home_server: str = Field("https://matrix.agent.finances.tchap.gouv.fr", description="adresse du serveur")
     matrix_bot_username: str = Field("", description="username of our matrix bot")
     matrix_bot_password: str = Field("", description="password of our matrix bot")
-    group_used: List[str] = Field(["basic"], description="listes des groupes à utiliser")
-    llm: LlmConfig = Field(default_factory=LlmConfig, description="llm configuration")
-
+    group_used: list[str] = Field(["basic"], description="listes des groupes à utiliser")
+    albert_api_url: str = Field("http://localhost:11434", description="adresse de l'API d'Albert")
+    albert_token: str = Field("", description="token d'authentification d'Albert")
+    
 
 env_config = Config()
 
