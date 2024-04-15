@@ -4,4 +4,4 @@
 
 
 def test_import():
-    from tchap_bot.bot import main  # noqa
+    from app.bot import main  # noqa
