@@ -32,11 +32,10 @@ pip install .
 ```bash
 # Récupération du code avec Git
 git clone ${GITLAB_URL}
-cd tchap_bot
+cd app
 
-# Création d'un virtualenv et installation des dépendances requises
+# Création d'un virtualenv
 python3 -m venv .venv
-
 
 # Installation des dépendances
 pip install .

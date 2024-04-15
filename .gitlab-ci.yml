@@ -10,7 +10,6 @@ stages:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pypoetry"
   # Speedup caching of node modules
   # see https://gitlab.com/gitlab-org/gitlab-runner/-/merge_requests/2684
   FF_USE_FASTZIP: 1
@@ -26,7 +25,6 @@ default:
         - package-lock.json
     paths:
       - .cache/pip
-      - .cache/pypoetry
       - .cache/npm
   before_script:
     - "pip install pipx"
