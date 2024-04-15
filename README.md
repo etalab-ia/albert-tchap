@@ -14,7 +14,7 @@ La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github
 
 Contient :
 - `matrix_bot` : une bibliothèque pour pouvoir faire des bots matrix
-- `tchap_bot` : un applicatif contenant quelques fonctionnalités de bots utiles
+- `.` : un applicatif contenant quelques fonctionnalités de bots utiles
 
 
 ## Installation
@@ -23,7 +23,7 @@ Contient :
 ### Avec pip
 
 ```bash
-pip install tchap-bot --index-url https://code.peren.fr/api/v4/projects/[package_index]/packages/pypi/simple
+pip install .
 ```
 
 
@@ -48,7 +48,7 @@ Créer le fichier .env avec les informations de connexion (ou fournissez-les en 
 Vous pouvez vous inspirer du fichier `.env.example` qui est initialisé avec les valeurs par défaut 
 
 ```bash
-cp .dev.env .venv
+cp .env.example .venv
 ```
 
 Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
@@ -62,7 +62,7 @@ Pour lancer le bot en mode développement :
 
 
 ```bash
-./.venv/bin/python3 -m tchap_bot
+./.venv/bin/python3 .
 ```
 
 ### Utilisation LLM
