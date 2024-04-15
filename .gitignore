@@ -12,3 +12,7 @@ report.xml
 node_modules/
 .idea/
 .cache/
+
+*.lock
+
+.env
