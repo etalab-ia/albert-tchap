@@ -14,6 +14,8 @@ _ROOT_PATH = PACKAGE_PATH.parent.parent  # Accessible from clone of the project,
 DOCUMENTATION_DIR = _ROOT_PATH / "docs"
 README_PATH = _ROOT_PATH / "README.md"
 
+COMMAND_PREFIX = "!"
+
 
 class BaseConfig(BaseSettings):
     # allows us to clean up the imports into multiple parts
