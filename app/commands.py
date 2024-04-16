@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from nio import MatrixRoom, Event
 
+from albert_client import AlbertApiClient
 from matrix_bot.callbacks import properly_fail
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
@@ -109,7 +110,9 @@ async def albert_answer(room: MatrixRoom, message: Event, matrix_client: MatrixC
     user_prompt: str = await event_parser.hl()
     if user_prompt[0] != COMMAND_PREFIX:
         await matrix_client.room_typing(room.room_id, typing_state=True, timeout=180_000)
-        if env_config.albert_api_url and env_config.albert_token:
+        if env_config.albert_api_url:
+            print(env_config)
+            albert_api_client = AlbertApiClient(config=env_config)
             # TODO: send the prompt as a HTTP request to Albert and get the response
             await matrix_client.send_text_message(
                 room.room_id, "Pour remettre à zéro la conversation, tapez `!reset`"

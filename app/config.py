@@ -20,19 +20,29 @@ COMMAND_PREFIX = "!"
 class BaseConfig(BaseSettings):
     # allows us to clean up the imports into multiple parts
     # https://stackoverflow.com/questions/77328900/nested-settings-with-pydantic-settings
-    model_config = SettingsConfigDict(env_file=Path(".env"), extra="ignore")  # allows nested configs
+    model_config = SettingsConfigDict(
+        env_file=Path(".env"), extra="ignore"
+    )  # allows nested configs
 
 
 class Config(BaseConfig):
     verbose: bool = Field(False, description="Enable / disable verbose logging")
-    systemd_logging: bool = Field(True, description="Enable / disable logging with systemd.journal.JournalHandler")
-    matrix_home_server: str = Field("https://matrix.agent.finances.tchap.gouv.fr", description="adresse du serveur")
+    systemd_logging: bool = Field(
+        True, description="Enable / disable logging with systemd.journal.JournalHandler"
+    )
+    matrix_home_server: str = Field(
+        "https://matrix.agent.dinum.tchap.gouv.fr", description="Tchap home server URL"
+    )
     matrix_bot_username: str = Field("", description="username of our matrix bot")
     matrix_bot_password: str = Field("", description="password of our matrix bot")
-    group_used: list[str] = Field(["basic"], description="listes des groupes à utiliser")
+    group_used: list[str] = Field(["basic"], description="List of commands groups to use")
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="API Albert URL")
-    albert_token: str = Field("", description="Albert API token")
-    
+    albert_username: str = Field("", description="Albert API username")
+    albert_password: str = Field("", description="Albert API password")
+    albert_access_token_ttl: int = Field(
+        9, description="Albert API access token time to live in seconds"
+    )
+
 
 env_config = Config()
 
@@ -48,5 +58,7 @@ def use_systemd_config():
     for handlers in existing_handlers:
         logging.getLogger().removeHandler(handlers)
     # Sending logs to systemd-journal if run via systemd, printing out on console otherwise.
-    logging_handler = journal.JournalHandler() if env_config.systemd_logging else logging.StreamHandler()
+    logging_handler = (
+        journal.JournalHandler() if env_config.systemd_logging else logging.StreamHandler()
+    )
     logging.getLogger().addHandler(logging_handler)

@@ -22,7 +22,7 @@ def properly_fail(function):
                 return await function_instance
             except Exception as unexpected_exception:  # noqa
                 await matrix_client.send_text_message(room.room_id, "failed to answer")
-                logger.warning(f"command failed with exception : {unexpected_exception}")
+                logger.warning(f"command failed with exception: {unexpected_exception}")
             finally:
                 await matrix_client.room_typing(room.room_id, typing_state=False)
 

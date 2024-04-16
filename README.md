@@ -67,7 +67,7 @@ Pour lancer le bot en mode développement :
 ### Utilisation d'Albert
 
 Pour utiliser le chatbot Albert il faut éditer le fichier `.env` pour mettre :
-- `albert_api_url` et `albert_api_key`
+- `albert_api_url`
 - `group_used=['albert']` (permet d'activer toutes les commandes qui font partie du groupe albert)
 
 
