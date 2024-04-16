@@ -28,3 +28,9 @@ rye = { dev-dependencies = [
 
 [tool.setuptools]
 py-modules = []
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+ignore-init-module-imports = true
