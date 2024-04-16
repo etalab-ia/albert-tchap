@@ -12,7 +12,7 @@ if __name__ == "__main__":
     )
     for callback in [
         feature
-        for feature_group in env_config.group_used
+        for feature_group in env_config.groups_used
         for feature in command_registry.activate_and_retrieve_group(feature_group)
     ]:
         logger.info("loaded feature", feature=callback.__name__)
