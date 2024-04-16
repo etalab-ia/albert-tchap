@@ -11,7 +11,6 @@ from matrix_bot.callbacks import properly_fail
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import MessageEventParser, ignore_when_not_concerned
-from tchap_utils import get_salon_moderators, user_name_to_non_hl_user, users_print
 from config import env_config
 
 
