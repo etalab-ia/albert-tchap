@@ -53,7 +53,7 @@ def register_feature(help: str | None, group: str):
     return decorator
 
 
-@register_feature(help=f"**{COMMAND_PREFIX}aide**: donne l'aide", group="basic")
+@register_feature(help=f"**{COMMAND_PREFIX}aide** : donne l'aide", group="basic")
 @properly_fail
 @ignore_when_not_concerned
 async def help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
@@ -66,7 +66,7 @@ async def help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     await matrix_client.send_markdown_message(room.room_id, help_message)
 
 
-@register_feature(help="**{COMMAND_PREFIX}heure**: donne l'heure", group="utils")
+@register_feature(help="**{COMMAND_PREFIX}heure** : donne l'heure", group="utils")
 @properly_fail
 @ignore_when_not_concerned
 async def heure(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
@@ -80,7 +80,7 @@ async def heure(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
 
 
 @register_feature(
-    help=f"**{COMMAND_PREFIX}reset**: recommence un stream avec Albert", group="albert"
+    help=f"**{COMMAND_PREFIX}reset** : recommence un stream avec Albert", group="albert"
 )
 @properly_fail
 @ignore_when_not_concerned
