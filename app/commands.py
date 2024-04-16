@@ -110,18 +110,25 @@ async def albert_answer(room: MatrixRoom, message: Event, matrix_client: MatrixC
     user_prompt: str = await event_parser.hl()
     if user_prompt[0] != COMMAND_PREFIX:
         await matrix_client.room_typing(room.room_id, typing_state=True, timeout=180_000)
-        if env_config.albert_api_url:
-            print(env_config)
+        try:
             albert_api_client = AlbertApiClient(config=env_config)
-            # TODO: send the prompt as a HTTP request to Albert and get the response
+        except Exception as albert_exception:
+            logger.error(f"Albert API client instanciation failed with {albert_exception=}")
+        else:
+
+            # TODO: send the prompt as a HTTP request to Albert and get the response, using albert_api_client instance
+            # TODO: send the response to the room
+
             await matrix_client.send_text_message(
-                room.room_id, "Pour remettre à zéro la conversation, tapez `!reset`"
+                room.room_id, f"Pour remettre à zéro la conversation, tapez `{COMMAND_PREFIX}reset`"
             )  # TODO
             pass
-        ALBERT_ERROR_RESPONSE = "Albert n'est pas configuré. Contactez albert-contact@data.gouv.fr pour signaler cette erreur."
-        logger.info(f"{ALBERT_ERROR_RESPONSE=}")
-        try:  # sometimes the async code fail (when input is big) with random asyncio errors
-            await matrix_client.send_text_message(room.room_id, ALBERT_ERROR_RESPONSE)
-        except Exception as llm_exception:  # it seems to work when we retry
-            logger.warning(f"Albert response failed with {llm_exception=}. retrying")
-            await matrix_client.send_text_message(room.room_id, ALBERT_ERROR_RESPONSE)
+
+            ALBERT_ERROR_RESPONSE = "Albert n'est pas configuré. Contactez albert-contact@data.gouv.fr pour signaler cette erreur."
+            logger.info(f"{ALBERT_ERROR_RESPONSE=}")
+            try:  # sometimes the async code fail (when input is big) with random asyncio errors
+                await matrix_client.send_text_message(room.room_id, ALBERT_ERROR_RESPONSE)
+            except Exception as llm_exception:  # it seems to work when we retry
+                logger.error(f"Albert API response failed with {llm_exception=}. retrying")
+                await matrix_client.send_text_message(room.room_id, ALBERT_ERROR_RESPONSE)
+
