@@ -20,14 +20,14 @@ class CommandRegistry:
     function_register: dict
     activated_functions: set[str]
 
-    def add_command(self, *, name: str, help: str, group: str, func):
+    def add_command(self, *, name: str, help: str | None, group: str, func):
         self.function_register[name] = {"help": help, "group": group, "func": func}
 
     def get_help(self) -> list[str]:
         return [
             function["help"]
             for name, function in self.function_register.items()
-            if name in self.activated_functions
+            if name in self.activated_functions and function["help"]
         ]
 
     def activate_and_retrieve_group(self, group_name: str):
@@ -46,7 +46,7 @@ class CommandRegistry:
 command_registry = CommandRegistry({}, set())
 
 
-def register_feature(help: str, group: str):
+def register_feature(help: str | None, group: str):
     def decorator(func):
         command_registry.add_command(
             name=func.__name__, help=help, group=group, func=func
@@ -56,7 +56,7 @@ def register_feature(help: str, group: str):
     return decorator
 
 
-@register_feature(help="**!help**: donne l'aide", group="basic")
+@register_feature(help="**!aide**: donne l'aide", group="basic")
 @properly_fail
 @ignore_when_not_concerned
 async def bot_help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
@@ -67,13 +67,13 @@ async def bot_help(room: MatrixRoom, message: Event, matrix_client: MatrixClient
     help_message = "Les commandes sont :\n - " + "\n - ".join(
         command_registry.get_help()
     )
-    event_parser.command("help", prefix="!")
+    event_parser.command("aide", prefix="!")
     logger.info("Handling command", command="help")
     await matrix_client.room_typing(room.room_id)
     await matrix_client.send_markdown_message(room.room_id, help_message)
 
 
-@register_feature(help="**!heure**: donne l'heure", group="basic")
+@register_feature(help="**!heure**: donne l'heure", group="utils")
 @properly_fail
 @ignore_when_not_concerned
 async def heure(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
@@ -88,7 +88,7 @@ async def heure(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     await matrix_client.send_text_message(room.room_id, heure)
     
 
-@register_feature(help="**!reset**: recommence un stream avec Albert", group="basic")
+@register_feature(help="**!reset**: recommence un stream avec Albert", group="albert")
 @properly_fail
 @ignore_when_not_concerned
 async def reset(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
@@ -105,7 +105,7 @@ async def reset(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
 
 
 @register_feature(
-    help="Renvoie la réponse d'Albert à un prompt donné",
+    help=None,
     group="albert",
 )
 @properly_fail
