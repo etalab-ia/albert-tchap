@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 # Albert Tchap Bot
 
-Le projet est un fork de [tchap_bot](https://gitlab.incubateur.net/PEREN/tchap_bot) conçu par le [Pôle d'Expertise de la Régulation Numérique](https://gitlab.incubateur.net/PEREN) qui est un bot matrix pour Tchap.
+Le projet est un fork de [tchap_bot](https://gitlab.incubateur.net/PEREN/tchap_bot) qui est un bot matrix pour Tchap, conçu par le [Pôle d'Expertise de la Régulation Numérique](https://gitlab.incubateur.net/PEREN).
 
 La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib.
 
@@ -14,21 +14,11 @@ La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github
 ## Description
 
 Contient :
-- `app/.` : la codebase pour le tchap bot Albert
-- `app/matrix_bot` : une bibliothèque pour pouvoir faire des bots matrix
+- `app/.` : la codebase pour le Tchap bot Albert
+- `app/matrix_bot` : une bibliothèque pour pouvoir faire des bots Matrix
 
 
-## Installation
-
-
-### Avec pip
-
-```bash
-pip install .
-```
-
-
-### En local
+## Installation locale
 
 ```bash
 # Récupération du code avec Git
@@ -48,7 +38,7 @@ Créer le fichier .env avec les informations de connexion (ou fournissez-les en 
 Vous pouvez vous inspirer du fichier `.env.example` qui est initialisé avec les valeurs par défaut 
 
 ```bash
-cp .env.example .venv
+cp .env.example .env
 ```
 
 Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
