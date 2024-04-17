@@ -4,17 +4,18 @@ SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <con
 SPDX-License-Identifier: MIT
 -->
 
-Bot Tchap
-=========
+# Albert Tchap Bot
 
-La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib
+Le projet est un fork de [tchap_bot](https://gitlab.incubateur.net/PEREN/tchap_bot) conçu par le [Pôle d'Expertise de la Régulation Numérique](https://gitlab.incubateur.net/PEREN) qui est un bot matrix pour Tchap.
+
+La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib.
 
 
 ## Description
 
 Contient :
-- `matrix_bot` : une bibliothèque pour pouvoir faire des bots matrix
-- `.` : un applicatif contenant quelques fonctionnalités de bots utiles
+- `app/.` : la codebase pour le tchap bot Albert
+- `app/matrix_bot` : une bibliothèque pour pouvoir faire des bots matrix
 
 
 ## Installation
