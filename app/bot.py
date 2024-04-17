@@ -1,11 +1,15 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
-from matrix_bot.bot import MatrixBot
 from commands import command_registry
 from config import env_config
+from matrix_bot.bot import MatrixBot
 from matrix_bot.config import logger
 
+# TODO:
+# - catch unknow command ?
+# - add dropup with all available commands like when using "/" ?
+# - if albert-bot is invited in a salon, make it answer only it is tagged.
 
 def main():
     tchap_bot = MatrixBot(

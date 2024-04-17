@@ -37,11 +37,7 @@ class Config(BaseConfig):
     matrix_bot_password: str = Field("", description="password of our matrix bot")
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
-    albert_username: str = Field("", description="Albert API username")
-    albert_password: str = Field("", description="Albert API password")
-    albert_access_token_ttl: int = Field(
-        9, description="Albert API access token time to live in seconds"
-    )
+    albert_api_token: str = Field("", description="Albert API TOKEN")
 
 
 env_config = Config()
