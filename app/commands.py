@@ -32,7 +32,7 @@ class CommandRegistry:
 
         help_message = "Bonjour, je suis Albert, l'assistant administratif de l'administration française. Je suis à l'écoute de toutes vos questions que vous pouvez poser ici.\n\n"
         help_message += "Veuillez noter que :\n\n"
-        help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière impécise !\n"
+        help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière imprécise !\n"
         help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement.\n"
         help_message += "\n"
         help_message += "Vous pouvez également utiliser les commandes spéciales suivantes :\n\n"
