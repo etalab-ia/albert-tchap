@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: 2021 - 2022 Isaac Beverly <https://github.com/imbev>
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
 
@@ -83,6 +84,19 @@ class EventParser:
         if self.room_is_direct_message():
             raise EventNotConcerned
 
+    def is_join(self) -> bool:
+        return (
+            self.event.source.get("type") == "m.room.member"
+            and self.event.source.get("membership") == "join"
+        )
+
+    def only_join(self) -> None:
+        """
+        :raise EventNotConcerned: if the event is not a join event.
+        """
+        if self.is_join():
+            raise EventNotConcerned
+
 
 class MessageEventParser(EventParser):
     event: RoomMessageText
@@ -93,7 +107,9 @@ class MessageEventParser(EventParser):
             raise EventNotConcerned
         command_payload = body.removeprefix(command_prefix)
         if self.log_usage:
-            logger.info("Handling command", command=command_name or command, command_payload=command_payload)
+            logger.info(
+                "Handling command", command=command_name or command, command_payload=command_payload
+            )
         return command_payload
 
     def command(self, command: str, prefix: str, command_name: str = "") -> str:
@@ -106,7 +122,9 @@ class MessageEventParser(EventParser):
         :return: the text after the command
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
-        return self._command(command=command, prefix=prefix, command_name=command_name, body=self.event.body)
+        return self._command(
+            command=command, prefix=prefix, command_name=command_name, body=self.event.body
+        )
 
     async def hl(self, consider_hl_when_direct_message=True) -> str:
         """

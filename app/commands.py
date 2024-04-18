@@ -94,6 +94,20 @@ async def albert_reset(room: MatrixRoom, message: Event, matrix_client: MatrixCl
 @register_feature(help=None, group="albert")
 @properly_fail
 @ignore_when_not_concerned
+async def albert_welcome(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
+    """
+    Receive the join event and send the welcome/help message
+    """
+    event_parser = MessageEventParser(
+        room=room, event=message, matrix_client=matrix_client, log_usage=True
+    )
+    event_parser.only_join()
+    await matrix_client.send_markdown_message(room.room_id, command_registry.get_help())
+
+
+@register_feature(help=None, group="albert")
+@properly_fail
+@ignore_when_not_concerned
 async def albert_answer(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     """
     Send the prompt to Albert and return the response
