@@ -23,12 +23,18 @@ class CommandRegistry:
     def add_command(self, *, name: str, help: str | None, group: str, func):
         self.function_register[name] = {"help": help, "group": group, "func": func}
 
-    def get_help(self) -> list[str]:
-        return [
+    def get_help(self) -> str:
+        cmds = [
             function["help"]
             for name, function in self.function_register.items()
             if name in self.activated_functions and function["help"]
         ]
+        help_message = "Je suis Albert, un assistant conversationnel dévelloper et maintenue par la Dinum/Etalab.\n"
+        help_message += "Je suis à l'écoute de toutes vos questions que vous pouvez poser ici.\n"
+        help_message += "\n"
+        help_message += "Vous pouvez également controler mon comportement en utilisant des commandes spéciales.\n"
+        help_message += "Les commandes sont :\n - " + "\n - ".join(cmds)
+        return help_message
 
     def activate_and_retrieve_group(self, group_name: str):
         self.activated_functions |= {
@@ -44,7 +50,6 @@ class CommandRegistry:
 
 
 command_registry = CommandRegistry({}, set())
-help_message = "Les commandes sont :\n - " + "\n - ".join(command_registry.get_help())
 
 def register_feature(help: str | None, group: str):
     def decorator(func):
@@ -63,7 +68,7 @@ async def help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     event_parser.command("aide", prefix=COMMAND_PREFIX)
     logger.info("Handling command", command="help")
     await matrix_client.room_typing(room.room_id)
-    await matrix_client.send_markdown_message(room.room_id, help_message)
+    await matrix_client.send_markdown_message(room.room_id, command_registry.get_help())
 
 
 @register_feature(
