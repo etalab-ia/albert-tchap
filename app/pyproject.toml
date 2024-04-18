@@ -4,7 +4,7 @@ version = "0.1"
 description = "Albert Tchap Bot"
 authors = [
     { name = "Pôle d'Expertise de la Régulation Numérique", email = "contact.peren@finances.gouv.fr" },
-    { name = "Etalab", email = "etalab@mail.numerique.gouv.fr" },
+    { name = "Etalab", email = "etalab@modernisation.gouv.fr" },
 ]
 
 requires-python = ">= 3.11"

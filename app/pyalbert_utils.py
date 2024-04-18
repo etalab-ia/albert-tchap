@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
+#
+# SPDX-License-Identifier: MIT
+
 import json
 
 import requests

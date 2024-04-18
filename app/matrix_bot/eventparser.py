@@ -8,9 +8,9 @@ from functools import wraps
 
 from nio import Event, MatrixRoom, RoomMessageText
 
+from .client import MatrixClient
 from .config import logger
 from .room_utils import room_is_direct_message
-from .client import MatrixClient
 
 
 class EventNotConcerned(Exception):

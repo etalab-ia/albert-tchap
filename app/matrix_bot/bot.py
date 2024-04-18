@@ -7,9 +7,9 @@ import asyncio
 
 from nio import SyncResponse
 
-from .client import MatrixClient
 from .auth import AuthLogin, Credentials
 from .callbacks import Callbacks
+from .client import MatrixClient
 from .config import bot_lib_config, logger
 
 

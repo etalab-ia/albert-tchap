@@ -6,8 +6,8 @@ import mimetypes
 import os
 from pathlib import Path
 from typing import Tuple
-import aiofiles.os
 
+import aiofiles.os
 import markdown
 import requests
 from nio import AsyncClient, AsyncClientConfig

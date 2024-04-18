@@ -4,10 +4,18 @@
 # SPDX-License-Identifier: MIT
 from functools import wraps
 
-from nio import Event, InviteMemberEvent, MatrixRoom, ToDeviceEvent, UnknownEvent, MegolmEvent, RoomMessageText
+from nio import (
+    Event,
+    InviteMemberEvent,
+    MatrixRoom,
+    MegolmEvent,
+    RoomMessageText,
+    ToDeviceEvent,
+    UnknownEvent,
+)
 
-from .config import logger, bot_lib_config
 from .client import MatrixClient
+from .config import bot_lib_config, logger
 
 
 def properly_fail(function):
