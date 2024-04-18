@@ -93,3 +93,5 @@ MANIFEST
 .pdm-python
 pdm.lock
 *.lock
+
+.reuse/
