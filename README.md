@@ -120,7 +120,12 @@ Le premier sync est assez long, et a priori non bloquant. Si vous avez une inter
 
 ## Contribution
 
-Avant de contribuer au dépôt, il est nécessaire de formatter, linter et trier les imports avec [Ruff](https://docs.astral.sh/ruff/) :
+Avant de contribuer au dépôt, il est nécessaire d'initialiser les _hooks_ de _pre-commit_ :
+```bash
+pre-commit install
+```
+
+Si vous ne pouvez pas utiliser de pre-commit, il est nécessaire de formatter, linter et trier les imports avec [Ruff](https://docs.astral.sh/ruff/) :
 ```bash
 ruff check --fix --select I .
 ```
