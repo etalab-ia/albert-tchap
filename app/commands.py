@@ -101,6 +101,7 @@ async def albert_welcome(room: MatrixRoom, message: Event, matrix_client: Matrix
     event_parser = MessageEventParser(
         room=room, event=message, matrix_client=matrix_client, log_usage=True
     )
+    event_parser.do_not_accept_own_message()
     event_parser.only_join()
     await matrix_client.send_markdown_message(room.room_id, command_registry.get_help())
 
