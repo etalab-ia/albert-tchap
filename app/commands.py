@@ -29,11 +29,14 @@ class CommandRegistry:
             for name, function in self.function_register.items()
             if name in self.activated_functions and function["help"]
         ]
-        help_message = "Je suis Albert, un assistant conversationnel dévelloper et maintenue par la Dinum/Etalab.\n"
-        help_message += "Je suis à l'écoute de toutes vos questions que vous pouvez poser ici.\n"
+
+        help_message = "Bonjour, je suis Albert, l'assistant administratif de l'administration française. Je suis à l'écoute de toutes vos questions que vous pouvez poser ici.\n\n"
+        help_message += "Veuillez noter que :\n\n"
+        help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière impécise !\n"
+        help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement.\n"
         help_message += "\n"
-        help_message += "Vous pouvez également controler mon comportement en utilisant des commandes spéciales.\n"
-        help_message += "Les commandes sont :\n - " + "\n - ".join(cmds)
+        help_message += "Vous pouvez également utiliser les commandes spéciales suivantes :\n\n"
+        help_message += "- " + "\n- ".join(cmds)
         return help_message
 
     def activate_and_retrieve_group(self, group_name: str):
@@ -50,6 +53,7 @@ class CommandRegistry:
 
 
 command_registry = CommandRegistry({}, set())
+
 
 def register_feature(help: str | None, group: str):
     def decorator(func):
@@ -98,20 +102,22 @@ async def albert_answer(room: MatrixRoom, message: Event, matrix_client: MatrixC
         room=room, event=message, matrix_client=matrix_client, log_usage=True
     )
     event_parser.do_not_accept_own_message()
-    #user_prompt: str = await event_parser.hl()
-    user_prompt:str = event_parser.event.body
+    # user_prompt: str = await event_parser.hl()
+    user_prompt: str = event_parser.event.body
     if user_prompt[0] != COMMAND_PREFIX:
         query = user_prompt
         await matrix_client.room_typing(room.room_id, typing_state=True, timeout=180_000)
         try:
             answer = generate(config=env_config, query=query)
         except Exception as albert_exception:
-            await matrix_client.send_markdown_message(room.room_id, f'\u26A0\ufe0f **Serveur erreur**\n\n{albert_exception}')
+            await matrix_client.send_markdown_message(
+                room.room_id, f"\u26a0\ufe0f **Serveur erreur**\n\n{albert_exception}"
+            )
             return
 
-        #await matrix_client.send_text_message(
+        # await matrix_client.send_text_message(
         #    room.room_id, f"Pour remettre à zéro la conversation, tapez `{COMMAND_PREFIX}reset`"
-        #)  # TODO
+        # )  # TODO
 
         logger.info(f"{query=}")
         logger.info(f"{answer=}")
@@ -120,4 +126,3 @@ async def albert_answer(room: MatrixRoom, message: Event, matrix_client: MatrixC
         except Exception as llm_exception:  # it seems to work when we retry
             logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
             await matrix_client.send_markdown_message(room.room_id, answer)
-
