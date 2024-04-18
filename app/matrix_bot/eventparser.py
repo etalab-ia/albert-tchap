@@ -85,12 +85,9 @@ class EventParser:
             raise EventNotConcerned
 
     def is_join(self) -> bool:
-        return (
-            self.event.source.get("type") == "m.room.member"
-            and self.event.source.get("membership") == "join"
-        )
+        return self.event.source.get("membership") == "join"
 
-    def only_join(self) -> None:
+    def only_on_join(self) -> None:
         """
         :raise EventNotConcerned: if the event is not a join event.
         """
