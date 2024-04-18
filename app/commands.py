@@ -44,7 +44,7 @@ class CommandRegistry:
 
 
 command_registry = CommandRegistry({}, set())
-HELP_MESSAGE = "Les commandes sont :\n - " + "\n - ".join(command_registry.get_help())
+help_message = "Les commandes sont :\n - " + "\n - ".join(command_registry.get_help())
 
 def register_feature(help: str | None, group: str):
     def decorator(func):
@@ -63,7 +63,7 @@ async def help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     event_parser.command("aide", prefix=COMMAND_PREFIX)
     logger.info("Handling command", command="help")
     await matrix_client.room_typing(room.room_id)
-    await matrix_client.send_markdown_message(room.room_id, HELP_MESSAGE)
+    await matrix_client.send_markdown_message(room.room_id, help_message)
 
 
 @register_feature(help="**{COMMAND_PREFIX}heure** : donne l'heure", group="utils")
