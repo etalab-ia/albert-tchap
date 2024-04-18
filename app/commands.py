@@ -66,21 +66,8 @@ async def help(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
     await matrix_client.send_markdown_message(room.room_id, help_message)
 
 
-@register_feature(help="**{COMMAND_PREFIX}heure** : donne l'heure", group="utils")
-@properly_fail
-@ignore_when_not_concerned
-async def heure(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
-    event_parser = MessageEventParser(room=room, event=message, matrix_client=matrix_client)
-    event_parser.do_not_accept_own_message()
-    event_parser.command("heure", prefix=COMMAND_PREFIX)
-    heure = f"il est {datetime.datetime.now().strftime('%Hh%M')}"
-    logger.info("Handling command", command="heure")
-    await matrix_client.room_typing(room.room_id)
-    await matrix_client.send_text_message(room.room_id, heure)
-
-
 @register_feature(
-    help=f"**{COMMAND_PREFIX}reset** : recommence un stream avec Albert", group="albert"
+    help=f"**{COMMAND_PREFIX}reset** : remet à zero la conversation avec Albert", group="albert"
 )
 @properly_fail
 @ignore_when_not_concerned
@@ -88,10 +75,10 @@ async def albert_reset(room: MatrixRoom, message: Event, matrix_client: MatrixCl
     event_parser = MessageEventParser(room=room, event=message, matrix_client=matrix_client)
     event_parser.do_not_accept_own_message()
     event_parser.command("reset", prefix=COMMAND_PREFIX)
+    await matrix_client.room_typing(room.room_id)
     # TODO: Albert reset stream
     reset: str = "La conversation a été remise à zéro."
     logger.info("Handling command", command="reset")
-    await matrix_client.room_typing(room.room_id)
     await matrix_client.send_text_message(room.room_id, reset)
 
 
@@ -114,17 +101,18 @@ async def albert_answer(room: MatrixRoom, message: Event, matrix_client: MatrixC
         try:
             answer = generate(config=env_config, query=query)
         except Exception as albert_exception:
-            logger.error(f"Albert API call failed with {albert_exception=}")
+            await matrix_client.send_markdown_message(room.room_id, f'\u26A0\ufe0f **Serveur erreur**\n\n{albert_exception}')
             return
 
         #await matrix_client.send_text_message(
         #    room.room_id, f"Pour remettre à zéro la conversation, tapez `{COMMAND_PREFIX}reset`"
         #)  # TODO
 
+        logger.info(f"{query=}")
         logger.info(f"{answer=}")
         try:  # sometimes the async code fail (when input is big) with random asyncio errors
             await matrix_client.send_markdown_message(room.room_id, answer)
         except Exception as llm_exception:  # it seems to work when we retry
-            logger.error(f"Albert API response failed with {llm_exception=}. retrying")
+            logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
             await matrix_client.send_markdown_message(room.room_id, answer)
 

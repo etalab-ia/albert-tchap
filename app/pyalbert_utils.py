@@ -26,7 +26,6 @@ def generate(config:dict, query:str):
     }
     # response = requests.post(f"{url}/stream/chat/1", json=data, headers=headers)
     response = requests.post(f"{url}/stream", json=data, headers=headers)
-    print(response)
     if not response.ok:
         error_detail = response.json().get("detail")
         logger.error(f"{error_detail}")
@@ -39,14 +38,18 @@ def generate(config:dict, query:str):
     data = {"stream_id": stream_id}
     response = requests.get(f"{url}/stream/{stream_id}/start", json=data, headers=headers, stream=True)
     if not response.ok:
-        error_detail = response.json().get("detail")
-        logger.error(f"{error_detail}")
+        try:
+            error_detail = response.json().get("detail")
+        except Exception:
+            error_detail = response.text
+        logger.error(f"Albert API Error Detail: {error_detail}")
         response.raise_for_status()
 
     answer = ""
     for line in response.iter_lines():
         if not line:
             continue
+
         decoded_line = line.decode("utf-8")
         _, _, data = decoded_line.partition("data: ")
         try:
