@@ -1,5 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
 
 SPDX-License-Identifier: MIT
 -->
@@ -20,9 +21,11 @@ Contient :
 
 ## Installation locale
 
+Le projet utilise un fichier de dépendances et de config `pyproject.toml` et non un fichier `requirements.txt`. Il est donc nécessaire d'utiliser `pip` en version 19.0 ou supérieure, ou bien avec un package manager comme `pdm`, `pip-tools`, `uv`, `rye`, `hatch` etc. (mais pas `poetry` qui n'utilise pas le standard `pyproject.toml`).
+
 ```bash
 # Récupération du code avec Git
-git clone ${GITLAB_URL}
+git clone ${GIHUB_URL}
 
 # Création d'un virtualenv
 python3 -m venv .venv
@@ -33,7 +36,7 @@ pip install .
 
 ### Configuration
 
-Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
+Créez le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
 Vous pouvez vous inspirer du fichier `app/.env.example` qui est initialisé avec les valeurs par défaut 
 
 ```bash
