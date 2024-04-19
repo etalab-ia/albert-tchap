@@ -22,7 +22,7 @@ class BaseConfig(BaseSettings):
     # allows us to clean up the imports into multiple parts
     # https://stackoverflow.com/questions/77328900/nested-settings-with-pydantic-settings
     model_config = SettingsConfigDict(
-        env_file=Path(".env"), extra="ignore"
+        env_file=Path(__file__).resolve().parent / ".env", extra="ignore"
     )  # allows nested configs
 
 

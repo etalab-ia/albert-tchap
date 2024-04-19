@@ -23,7 +23,6 @@ Contient :
 ```bash
 # Récupération du code avec Git
 git clone ${GITLAB_URL}
-cd app
 
 # Création d'un virtualenv
 python3 -m venv .venv
@@ -35,10 +34,10 @@ pip install .
 ### Configuration
 
 Créer le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
-Vous pouvez vous inspirer du fichier `.env.example` qui est initialisé avec les valeurs par défaut 
+Vous pouvez vous inspirer du fichier `app/.env.example` qui est initialisé avec les valeurs par défaut 
 
 ```bash
-cp .env.example .env
+cp app/.env.example app/.env
 ```
 
 Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
@@ -58,8 +57,9 @@ Pour lancer le bot en mode développement :
 ### Utilisation d'Albert
 
 Pour utiliser le chatbot Albert il faut éditer le fichier `.env` pour mettre :
-- `albert_api_url`
-- `groups_used=['albert']` (permet d'activer toutes les commandes qui font partie du groupe albert)
+- `albert_api_url`: l'url de l'API Albert à consommer.
+- `albert_api_token`: le token API utilisé pour authorisé le bot a consommer l'API Albert.
+- `groups_used=['albert']`: permet d'activer toutes les commandes qui font partie du groupe albert.
 
 
 ## Utilisation matrix_bot
