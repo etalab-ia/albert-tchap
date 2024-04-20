@@ -3,9 +3,7 @@
 # SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
-
 from dataclasses import dataclass
-from functools import wraps
 
 from nio import Event, MatrixRoom, RoomMessageText
 
@@ -16,24 +14,6 @@ from .room_utils import room_is_direct_message
 
 class EventNotConcerned(Exception):
     """Exception to say that the current event is not concerned by this parser"""
-
-
-def ignore_when_not_concerned(function):
-    """decorator to use with async function using EventParser"""
-
-    @wraps(function)
-    def decorated(*args, **kwargs):
-        function_instance = function(*args, **kwargs)
-
-        async def inner():
-            try:
-                return await function_instance
-            except EventNotConcerned:
-                return
-
-        return inner()
-
-    return decorated
 
 
 @dataclass
@@ -84,14 +64,11 @@ class EventParser:
         if self.room_is_direct_message():
             raise EventNotConcerned
 
-    def is_join(self) -> bool:
-        return self.event.source.get("membership") == "join"
-
     def only_on_join(self) -> None:
         """
-        :raise EventNotConcerned: if the event is not a join event.
+        :raise EventNotConcerned: if the event is not a join event (the bot has been invited)
         """
-        if self.is_join():
+        if not self.event.source.get("content", {}).get("membership") == "invite":
             raise EventNotConcerned
 
 

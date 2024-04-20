@@ -16,27 +16,43 @@ from nio import (
 
 from .client import MatrixClient
 from .config import bot_lib_config, logger
+from .eventparser import (
+    EventNotConcerned,
+    EventParser,
+    MessageEventParser,
+)
 
 
-def properly_fail(function):
+def properly_fail(matrix_client):
     """use this decorator so that your async callback never crash, log the error and return a message to the room"""
 
-    @wraps(function)
-    def decorated(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
-        function_instance = function(room, message, matrix_client)
-
-        async def inner():
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(room, event):
             try:
-                return await function_instance
-            except Exception as unexpected_exception:  # noqa
+                return await func(room, event)
+            except Exception as unexpected_exception:
                 await matrix_client.send_text_message(room.room_id, "failed to answer")
                 logger.warning(f"command failed with exception: {unexpected_exception}")
             finally:
                 await matrix_client.room_typing(room.room_id, typing_state=False)
 
-        return inner()
+        return wrapper
 
-    return decorated
+    return decorator
+
+
+def ignore_when_not_concerned(func):
+    """decorator to use with async function using EventParser"""
+
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except EventNotConcerned:
+            return
+
+    return wrapper
 
 
 class Callbacks:
@@ -47,21 +63,37 @@ class Callbacks:
         self.startup = []
         self.client_callback = []
 
-    def register_on_message_event(self, func, matrix_client) -> None:
-        def wrapped_func(*args, **kwargs):
-            return func(*args, matrix_client=matrix_client, **kwargs)
+    def register_on_custom_event(self, func, onEvent: Event, feature: dict):
+        @properly_fail(self.matrix_client)
+        @ignore_when_not_concerned
+        async def wrapped_func(room, event):
+            if not isinstance(event, onEvent):
+                raise EventNotConcerned
 
-        self.client_callback.append((wrapped_func, RoomMessageText))
+            if onEvent == RoomMessageText:
+                ep = MessageEventParser(
+                    room=room, event=event, matrix_client=self.matrix_client, log_usage=True
+                )
+                if feature.get("command"):
+                    ep.command(feature["command"], prefix=feature["prefix"])
+            else:
+                ep = EventParser(
+                    room=room, event=event, matrix_client=self.matrix_client, log_usage=True
+                )
 
-    def register_on_custom_event(self, func, event: Event):
-        self.client_callback.append((func, event))
+            ep.do_not_accept_own_message()  # avoid infinite loop
+            await func(ep=ep, matrix_client=self.matrix_client)
+
+        self.client_callback.append((wrapped_func, onEvent))
 
     def register_on_reaction_event(self, func):
-        async def new_func(room, event):
+        @properly_fail(self.matrix_client)
+        @ignore_when_not_concerned
+        async def wrapped_func(room: MatrixRoom, event: Event):
             if event.type == "m.reaction":
                 await func(room, event, event.source["content"]["m.relates_to"]["key"])
 
-        self.client_callback.append((new_func, UnknownEvent))
+        self.client_callback.append((wrapped_func, UnknownEvent))
 
     def register_on_startup(self, func):
         self.startup.append(func)

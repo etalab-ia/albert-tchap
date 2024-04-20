@@ -19,7 +19,7 @@ def generate(config:dict, query:str):
     }
     data = {
         "query": query,
-        "model_name": "AgentPublic/albert-light",
+        "model_name": "AgentPublic/albertlight-7b",
         "mode": "rag",
         # "postprocessing": ["check_url", "check_mail", "check_number"],
         # "with_history": True,
