@@ -5,7 +5,6 @@
 import json
 
 import requests
-
 from matrix_bot.config import logger
 
 

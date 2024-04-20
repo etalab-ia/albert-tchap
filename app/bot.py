@@ -9,9 +9,7 @@ from matrix_bot.bot import MatrixBot
 from matrix_bot.config import logger
 
 # TODO/IMPROVE:
-# - catch unknow command ?
-# - add dropup with all available commands like when using "/" ?
-# - if albert-bot is invited in a salon, make it answer only when it is tagged.
+# - if albert-bot is invited in a salon, make it answer only when if it is tagged.
 
 
 def main():

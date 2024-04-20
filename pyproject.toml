@@ -7,7 +7,7 @@ authors = [
     { name = "Etalab", email = "etalab@modernisation.gouv.fr" },
 ]
 
-requires-python = ">= 3.11"
+requires-python = ">= 3.10"
 readme = "README.md"
 license = { text = "MIT" }
 dependencies = [
