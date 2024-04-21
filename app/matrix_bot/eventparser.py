@@ -77,7 +77,7 @@ class MessageEventParser(EventParser):
 
     def _command(self, command: str, prefix: str, body=None, command_name: str = "") -> str:
         command_prefix = f"{prefix}{command}"
-        if not body.startswith(command_prefix):
+        if body.split()[0] != command_prefix:
             raise EventNotConcerned
         command_payload = body.removeprefix(command_prefix)
         if self.log_usage:

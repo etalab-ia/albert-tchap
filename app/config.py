@@ -40,6 +40,10 @@ class Config(BaseConfig):
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API TOKEN")
 
+    # Conversational settings
+    with_history: bool = Field(True, description="Conversational mode")
+    chat_id: int|None = Field(None, description="Current chat id")
+
 
 env_config = Config()
 
