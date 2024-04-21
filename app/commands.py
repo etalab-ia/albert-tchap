@@ -60,7 +60,7 @@ class CommandRegistry:
             if name in self.activated_functions and feature["help"]
         ]
 
-        help_message = "Bonjour, je m'appelle Albert et je suis votre assistant automatique dédié aux questions légal et administratives. N'hésitez pas à me soumettre vos interrogations, je suis là pour vous aider au mieux.\n\n"
+        help_message = "Bonjour, je m'appelle Albert et je suis votre assistant automatique dédié aux questions légales et administratives. N'hésitez pas à me soumettre vos interrogations, je suis là pour vous aider au mieux.\n\n"
         help_message += "Veuillez noter que :\n\n"
         help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière imprécise.\n"
         help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement.\n"
