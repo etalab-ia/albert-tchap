@@ -31,9 +31,7 @@ class Config(BaseConfig):
     systemd_logging: bool = Field(
         True, description="Enable / disable logging with systemd.journal.JournalHandler"
     )
-    matrix_home_server: str = Field(
-        "https://matrix.agent.dinum.tchap.gouv.fr", description="Tchap home server URL"
-    )
+    matrix_home_server: str = Field("", description="Tchap home server URL")
     matrix_bot_username: str = Field("", description="username of our matrix bot")
     matrix_bot_password: str = Field("", description="password of our matrix bot")
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
