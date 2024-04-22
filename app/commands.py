@@ -61,17 +61,17 @@ class CommandRegistry:
         ]
 
         help_message = "Bonjour, je m'appelle Albert et je suis votre assistant automatique dédié aux questions légales et administratives. N'hésitez pas à me soumettre vos interrogations, je suis là pour vous aider au mieux.\n\n"
-        help_message += "Veuillez noter que :\n\n"
-        help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière imprécise.\n"
-        help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement.\n"
+        help_message += "Attention :\n\n"
+        help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière imprécise\n"
+        help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement\n"
         help_message += "\n"
-        help_message += "Vous pouvez également utiliser les commandes spéciales suivantes :\n\n"
+        help_message += "Vous pouvez utiliser les commandes spéciales suivantes :\n\n"
         help_message += "- " + "\n- ".join(cmds)
         help_message += "\n\n"
         if env_config.with_history:
-            help_message += "Le mode conversation est activé"
+            help_message += "Le mode conversation est activé."
         else:
-            help_message += "Le mode conversation est désactivé"
+            help_message += "Le mode conversation est désactivé."
 
         return help_message
 
@@ -155,7 +155,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="conversation",
-    help=f"**{COMMAND_PREFIX}conversation** : activer/désactiver le mode conversation.",
+    help=f"**{COMMAND_PREFIX}conversation** : activer/désactiver le mode conversation",
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
