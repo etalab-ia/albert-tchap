@@ -142,7 +142,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="reset",
-    help=f"**{COMMAND_PREFIX}reset** : remettre à zero la conversation avec Albert",
+    help=f"**{COMMAND_PREFIX}reset** : remettre à zéro la conversation avec Albert",
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
