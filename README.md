@@ -7,9 +7,13 @@ SPDX-License-Identifier: MIT
 
 # Albert Tchap Bot
 
-Le projet est un fork de [tchap_bot](https://gitlab.incubateur.net/PEREN/tchap_bot) qui est un bot matrix pour Tchap, conçu par le [Pôle d'Expertise de la Régulation Numérique](https://gitlab.incubateur.net/PEREN).
+Bot pour Tchap, l'application de messagerie de l'administration française.
+Ce bot utilise Albert, l'agent conversationnel (*large language models*, LLM) de l'administration française, pour répondre à des questions sur Tchap.
 
-La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib.
+Le projet est un POC (Proof of Concept - preuve de concept) pour montrer comment un bot peut être utilisé pour répondre à des questions sur Tchap en utilisant Albert.
+Il s'agit d'un travail WIP (Work In Progress - en cours de développement) et n'est pas (encore) destiné à être utilisé en production.
+
+Le projet est un fork de [tchap_bot](https://gitlab.incubateur.net/PEREN/tchap_bot) qui est un bot Matrix pour Tchap, conçu par le [Pôle d'Expertise de la Régulation Numérique](https://gitlab.incubateur.net/PEREN). La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib.
 
 
 ## Description
@@ -34,7 +38,7 @@ python3 -m venv .venv
 pip install .
 ```
 
-### Configuration
+## Configuration
 
 Créez le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
 Vous pouvez vous inspirer du fichier `app/.env.example` qui est initialisé avec les valeurs par défaut 
@@ -45,27 +49,27 @@ cp app/.env.example app/.env
 
 Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
 
-
-## Utilisation tchap_bot
-
-### Utilisation générale
-
-Pour lancer le bot en mode développement :
+Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables suivantes :
+- `albert_api_url` : l'url de l'API Albert à consommer.
+- `albert_api_token` : le token API utilisé pour authorisé le bot a consommer l'API Albert.
+- `groups_used=['albert']` : permet d'activer toutes les commandes qui font partie du groupe albert.
 
 
+## Utilisation en dehors de Docker
+
+Pour lancer le bot en dehors de Docker :
 ```bash
+cd app
 ./.venv/bin/python3 .
 ```
 
-### Utilisation d'Albert
 
-Pour utiliser le chatbot Albert il faut éditer le fichier `.env` pour mettre :
-- `albert_api_url`: l'url de l'API Albert à consommer.
-- `albert_api_token`: le token API utilisé pour authorisé le bot a consommer l'API Albert.
-- `groups_used=['albert']`: permet d'activer toutes les commandes qui font partie du groupe albert.
+## Utilisation avec Docker
+
+TODO: documentation à venir
 
 
-## Utilisation matrix_bot
+## Utilisation de la librairie `matrix_bot`
 
 Il faut initialiser un matrixbot et le faire tourner. Un exemple très simple pour avoir une commande qui donne l'heure :
 
@@ -105,20 +109,16 @@ tchap_bot.callbacks.register_on_message_event(heure, tchap_bot.matrix_client)
 tchap_bot.run()
 ```
 
-D'autres exemples plus complexes sont disponibles dans tchap_bot
-
 
 ## Troubleshooting
 
-Le premier sync est assez long, et a priori non bloquant. Si vous avez une interaction avec le bot avant qu'il se soit bien sync vous risquez de le laisser dans un état instable (où le bot n'a pas le listing des rooms) 
+Le premier sync est assez long, et a priori non bloquant. Si vous avez une interaction avec le bot avant qu'il se soit bien sync vous risquez de le laisser dans un état instable (où le bot n'a pas le listing des rooms).
 
 ## Contribution
 
-
-Avant de contribuer au dépôt, il est nécessaire d'initialiser les _hooks_ de _pre-commit_ :
-
+Avant de contribuer au dépôt, il est nécessaire de formatter, linter et trier les imports avec [Ruff](https://docs.astral.sh/ruff/) :
 ```bash
-pre-commit install
+ruff check --fix --select I .
 ```
 
 
