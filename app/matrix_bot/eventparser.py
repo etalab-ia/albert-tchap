@@ -1,10 +1,9 @@
 # SPDX-FileCopyrightText: 2021 - 2022 Isaac Beverly <https://github.com/imbev>
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
-
 from dataclasses import dataclass
-from functools import wraps
 
 from nio import Event, MatrixRoom, RoomMessageText
 
@@ -15,24 +14,6 @@ from .room_utils import room_is_direct_message
 
 class EventNotConcerned(Exception):
     """Exception to say that the current event is not concerned by this parser"""
-
-
-def ignore_when_not_concerned(function):
-    """decorator to use with async function using EventParser"""
-
-    @wraps(function)
-    def decorated(*args, **kwargs):
-        function_instance = function(*args, **kwargs)
-
-        async def inner():
-            try:
-                return await function_instance
-            except EventNotConcerned:
-                return
-
-        return inner()
-
-    return decorated
 
 
 @dataclass
@@ -83,6 +64,13 @@ class EventParser:
         if self.room_is_direct_message():
             raise EventNotConcerned
 
+    def only_on_join(self) -> None:
+        """
+        :raise EventNotConcerned: if the event is not a join event (the bot has been invited)
+        """
+        if not self.event.source.get("content", {}).get("membership") == "invite":
+            raise EventNotConcerned
+
 
 class MessageEventParser(EventParser):
     event: RoomMessageText
@@ -93,7 +81,9 @@ class MessageEventParser(EventParser):
             raise EventNotConcerned
         command_payload = body.removeprefix(command_prefix)
         if self.log_usage:
-            logger.info("Handling command", command=command_name or command, command_payload=command_payload)
+            logger.info(
+                "Handling command", command=command_name or command, command_payload=command_payload
+            )
         return command_payload
 
     def command(self, command: str, prefix: str, command_name: str = "") -> str:
@@ -106,7 +96,9 @@ class MessageEventParser(EventParser):
         :return: the text after the command
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
-        return self._command(command=command, prefix=prefix, command_name=command_name, body=self.event.body)
+        return self._command(
+            command=command, prefix=prefix, command_name=command_name, body=self.event.body
+        )
 
     async def hl(self, consider_hl_when_direct_message=True) -> str:
         """
