@@ -8,9 +8,29 @@ import requests
 from matrix_bot.config import logger
 
 
+def new_chat(config:dict) -> int:
+    api_token = config.albert_api_token
+    url = config.albert_api_url
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+    }
+
+    data = {
+        "chat_type": "qa",
+    }
+    response = requests.post(f"{url}/chat", json=data, headers=headers)
+    if not response.ok:
+        error_detail = response.json().get("detail")
+        logger.error(f"{error_detail}")
+        response.raise_for_status()
+
+    chat_id = response.json()["id"]
+    return chat_id
+
 def generate(config:dict, query:str):
     api_token = config.albert_api_token
     url = config.albert_api_url
+    with_history = config.with_history
 
     # Create Stream:
     headers = {
@@ -20,11 +40,15 @@ def generate(config:dict, query:str):
         "query": query,
         "model_name": "AgentPublic/albertlight-7b",
         "mode": "rag",
+        "with_history": with_history,
         # "postprocessing": ["check_url", "check_mail", "check_number"],
-        # "with_history": True,
     }
-    # response = requests.post(f"{url}/stream/chat/1", json=data, headers=headers)
-    response = requests.post(f"{url}/stream", json=data, headers=headers)
+    if with_history:
+        if not config.chat_id:
+            config.chat_id = new_chat(config)
+        response = requests.post(f"{url}/stream/chat/{config.chat_id}", json=data, headers=headers)
+    else:
+        response = requests.post(f"{url}/stream", json=data, headers=headers)
     if not response.ok:
         error_detail = response.json().get("detail")
         logger.error(f"{error_detail}")

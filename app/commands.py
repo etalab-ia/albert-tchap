@@ -10,7 +10,7 @@ from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventParser
 from nio import Event, RoomCreateEvent, RoomMemberEvent, RoomMessageText
-from pyalbert_utils import generate
+from pyalbert_utils import generate, new_chat
 
 
 @dataclass
@@ -67,6 +67,12 @@ class CommandRegistry:
         help_message += "\n"
         help_message += "Vous pouvez également utiliser les commandes spéciales suivantes :\n\n"
         help_message += "- " + "\n- ".join(cmds)
+        help_message += "\n\n"
+        if env_config.with_history:
+            help_message += "Le mode conversation est activé"
+        else:
+            help_message += "Le mode conversation est désactivé"
+
         return help_message
 
     def show_commands(self):
@@ -136,14 +142,30 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="reset",
-    help=f"**{COMMAND_PREFIX}reset** : remettre à zero la conversation avec Albert",
+    help=f"**{COMMAND_PREFIX}reset** : remettre à zéro la conversation avec Albert",
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
-    # TODO: Albert reset stream
-    reset_message = "La conversation a été remise à zéro."
-    await matrix_client.send_text_message(ep.room.room_id, reset_message)
+    if env_config.with_history:
+        env_config.chat_id = new_chat(env_config)
+        reset_message = "La conversation a été remise à zéro."
+        await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
+@register_feature(
+    group="albert",
+    onEvent=RoomMessageText,
+    command="conversation",
+    help=f"**{COMMAND_PREFIX}conversation** : activer/désactiver le mode conversation.",
+)
+async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
+    await matrix_client.room_typing(ep.room.room_id)
+    if env_config.with_history:
+        env_config.with_history = False
+        reset_message = "Le mode conversation est activé."
+    else:
+        env_config.with_history = True
+        reset_message = "Le mode conversation est désactivé."
+    await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
 @register_feature(
     group="albert",
