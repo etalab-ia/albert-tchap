@@ -66,7 +66,13 @@ cd app
 
 ## Utilisation avec Docker
 
-TODO: documentation à venir
+1. Créez un fichier .env à la racine du projet avec les variables d'environnement mentionnées dans la section *"For docker-compose deployment"* du fichier [.env.example](./.env.example)
+   
+2. Lancer le container du bot à la racine du projet
+   
+    ```bash
+    docker compose .env up --detach
+    ```
 
 
 ## Utilisation de la librairie `matrix_bot`
@@ -113,6 +119,7 @@ tchap_bot.run()
 ## Troubleshooting
 
 Le premier sync est assez long, et a priori non bloquant. Si vous avez une interaction avec le bot avant qu'il se soit bien sync vous risquez de le laisser dans un état instable (où le bot n'a pas le listing des rooms).
+
 
 ## Contribution
 
