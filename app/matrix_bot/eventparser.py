@@ -28,6 +28,10 @@ class EventParser:
     matrix_client: MatrixClient
     log_usage: bool = False
 
+    @property
+    def sender(self):
+        return self.event.sender
+
     def is_from_userid(self, userid: str) -> bool:
         return self.sender_id() == userid
 
