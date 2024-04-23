@@ -3,9 +3,10 @@
 #
 # SPDX-License-Identifier: MIT
 
+from collections import defaultdict
 from dataclasses import dataclass
 
-from config import COMMAND_PREFIX, env_config
+from config import COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventParser
@@ -53,7 +54,7 @@ class CommandRegistry:
             if name in self.activated_functions
         ]
 
-    def get_help(self) -> str:
+    def get_help(self, config: Config) -> str:
         cmds = [
             feature["help"]
             for name, feature in self.function_register.items()
@@ -68,7 +69,7 @@ class CommandRegistry:
         help_message += "Vous pouvez utiliser les commandes spéciales suivantes :\n\n"
         help_message += "- " + "\n- ".join(cmds)
         help_message += "\n\n"
-        if env_config.with_history:
+        if config.with_history:
             help_message += "Le mode conversation est activé."
         else:
             help_message += "Le mode conversation est désactivé."
@@ -88,6 +89,7 @@ class CommandRegistry:
 
 
 command_registry = CommandRegistry({}, set())
+user_configs = defaultdict(lambda: Config())
 
 
 def register_feature(
@@ -119,8 +121,9 @@ def register_feature(
     help=f"**{COMMAND_PREFIX}aide** : afficher l'aide",
 )
 async def help(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help())
+    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
 @register_feature(
@@ -133,9 +136,10 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     """
     Receive the join/invite event and send the welcome/help message
     """
+    config = user_configs[ep.sender]
     ep.only_on_direct_message()
     ep.only_on_join()
-    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help())
+    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
 @register_feature(
@@ -145,9 +149,10 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     help=f"**{COMMAND_PREFIX}reset** : remettre à zéro la conversation avec Albert",
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    if env_config.with_history:
-        env_config.chat_id = new_chat(env_config)
+    if config.with_history:
+        config.chat_id = new_chat(config)
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
@@ -158,12 +163,13 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     help=f"**{COMMAND_PREFIX}conversation** : activer/désactiver le mode conversation",
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    if env_config.with_history:
-        env_config.with_history = False
+    if config.with_history:
+        config.with_history = False
         reset_message = "Le mode conversation est activé."
     else:
-        env_config.with_history = True
+        config.with_history = True
         reset_message = "Le mode conversation est désactivé."
     await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
@@ -177,13 +183,14 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     Receive a message event which is not a command, send the prompt to Albert API and return the response to the user
     """
     # user_prompt: str = await ep.hl()
+    config = user_configs[ep.sender]
     user_prompt = ep.event.body
     if user_prompt[0] != COMMAND_PREFIX:
         ep.only_on_direct_message()
         query = user_prompt
         await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
         try:
-            answer = generate(config=env_config, query=query)
+            answer = generate(config=config, query=query)
         except Exception as albert_exception:
             await matrix_client.send_markdown_message(
                 ep.room.room_id, f"\u26a0\ufe0f **Serveur erreur**\n\n{albert_exception}"

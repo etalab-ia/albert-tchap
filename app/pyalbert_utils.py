@@ -5,10 +5,11 @@
 import json
 
 import requests
+from config import Config
 from matrix_bot.config import logger
 
 
-def new_chat(config:dict) -> int:
+def new_chat(config: Config) -> int:
     api_token = config.albert_api_token
     url = config.albert_api_url
     headers = {
@@ -27,7 +28,8 @@ def new_chat(config:dict) -> int:
     chat_id = response.json()["id"]
     return chat_id
 
-def generate(config:dict, query:str):
+
+def generate(config: Config, query: str):
     api_token = config.albert_api_token
     url = config.albert_api_url
     with_history = config.with_history
@@ -59,7 +61,9 @@ def generate(config:dict, query:str):
     # Start Stream:
     # @TODO: implement non-streaming response
     data = {"stream_id": stream_id}
-    response = requests.get(f"{url}/stream/{stream_id}/start", json=data, headers=headers, stream=True)
+    response = requests.get(
+        f"{url}/stream/{stream_id}/start", json=data, headers=headers, stream=True
+    )
     if not response.ok:
         try:
             error_detail = response.json().get("detail")
