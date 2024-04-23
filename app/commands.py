@@ -136,9 +136,10 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     """
     Receive the join/invite event and send the welcome/help message
     """
+    config = user_configs[ep.sender]
     ep.only_on_direct_message()
     ep.only_on_join()
-    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help())
+    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
 @register_feature(
