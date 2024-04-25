@@ -5,13 +5,13 @@ default:
   before_script:
     - | # export env file and copy routing table to pyalbert config
       if [[ $CI_COMMIT_BRANCH = "staging" ]]; then
-        echo "info: export staging env file of $CI_ENVIRONMENT_NAME environment"
-        export $(grep -v "^#" $STAGING__ENV_FILE | xargs)
+        echo "info: export staging env file"
+        while IFS='=' read -r key value; do export "$key"="$value"; done < <(grep -v "^#" $STAGING__ENV_FILE)
         cp $STAGING__ENV_FILE ./.env
 
       elif [[ $CI_COMMIT_BRANCH = "main" ]]; then
-        echo "info: export production env file of $CI_ENVIRONMENT_NAME environment"
-        export $(grep -v "^#" $PROD__ENV_FILE | xargs)
+        echo "info: export production env file"
+        while IFS='=' read -r key value; do export "$key"="$value"; done < <(grep -v "^#" $PROD__ENV_FILE)
         cp $PROD__ENV_FILE ./.env
       fi
 
@@ -36,12 +36,14 @@ deploy:
     - | # deploy app to remote server
       ssh -i $CI_DEPLOY_USER_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no ${CI_DEPLOY_USER}@${CI_DEPLOY_HOST} "
       cd /home/${CI_DEPLOY_USER}/${CI_JOB_ID}
-
+      mkdir -p /data/tchapbot
+      
       export COMPOSE_FILE=/home/${CI_DEPLOY_USER}/${CI_JOB_ID}/docker-compose.yml
       export COMPOSE_PROJECT_NAME=albert-tchapbot
 
       docker compose down
       docker tag albert/tchapbot:latest albert/tchapbot:old || true
+      docker image rm albert/tchapbot:latest || true
       docker compose up --detach
       docker image rm albert/tchapbot:old || true
 
