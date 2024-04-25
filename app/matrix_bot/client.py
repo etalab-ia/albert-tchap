@@ -5,9 +5,9 @@
 import mimetypes
 import os
 from pathlib import Path
-from typing import List, Tuple, Union
-import aiofiles.os
+from typing import Tuple
 
+import aiofiles.os
 import markdown
 import requests
 from nio import AsyncClient, AsyncClientConfig
@@ -117,7 +117,7 @@ class MatrixClient(AsyncClient):
             )
             logger.info("Automatically blacklisting the following devices:")
             for user in self.rooms[room_id].users:
-                unverified: List[str] = []
+                unverified: list[str] = []
                 for device_id, device in self.olm.device_store[user].items():
                     if not (self.olm.is_device_verified(device) or self.olm.is_device_blacklisted(device)):
                         self.olm.blacklist_device(device)
@@ -198,7 +198,7 @@ class MatrixClient(AsyncClient):
             message_type="m.reaction",
         )
 
-    async def _upload_file(self, file_path: Union[str, Path]) -> Tuple[UploadResponse, os.stat_result, str]:
+    async def _upload_file(self, file_path: str | Path) -> Tuple[UploadResponse, os.stat_result, str]:
         mime_type = mimetypes.guess_type(file_path)[0]
         file_stat = await aiofiles.os.stat(file_path)
         async with aiofiles.open(file_path, "r+b") as file:

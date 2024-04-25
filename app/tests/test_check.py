@@ -2,6 +2,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import importlib.metadata
 
-__version__ = importlib.metadata.version(__package__)
+def test_import():
+    from app.bot import main  # noqa

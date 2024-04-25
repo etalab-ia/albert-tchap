@@ -1,106 +1,49 @@
-# SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
-#
-# SPDX-License-Identifier: MIT
-
 stages:
-  - check
-  - test
-  - package-build
-  - package-publish
-
-variables:
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  POETRY_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pypoetry"
-  # Speedup caching of node modules
-  # see https://gitlab.com/gitlab-org/gitlab-runner/-/merge_requests/2684
-  FF_USE_FASTZIP: 1
-  CACHE_COMPRESSION_LEVEL: "fastest"
+  - deploy
 
 default:
-  image: python:3.9-bullseye
-  interruptible: true
-  cache:
-    key:
-      files:
-        - poetry.lock
-        - package-lock.json
-    paths:
-      - .cache/pip
-      - .cache/pypoetry
-      - .cache/npm
   before_script:
-    - "pip install pipx"
-    - "pipx ensurepath"
-    - "pipx install poetry==1.3.2"
-    - "python -m venv .venv"
-    - "/root/.local/bin/poetry config http-basic.peren_package_registry -- gitlab-ci-token ${CI_JOB_TOKEN}"
-    - "/root/.local/bin/poetry install --without=systemd"
-    - "if test -f package.json ; then curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && apt-get install -y nodejs ; fi"
+    - | # export env file and copy routing table to pyalbert config
+      if [[ $CI_COMMIT_BRANCH = "staging" ]]; then
+        echo "info: export staging env file of $CI_ENVIRONMENT_NAME environment"
+        export $(grep -v "^#" $STAGING__ENV_FILE | xargs)
+        cp $STAGING__ENV_FILE ./.env
 
-.check:
-  stage: check
-  needs: []
+      elif [[ $CI_COMMIT_BRANCH = "main" ]]; then
+        echo "info: export production env file of $CI_ENVIRONMENT_NAME environment"
+        export $(grep -v "^#" $PROD__ENV_FILE | xargs)
+        cp $PROD__ENV_FILE ./.env
+      fi
 
-licensing:
-  extends: .check
-  script:
-    - ".venv/bin/licensecheck"
-    - ".venv/bin/reuse lint"
-
-linting:
-  extends: .check
-  script:
-    - "./.venv/bin/flake8 src/tchap_bot/"
-    # flake8-nb could be used to lint python files as well
-    # but we split checks for notebooks linting to have dedicated options
-    - "find . -name '*.ipynb' -exec flake8_nb {} \\;"
-    - "./.venv/bin/pylint --output-format=colorized src/tchap_bot tests/ -d R,C || ./.venv/bin/pylint-exit $?"
-    - "./.venv/bin/black --check src/tchap_bot/"
-
-
-.test:
-  stage: test
-  needs: []
-
-test:
-  extends: .test
-  script:
-    - "./.venv/bin/pytest --cov=tchap_bot --junitxml=report.xml tests/"
-    - "./.venv/bin/coverage xml"
-    - "./.venv/bin/coverage html"
-
-  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
-  artifacts:
-    paths:
-      - htmlcov
-    reports:
-      junit: report.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage.xml
-
-package-build:
-  stage: package-build
-  script:
-    - /root/.local/bin/poetry build
-  artifacts:
-    paths:
-      - "dist/"
-
-package-publish:
-  stage: package-publish
-  only:
-     - main
-  script:
-     - /root/.local/bin/poetry config repositories.gitlab "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
-     - /root/.local/bin/poetry config http-basic.gitlab -- gitlab-ci-token "$CI_JOB_TOKEN"
-     - /root/.local/bin/poetry publish --repository gitlab
-
-package-publish-central:
-  stage: package-publish
-  script:
-     - /root/.local/bin/poetry config repositories.gitlab-central "${CI_API_V4_URL}/projects/${CENTRAL_REGISTRY_ID}/packages/pypi"
-     - /root/.local/bin/poetry config http-basic.gitlab-central -- gitlab-ci-token "$CI_JOB_TOKEN"
-     - /root/.local/bin/poetry publish --repository gitlab-central
+deploy:
   rules:
-     - if: $CI_COMMIT_BRANCH == "main" && $CENTRAL_REGISTRY_ID
+    - if: $CI_COMMIT_BRANCH == "main" # staging not implemented yet
+  stage: deploy
+  image: alpine:latest
+  script:
+    - | # ssh connection setup
+      chmod og= $CI_DEPLOY_USER_SSH_PRIVATE_KEY
+      apk update
+      apk add openssh-client
+    - | # send deployment files to remote server
+      mkdir -p ./${CI_JOB_ID}
+      cp -r ./app ./${CI_JOB_ID}
+      cp ./docker-compose.yml ./${CI_JOB_ID}/docker-compose.yml
+      cp ./Dockerfile ./${CI_JOB_ID}/Dockerfile
+      cp ./pyproject.toml ./${CI_JOB_ID}/pyproject.toml
+      cp ./.env ./${CI_JOB_ID}/.env
+      scp -i $CI_DEPLOY_USER_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no -r ./${CI_JOB_ID} ${CI_DEPLOY_USER}@${CI_DEPLOY_HOST}:/home/${CI_DEPLOY_USER}/${CI_JOB_ID}
+    - | # deploy app to remote server
+      ssh -i $CI_DEPLOY_USER_SSH_PRIVATE_KEY -o StrictHostKeyChecking=no ${CI_DEPLOY_USER}@${CI_DEPLOY_HOST} "
+      cd /home/${CI_DEPLOY_USER}/${CI_JOB_ID}
+
+      export COMPOSE_FILE=/home/${CI_DEPLOY_USER}/${CI_JOB_ID}/docker-compose.yml
+      export COMPOSE_PROJECT_NAME=albert-tchapbot
+
+      docker compose down
+      docker tag albert/tchapbot:latest albert/tchapbot:old || true
+      docker compose up --detach
+      docker image rm albert/tchapbot:old || true
+
+      rm -rf /home/${CI_DEPLOY_USER}/${CI_JOB_ID}
+      "
