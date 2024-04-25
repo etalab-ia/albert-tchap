@@ -17,7 +17,7 @@ default:
 
 deploy:
   rules:
-    - if: $CI_COMMIT_BRANCH == "main" # staging not implemented yet
+    - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "staging"
   stage: deploy
   image: alpine:latest
   script:
