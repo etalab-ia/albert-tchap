@@ -25,7 +25,7 @@ class BotLibConfig(BaseSettings):
     encryption_enabled: bool = Field(default=ENCRYPTION_ENABLED)
     ignore_unverified_devices: bool = Field(default=True, description="True by default in Element")
     store_path: Path = Field(default="./store/", description="path in which matrix-nio store will be written")
-    session_path: Path = Field(default="/data/session.txt", description="path of the file to store session identifier")
+    session_path: Path = Field(default="session.txt", description="path of the file to store session identifier")
     log_level: int = Field(default=logging.INFO, description="log level for the library")
     salt: bytes = Field(
         default=b"\xce,\xa1\xc6lY\x80\xe3X}\x91\xa60m\xa8N",
