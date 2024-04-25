@@ -13,7 +13,7 @@ Ce bot utilise Albert, l'agent conversationnel (*large language models*, LLM) de
 Le projet est un POC (Proof of Concept - preuve de concept) pour montrer comment un bot peut être utilisé pour répondre à des questions sur Tchap en utilisant Albert.
 Il s'agit d'un travail WIP (Work In Progress - en cours de développement) et n'est pas (encore) destiné à être utilisé en production.
 
-Le projet est un fork de [tchap_bot](https://gitlab.incubateur.net/PEREN/tchap_bot) qui est un bot Matrix pour Tchap, conçu par le [Pôle d'Expertise de la Régulation Numérique](https://gitlab.incubateur.net/PEREN). La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib.
+Le projet est un fork de [tchap_bot](https://code.peren.fr/peren/PEREN/tchap_bot) qui est un bot Matrix pour Tchap, conçu par le [Pôle d'Expertise de la Régulation Numérique](https://code.peren.fr/peren/PEREN). La partie bibliothèque (`matrix_bot`) est fortement inspirée de https://github.com/imbev/simplematrixbotlib.
 
 
 ## Description
@@ -31,7 +31,7 @@ Le projet utilise un fichier de dépendances et de config `pyproject.toml` et no
 # Récupération du code avec Git
 git clone ${GITHUB_URL}
 
-# Création d'un virtualenv
+# Création d'un environnement virtuel Python
 python3 -m venv .venv
 
 # Installation des dépendances
@@ -40,9 +40,7 @@ pip install .
 
 ## Configuration
 
-Créez le fichier .env avec les informations de connexion (ou fournissez-les en variables d'environnement).
-Vous pouvez vous inspirer du fichier `app/.env.example` qui est initialisé avec les valeurs par défaut 
-
+Créez le fichier d'environnement `app/.env` avec les informations de connexion (ou fournissez-les en variables d'environnement). Vous pouvez vous inspirer du fichier `app/.env.example` qui est initialisé avec les valeurs par défaut :
 ```bash
 cp app/.env.example app/.env
 ```
@@ -50,9 +48,9 @@ cp app/.env.example app/.env
 Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
 
 Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables suivantes :
-- `albert_api_url` : l'url de l'API Albert à consommer.
-- `albert_api_token` : le token API utilisé pour authorisé le bot a consommer l'API Albert.
-- `groups_used=['albert']` : permet d'activer toutes les commandes qui font partie du groupe albert.
+- `albert_api_url` : l'url de l'API Albert à consommer
+- `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert
+- `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
 
 
 ## Utilisation en dehors de Docker
@@ -66,10 +64,9 @@ cd app
 
 ## Utilisation avec Docker
 
-1. Créez un fichier .env à la racine du projet avec les variables d'environnement mentionnées dans la section *"For docker-compose deployment"* du fichier [.env.example](./.env.example)
-   
+1. Créez un fichier `.env` à la racine du projet avec les variables d'environnement mentionnées dans la section *"For docker-compose deployment"* du fichier [.env.example](./.env.example)
+
 2. Lancer le container du bot à la racine du projet
-   
     ```bash
     docker compose .env up --detach
     ```
