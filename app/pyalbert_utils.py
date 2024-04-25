@@ -9,6 +9,16 @@ from config import Config
 from matrix_bot.config import logger
 
 
+def log_and_raise_for_status(response):
+    if not response.ok:
+        try:
+            error_detail = response.json().get("detail")
+        except Exception:
+            error_detail = response.text
+        logger.error(f"Albert API Error Detail: {error_detail}")
+        response.raise_for_status()
+
+
 def new_chat(config: Config) -> int:
     api_token = config.albert_api_token
     url = config.albert_api_url
@@ -19,12 +29,8 @@ def new_chat(config: Config) -> int:
     data = {
         "chat_type": "qa",
     }
-    response = requests.post(f"{url}/chat", json=data, headers=headers)
-    if not response.ok:
-        error_detail = response.json().get("detail")
-        logger.error(f"{error_detail}")
-        response.raise_for_status()
-
+    response = requests.post(f"{url}/chat", headers=headers, json=data)
+    log_and_raise_for_status(response)
     chat_id = response.json()["id"]
     return chat_id
 
@@ -48,29 +54,21 @@ def generate(config: Config, query: str):
     if with_history:
         if not config.chat_id:
             config.chat_id = new_chat(config)
-        response = requests.post(f"{url}/stream/chat/{config.chat_id}", json=data, headers=headers)
+        response = requests.post(f"{url}/stream/chat/{config.chat_id}", headers=headers, json=data)
     else:
-        response = requests.post(f"{url}/stream", json=data, headers=headers)
-    if not response.ok:
-        error_detail = response.json().get("detail")
-        logger.error(f"{error_detail}")
-        response.raise_for_status()
+        response = requests.post(f"{url}/stream", headers=headers, json=data)
+    log_and_raise_for_status(response)
 
     stream_id = response.json()["id"]
+    config.stream_id = stream_id
 
     # Start Stream:
     # @TODO: implement non-streaming response
     data = {"stream_id": stream_id}
     response = requests.get(
-        f"{url}/stream/{stream_id}/start", json=data, headers=headers, stream=True
+        f"{url}/stream/{stream_id}/start", headers=headers, json=data, stream=True
     )
-    if not response.ok:
-        try:
-            error_detail = response.json().get("detail")
-        except Exception:
-            error_detail = response.text
-        logger.error(f"Albert API Error Detail: {error_detail}")
-        response.raise_for_status()
+    log_and_raise_for_status(response)
 
     answer = ""
     for line in response.iter_lines():
@@ -91,3 +89,25 @@ def generate(config: Config, query: str):
             raise e
 
     return answer
+
+
+def generate_sources(config: Config, stream_id: int) -> list[dict]:
+    api_token = config.albert_api_token
+    url = config.albert_api_url
+
+    # Create Stream:
+    headers = {
+        "Authorization": f"Bearer {api_token}",
+    }
+    response = requests.get(f"{url}/stream/{stream_id}", headers=headers)
+    log_and_raise_for_status(response)
+    stream = response.json()
+
+    # Fetch chunks sources
+    if not stream.get("rag_sources"):
+        return []
+    data = {"uids": stream['rag_sources']}
+    response = requests.post(f"{url}/get_chunks", headers=headers, json=data)
+    log_and_raise_for_status(response)
+    sources = response.json()
+    return sources

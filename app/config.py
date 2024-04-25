@@ -43,6 +43,7 @@ class Config(BaseConfig):
     # Conversational settings
     with_history: bool = Field(True, description="Conversational mode")
     chat_id: int|None = Field(None, description="Current chat id")
+    stream_id: int|None = Field(None, description="Current stream id")
 
 
 env_config = Config()

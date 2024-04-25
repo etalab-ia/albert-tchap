@@ -10,10 +10,10 @@ from matrix_bot.config import logger
 
 # TODO/IMPROVE:
 # - if albert-bot is invited in a salon, make it answer only when if it is tagged.
-# - !models: show available models
-# - !model {model_name}: change model used
-# - !sources: show the last sources used.
-# - !info: show the chat setting (model, with_history)
+# - !models: show available models.
+# - !model {model_name}: change model used.
+# - show sources of a mesage for some given reactions of an answer.
+# - !info: show the chat setting (model, with_history).
 
 
 def main():
