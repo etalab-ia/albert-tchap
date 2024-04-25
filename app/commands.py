@@ -11,7 +11,7 @@ from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
-from pyalbert_utils import generate, new_chat
+from pyalbert_utils import generate, generate_sources, new_chat
 
 
 @dataclass
@@ -156,6 +156,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
+
 @register_feature(
     group="albert",
     onEvent=RoomMessageText,
@@ -172,6 +173,37 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
         config.with_history = True
         reset_message = "Le mode conversation est désactivé."
     await matrix_client.send_text_message(ep.room.room_id, reset_message)
+
+
+@register_feature(
+    group="albert",
+    onEvent=RoomMessageText,
+    command="sources",
+    help=f"**{COMMAND_PREFIX}sources** : Afficher les références utilisé lors de la dernière réponse",
+)
+async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
+
+    try:
+        if config.stream_id:
+            sources = generate_sources(config=config, stream_id=config.stream_id)
+            sources_msg = ""
+            for source in sources:
+                extra_context = ""
+                if source.get("context"):
+                    extra_context = f'({source["context"]})'
+                sources_msg += f'- {source["title"]} {extra_context}: {source["url"]} \n'
+        else:
+            sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
+    except Exception as albert_exception:
+        await matrix_client.send_markdown_message(
+            ep.room.room_id, f"\u26a0\ufe0f **Serveur erreur**\n\n{albert_exception}"
+        )
+        return
+
+    await matrix_client.send_text_message(ep.room.room_id, sources_msg)
+
 
 @register_feature(
     group="albert",
