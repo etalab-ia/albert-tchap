@@ -29,7 +29,7 @@ Le projet utilise un fichier de dépendances et de config `pyproject.toml` et no
 
 ```bash
 # Récupération du code avec Git
-git clone ${GIHUB_URL}
+git clone ${GITHUB_URL}
 
 # Création d'un virtualenv
 python3 -m venv .venv
