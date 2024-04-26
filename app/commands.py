@@ -158,7 +158,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 
 
 @register_feature(
-    group="albert",
+    group="albert_debug",
     onEvent=RoomMessageText,
     command="conversation",
     help=f"**{COMMAND_PREFIX}conversation** : activer/désactiver le mode conversation",
