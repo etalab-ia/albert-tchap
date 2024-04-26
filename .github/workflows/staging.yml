@@ -1,0 +1,66 @@
+name: Deploy to staging when pushing on staging
+
+on:
+  push:
+    branches:
+      - staging
+
+jobs:
+
+  deploy-staging:
+
+    name: Deploy to staging from ${{ github.ref_name }}/${{ github.sha }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get GitHub Actions job ID
+        run: |
+          jobs=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id}}/attempts/${{ github.run_attempt }}/jobs)
+          job_id=$(echo $jobs | jq -r '.jobs[] | select(.runner_name=="${{ runner.name }}") | .id')
+          echo "job_id=$job_id" >> $GITHUB_OUTPUT
+
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
+          name: id_rsa
+          known_hosts: ${{ secrets.CI_DEPLOY_STAGING_HOST }}
+
+      - name: Adding server to known hosts
+        run: ssh-keyscan -H ${{ secrets.CI_DEPLOY_STAGING_HOST }}  >> ~/.ssh/known_hosts
+
+      - name: Send deployment files to remote server
+        run: |
+          mkdir -p ./${{ steps.get-job-id.outputs.job_id }}
+          cp -r ./app ./${{ steps.get-job-id.outputs.job_id }}
+          cp ./docker-compose.yml ./${{ steps.get-job-id.outputs.job_id }}/docker-compose.yml
+          cp ./Dockerfile ./${{ steps.get-job-id.outputs.job_id }}/Dockerfile
+          cp ./pyproject.toml ./${{ steps.get-job-id.outputs.job_id }}/pyproject.toml
+          cp ./.env ./${{ steps.get-job-id.outputs.job_id }}/.env
+          scp -i  ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no -r ./${{ steps.get-job-id.outputs.job_id }} ${{ secrets.CI_DEPLOY_USER }}@${{ secrets.CI_DEPLOY_STAGING_HOST }}:/home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
+
+      - name: Execute server commands for deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CI_DEPLOY_STAGING_HOST }}
+          username: ${{ secrets.CI_DEPLOY_USER }}
+          key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
+            mkdir -p /data/tchapbot
+            
+            export COMPOSE_FILE=/home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}/docker-compose.yml
+            export COMPOSE_PROJECT_NAME=albert-tchapbot
+
+            docker compose down
+            docker tag albert/tchapbot:latest albert/tchapbot:old || true
+            docker image rm albert/tchapbot:latest || true
+            docker compose up --detach
+            docker image rm albert/tchapbot:old || true
+
+            rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
