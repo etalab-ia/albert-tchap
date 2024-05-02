@@ -11,20 +11,18 @@ requires-python = ">= 3.10"
 readme = "README.md"
 license = { text = "MIT" }
 dependencies = [
-    "pillow>=10.2.0",
-    "markdown>=3.6",
-    "requests>=2.31.0",
-    "pydantic>=2.6.4",
-    "pydantic-settings>=2.2.1",
-    "matrix-nio[e2e]>=0.24.0",
-    "cryptography>=42.0.5",
-    "structlog>=24.1.0",
+    "pillow==10.2.0",
+    "markdown==3.6",
+    "requests==2.31.0",
+    "pydantic==2.6.4",
+    "pydantic-settings==2.2.1",
+    "matrix-nio[e2e]==0.24.0",
+    "cryptography==42.0.5",
+    "structlog==24.1.0",
 ]
 
 [tool]
-rye = { dev-dependencies = [
-    "ruff>=0.4.0",
-] }
+rye = { dev-dependencies = ["ruff==0.4.0"] }
 
 [tool.setuptools]
 py-modules = []

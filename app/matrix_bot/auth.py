@@ -13,13 +13,18 @@ from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-
 from matrix_bot.config import bot_lib_config, logger
 
 
 def _get_key_from_password(password: str, salt):
     """calculate a cryptographic key from the password"""
-    kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000, backend=default_backend())
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=100000,
+        backend=default_backend(),
+    )
     return base64.urlsafe_b64encode(kdf.derive(password.encode(encoding="utf-8")))
 
 
@@ -65,7 +70,9 @@ class AuthLogin:
 
     def __post_init__(self):
         self.session_stored_file_path = (
-            Path(self.credentials.session_stored_file) if self.credentials.session_stored_file else None
+            Path(self.credentials.session_stored_file)
+            if self.credentials.session_stored_file
+            else None
         )
         self.device_name = f"Bot Client using Matrix-Bot id {secrets.token_urlsafe(20)}"
         self.read_session_file()
@@ -95,7 +102,8 @@ class AuthLogin:
         if not (self.device_id and self.access_token):
             raise ValueError(f"Can't save credentials: {self.device_id=} or {self.access_token=}")
         encrypted_session = encrypt(
-            json.dumps([self.device_id, self.access_token, self.device_name]), self.credentials.password
+            json.dumps([self.device_id, self.access_token, self.device_name]),
+            self.credentials.password,
         )
         with open(self.session_stored_file_path, "w") as store_file:
             store_file.write(encrypted_session)
