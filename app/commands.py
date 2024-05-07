@@ -137,6 +137,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     Receive the join/invite event and send the welcome/help message
     """
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender()
     ep.only_on_direct_message()
     ep.only_on_join()
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
@@ -150,7 +151,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    ep.only_allowed_sender()
+    await ep.only_allowed_sender()
     await matrix_client.room_typing(ep.room.room_id)
     if config.with_history:
         config.chat_id = new_chat(config)
@@ -166,7 +167,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    ep.only_allowed_sender()
+    await ep.only_allowed_sender()
     await matrix_client.room_typing(ep.room.room_id)
     if config.with_history:
         config.with_history = False
@@ -185,7 +186,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    ep.only_allowed_sender()
+    await ep.only_allowed_sender()
     await matrix_client.room_typing(ep.room.room_id)
 
     try:
@@ -219,7 +220,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     # user_prompt: str = await ep.hl()
     config = user_configs[ep.sender]
-    ep.only_allowed_sender()
+    await ep.only_allowed_sender()
     user_prompt = ep.event.body
     if user_prompt[0] != COMMAND_PREFIX:
         ep.only_on_direct_message()

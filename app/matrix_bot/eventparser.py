@@ -30,7 +30,7 @@ class EventParser:
     log_usage: bool = False
 
     @property
-    def sender(self):
+    def sender(self) -> str:
         return self.event.sender
 
     def is_from_userid(self, userid: str) -> bool:
@@ -86,11 +86,15 @@ class EventParser:
         if not self.event.source.get("content", {}).get("membership") == "invite":
             raise EventNotConcerned
 
-    def only_allowed_sender(self) -> None:
+    async def only_allowed_sender(self) -> None:
         """
         :raise EventNotConcerned: if the sender is not allowed to send messages
         """
         if not self.is_sender_allowed():
+            await self.matrix_client.send_markdown_message(
+                self.room.room_id,
+                "Albert n'est pas encore disponible pour votre domaine. Merci de rester en contact, il sera disponible après un bêta test !",
+            )
             raise EventNotConcerned
 
 
