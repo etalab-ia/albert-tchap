@@ -15,6 +15,7 @@ services:
       - matrix_bot_password=${MATRIX_BOT_PASSWORD}
       - session_path=/data/session.txt
       - groups_used=["basic", "albert"]
+      - users_allowed_domains=${USER_ALLOWED_DOMAINS}
       - salt=${SALT}
       - albert_api_url=${ALBERT_API_URL}
       - albert_api_token=${ALBERT_API_TOKEN}
