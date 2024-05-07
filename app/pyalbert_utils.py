@@ -9,7 +9,7 @@ from config import Config
 from matrix_bot.config import logger
 
 
-def log_and_raise_for_status(response):
+def log_and_raise_for_status(response: requests.Response):
     if not response.ok:
         try:
             error_detail = response.json().get("detail")
@@ -35,7 +35,7 @@ def new_chat(config: Config) -> int:
     return chat_id
 
 
-def generate(config: Config, query: str):
+def generate(config: Config, query: str) -> str | None:
     api_token = config.albert_api_token
     url = config.albert_api_url
     with_history = config.with_history
@@ -91,7 +91,7 @@ def generate(config: Config, query: str):
     return answer
 
 
-def generate_sources(config: Config, stream_id: int) -> list[dict]:
+def generate_sources(config: Config, stream_id: int) -> list[dict | None]:
     api_token = config.albert_api_token
     url = config.albert_api_url
 

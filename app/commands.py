@@ -216,28 +216,36 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     # user_prompt: str = await ep.hl()
     config = user_configs[ep.sender]
-    user_prompt = ep.event.body
+    user_prompt: str = ep.event.body
     if user_prompt[0] != COMMAND_PREFIX:
         ep.only_on_direct_message()
         query = user_prompt
         await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
         try:
-            answer = generate(config=config, query=query)
+            answer: str | None = generate(config=config, query=query)
         except Exception as albert_exception:
+            # Send an error message to the user
             await matrix_client.send_markdown_message(
-                ep.room.room_id, f"\u26a0\ufe0f **Serveur erreur**\n\n{albert_exception}"
+                ep.room.room_id,
+                f"\u26a0\ufe0f **Erreur**\n\nAlbert est actuellement en maintenance, étant encore en phase de test. Réessayez plus tard.",
             )
+            # Redirect the error message to the errors room if it exists
+            if config.errors_room_id:
+                await matrix_client.send_markdown_message(
+                    config.errors_room_id,
+                    f"\u26a0\ufe0f **Albert API erreur**\n\n{albert_exception}",
+                )
             return
 
-        logger.info(f"{query=}")
-        logger.info(f"{answer=}")
+        logger.debug(f"{query=}")
+        logger.debug(f"{answer=}")
         try:  # sometimes the async code fail (when input is big) with random asyncio errors
             await matrix_client.send_markdown_message(ep.room.room_id, answer)
         except Exception as llm_exception:  # it seems to work when we retry
             logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
             await matrix_client.send_markdown_message(ep.room.room_id, answer)
     else:
-        command = user_prompt.split()[0][1:]
+        command: str = user_prompt.split()[0][1:]
         if not command_registry.is_valid_command(command):
             await matrix_client.send_markdown_message(
                 ep.room.room_id,
