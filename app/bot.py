@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
-# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
 
@@ -34,8 +34,8 @@ def main():
         logger.info("loaded feature", feature=feature["name"])
 
     # To send message if Albert is updated for example...
-    #async def startup_action(room_id):
+    # async def startup_action(room_id):
     #    await tchap_bot.matrix_client.send_markdown_message(room_id, command_registry.get_help())
-    #tchap_bot.callbacks.register_on_startup(startup_action)
+    # tchap_bot.callbacks.register_on_startup(startup_action)
 
     tchap_bot.run()

@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
-# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
 
@@ -40,8 +40,8 @@ class Config(BaseConfig):
 
     # Conversational settings
     with_history: bool = Field(True, description="Conversational mode")
-    chat_id: int|None = Field(None, description="Current chat id")
-    stream_id: int|None = Field(None, description="Current stream id")
+    chat_id: int | None = Field(None, description="Current chat id")
+    stream_id: int | None = Field(None, description="Current stream id")
 
 
 env_config = Config()

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
 
@@ -106,7 +106,7 @@ def generate_sources(config: Config, stream_id: int) -> list[dict]:
     # Fetch chunks sources
     if not stream.get("rag_sources"):
         return []
-    data = {"uids": stream['rag_sources']}
+    data = {"uids": stream["rag_sources"]}
     response = requests.post(f"{url}/get_chunks", headers=headers, json=data)
     log_and_raise_for_status(response)
     sources = response.json()
