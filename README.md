@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 *[English version below](#english-version)*
 
+| <a href="https://github.com/etalab-ia/albert"><b>Albert API sur GitHub</b></a> | <a href="https://huggingface.co/AgentPublic"><b>Modèles Albert sur HuggingFace</b></a> |
+
 ## Description du projet
 
 Bot pour Tchap, l'application de messagerie de l'administration française.
@@ -102,6 +104,9 @@ Ce projet est sous licence MIT. Une copie intégrale du texte de la licence se t
 
 <details>
   <summary>English version</summary>
+
+
+| <a href="https://github.com/etalab-ia/albert"><b>Albert API on GitHub</b></a> | <a href="https://huggingface.co/AgentPublic"><b>Albert models on HuggingFace</b></a> |
 
 ## Project Description
 
