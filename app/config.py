@@ -17,6 +17,13 @@ README_PATH = _ROOT_PATH / "README.md"
 
 COMMAND_PREFIX = "!"
 
+ALLOWED_DOMAINS = [
+    "mail.numerique.gouv.fr",
+    "modernisation.gouv.fr",
+    "data.gouv.fr",
+    "beta.gouv.fr",
+]
+
 
 class BaseConfig(BaseSettings):
     # allows us to clean up the imports into multiple parts

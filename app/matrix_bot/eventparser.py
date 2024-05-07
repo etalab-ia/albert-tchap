@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: MIT
 from dataclasses import dataclass
 
+from config import ALLOWED_DOMAINS
 from nio import Event, MatrixRoom, RoomMessageText
 
 from .client import MatrixClient
@@ -38,14 +39,24 @@ class EventParser:
     def is_from_this_bot(self) -> bool:
         return self.is_from_userid(self.matrix_client.user_id)
 
+    def is_sender_allowed(self) -> bool:
+        return self.sender_domain() in ALLOWED_DOMAINS
+
     def room_is_direct_message(self) -> bool:
         return room_is_direct_message(self.room)
 
-    def sender_id(self):
+    def sender_id(self) -> str:
         return self.event.sender
 
     def sender_username(self) -> str:
         return self.room.users[self.event.sender].name
+
+    def sender_domain(self) -> str:
+        """
+        Sender IDs are formatted like this: "@<mail_username>-<mail_domain>:<matrix_server>
+        e.g. @john-doe-ministere_example.gouv.fr:agent.ministere_example.tchap.gouv.fr
+        """
+        return self.event.sender.split(":")[0].split("-")[-1]
 
     def do_not_accept_own_message(self) -> None:
         """
@@ -73,6 +84,13 @@ class EventParser:
         :raise EventNotConcerned: if the event is not a join event (the bot has been invited)
         """
         if not self.event.source.get("content", {}).get("membership") == "invite":
+            raise EventNotConcerned
+
+    def only_allowed_sender(self) -> None:
+        """
+        :raise EventNotConcerned: if the sender is not allowed to send messages
+        """
+        if not self.is_sender_allowed():
             raise EventNotConcerned
 
 
