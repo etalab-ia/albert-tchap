@@ -216,13 +216,13 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     # user_prompt: str = await ep.hl()
     config = user_configs[ep.sender]
-    user_prompt: str = ep.event.body
+    user_prompt = ep.event.body
     if user_prompt[0] != COMMAND_PREFIX:
         ep.only_on_direct_message()
         query = user_prompt
         await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
         try:
-            answer: str | None = generate(config=config, query=query)
+            answer = generate(config=config, query=query)
         except Exception as albert_exception:
             # Send an error message to the user
             await matrix_client.send_markdown_message(

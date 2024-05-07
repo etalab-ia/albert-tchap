@@ -35,7 +35,7 @@ def new_chat(config: Config) -> int:
     return chat_id
 
 
-def generate(config: Config, query: str) -> str | None:
+def generate(config: Config, query: str) -> str:
     api_token = config.albert_api_token
     url = config.albert_api_url
     with_history = config.with_history
@@ -91,7 +91,7 @@ def generate(config: Config, query: str) -> str | None:
     return answer
 
 
-def generate_sources(config: Config, stream_id: int) -> list[dict | None]:
+def generate_sources(config: Config, stream_id: int) -> list[dict]:
     api_token = config.albert_api_token
     url = config.albert_api_url
 
