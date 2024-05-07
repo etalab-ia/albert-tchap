@@ -179,7 +179,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="sources",
-    help=f"**{COMMAND_PREFIX}sources** : Afficher les références utilisées lors de la dernière réponse",
+    help=f"**{COMMAND_PREFIX}sources** : afficher les références utilisées lors de la dernière réponse",
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
