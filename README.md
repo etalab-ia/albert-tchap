@@ -71,7 +71,7 @@ cd app
 
 2. Lancer le container du bot à la racine du projet :
 ```bash
-docker compose .env up --detach
+docker compose up --detach
 ```
 
 
