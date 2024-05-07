@@ -17,13 +17,6 @@ README_PATH = _ROOT_PATH / "README.md"
 
 COMMAND_PREFIX = "!"
 
-ALLOWED_DOMAINS = [
-    "mail.numerique.gouv.fr",
-    "modernisation.gouv.fr",
-    "data.gouv.fr",
-    "beta.gouv.fr",
-]
-
 
 class BaseConfig(BaseSettings):
     # allows us to clean up the imports into multiple parts
@@ -44,6 +37,9 @@ class Config(BaseConfig):
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API TOKEN")
+    users_allowed_domains: list[str] = Field(
+        [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
+    )
 
     # Conversational settings
     with_history: bool = Field(True, description="Conversational mode")

@@ -6,7 +6,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
-from config import ALLOWED_DOMAINS, COMMAND_PREFIX, Config
+from config import COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventParser
