@@ -6,7 +6,7 @@
 from collections import defaultdict
 from dataclasses import dataclass
 
-from config import COMMAND_PREFIX, Config
+from config import ALLOWED_DOMAINS, COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventParser
@@ -150,6 +150,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    ep.only_allowed_sender()
     await matrix_client.room_typing(ep.room.room_id)
     if config.with_history:
         config.chat_id = new_chat(config)
@@ -165,6 +166,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    ep.only_allowed_sender()
     await matrix_client.room_typing(ep.room.room_id)
     if config.with_history:
         config.with_history = False
@@ -183,6 +185,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    ep.only_allowed_sender()
     await matrix_client.room_typing(ep.room.room_id)
 
     try:
@@ -216,6 +219,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     # user_prompt: str = await ep.hl()
     config = user_configs[ep.sender]
+    ep.only_allowed_sender()
     user_prompt = ep.event.body
     if user_prompt[0] != COMMAND_PREFIX:
         ep.only_on_direct_message()
@@ -229,8 +233,8 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
             )
             return
 
-        logger.info(f"{query=}")
-        logger.info(f"{answer=}")
+        logger.debug(f"{query=}")
+        logger.debug(f"{answer=}")
         try:  # sometimes the async code fail (when input is big) with random asyncio errors
             await matrix_client.send_markdown_message(ep.room.room_id, answer)
         except Exception as llm_exception:  # it seems to work when we retry
