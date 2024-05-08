@@ -13,6 +13,7 @@ services:
       - matrix_home_server=${MATRIX_HOME_SERVER}
       - matrix_bot_username=${MATRIX_BOT_USERNAME}
       - matrix_bot_password=${MATRIX_BOT_PASSWORD}
+      - errors_room_id=${ERRORS_ROOM_ID}
       - session_path=/data/session.txt
       - groups_used=["basic", "albert"]
       - salt=${SALT}
