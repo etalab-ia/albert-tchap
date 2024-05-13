@@ -229,8 +229,8 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
             )
             return
 
-        logger.info(f"{query=}")
-        logger.info(f"{answer=}")
+        logger.debug(f"{query=}")
+        logger.debug(f"{answer=}")
         try:  # sometimes the async code fail (when input is big) with random asyncio errors
             await matrix_client.send_markdown_message(ep.room.room_id, answer)
         except Exception as llm_exception:  # it seems to work when we retry
