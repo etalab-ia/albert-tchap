@@ -10,15 +10,15 @@ services:
     environment:
       - VERBOSE=true
       - SYSTEMD_LOGGING=True
-      - matrix_home_server=${MATRIX_HOME_SERVER}
-      - matrix_bot_username=${MATRIX_BOT_USERNAME}
-      - matrix_bot_password=${MATRIX_BOT_PASSWORD}
+      - matrix_home_server=${matrix_home_server}
+      - matrix_bot_username=${matrix_bot_username}
+      - matrix_bot_password=${matrix_bot_password}
       - session_path=/data/session.txt
       - groups_used=["basic", "albert"]
-      - user_allowed_domains=${USER_ALLOWED_DOMAINS}
-      - salt=${SALT}
-      - albert_api_url=${ALBERT_API_URL}
-      - albert_api_token=${ALBERT_API_TOKEN}
+      - user_allowed_domains=${user_allowed_domains}
+      - salt=${salt}
+      - albert_api_url=${albert_api_url}
+      - albert_api_token=${albert_api_token}
     ports:
       - 443:443
       - 80:80
