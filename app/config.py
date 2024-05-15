@@ -37,6 +37,10 @@ class Config(BaseConfig):
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API TOKEN")
+    albert_api_model_name: str = Field(
+        "AgentPublic/albertlight-7b",
+        description="Albert model name to use (see Albert models hub on HuggingFace)",
+    )
     user_allowed_domains: list[str] = Field(
         [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
     )

@@ -46,7 +46,7 @@ def generate(config: Config, query: str):
     }
     data = {
         "query": query,
-        "model_name": "AgentPublic/guillaumetell-7b",
+        "model_name": config.albert_api_model_name,
         "mode": "rag",
         "with_history": with_history,
         # "postprocessing": ["check_url", "check_mail", "check_number"],
