@@ -54,6 +54,7 @@ Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables 
 - `albert_api_url` : l'url de l'API Albert à consommer
 - `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert
 - `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
+- `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
 
 
 ### Utilisation en dehors de Docker
@@ -151,6 +152,7 @@ For the bot to connect to Albert's API, you need to provide the following variab
 - `albert_api_url`: the URL of the Albert API to consume
 - `albert_api_token`: the API token used to authorize the bot to consume the Albert API
 - `groups_used=['albert']`: allows, in this example, to activate all commands that are part of the albert group
+- `user_allowed_domains` : list of allowed email domains for Tchap users to interact with the bot (example: `user_allowed_domains='["ministere.gouv.fr"]'`)
 
 ### Usage outside of Docker
 
