@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: MIT
 from dataclasses import dataclass
 
-from config import config
+from config import env_config
 from nio import Event, MatrixRoom, RoomMessageText
 
 from .client import MatrixClient
@@ -40,7 +40,7 @@ class EventParser:
         return self.is_from_userid(self.matrix_client.user_id)
 
     def is_sender_allowed(self) -> bool:
-        return self.sender_domain() in config.user_allowed_domains
+        return self.sender_domain() in env_config.user_allowed_domains
 
     def room_is_direct_message(self) -> bool:
         return room_is_direct_message(self.room)
