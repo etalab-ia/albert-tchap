@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
-# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
 
@@ -33,7 +33,9 @@ def get_salon_users_str(salon: MatrixRoom):
     return "\n".join(f" - **{key}** : {','.join(value) } " for key, value in user_to_print.items())
 
 
-def get_salon_moderators(salon: MatrixRoom, *, fomo_user_name=None, kick_user_name=None) -> Optional[list[str]]:
+def get_salon_moderators(
+    salon: MatrixRoom, *, fomo_user_name=None, kick_user_name=None
+) -> Optional[list[str]]:
     user_to_power_level = get_user_to_power_level(salon)
     if fomo_user_name and fomo_user_name in user_to_power_level.keys():
         return None
@@ -42,7 +44,11 @@ def get_salon_moderators(salon: MatrixRoom, *, fomo_user_name=None, kick_user_na
     minimum_power_level = 50
     if kick_user_name:
         minimum_power_level = user_to_power_level[kick_user_name] + 1
-    return [user_name for user_name, power_level in user_to_power_level.items() if power_level >= minimum_power_level]
+    return [
+        user_name
+        for user_name, power_level in user_to_power_level.items()
+        if power_level >= minimum_power_level
+    ]
 
 
 def user_name_to_non_hl_user(complete_user_name: str) -> str:

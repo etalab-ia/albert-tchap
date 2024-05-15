@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
-# SPDX-FileCopyrightText: 2024 Etalab/Datalab <etalab@modernisation.gouv.fr>
+# SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
 
@@ -31,18 +31,20 @@ class Config(BaseConfig):
     systemd_logging: bool = Field(
         True, description="Enable / disable logging with systemd.journal.JournalHandler"
     )
-    matrix_home_server: str = Field(
-        "https://matrix.agent.dinum.tchap.gouv.fr", description="Tchap home server URL"
-    )
+    matrix_home_server: str = Field("", description="Tchap home server URL")
     matrix_bot_username: str = Field("", description="username of our matrix bot")
     matrix_bot_password: str = Field("", description="password of our matrix bot")
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API TOKEN")
+    user_allowed_domains: list[str] = Field(
+        [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
+    )
 
     # Conversational settings
     with_history: bool = Field(True, description="Conversational mode")
-    chat_id: int|None = Field(None, description="Current chat id")
+    chat_id: int | None = Field(None, description="Current chat id")
+    stream_id: int | None = Field(None, description="Current stream id")
 
 
 env_config = Config()

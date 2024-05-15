@@ -5,7 +5,6 @@
 import mimetypes
 import os
 from pathlib import Path
-from typing import Tuple
 
 import aiofiles.os
 import markdown
@@ -22,13 +21,17 @@ from .room_utils import room_is_direct_message
 
 def check_valid_homeserver(homeserver: str):
     if not (homeserver.startswith("http://") or homeserver.startswith("https://")):
-        raise ValueError(f"Invalid Homeserver, should start with http:// or https://, is {homeserver} instead")
+        raise ValueError(
+            f"Invalid Homeserver, should start with http:// or https://, is {homeserver} instead"
+        )
     matrix_version_url = f"{homeserver}/_matrix/client/versions"
     try:
         response = requests.get(matrix_version_url)
         response.raise_for_status()
     except requests.HTTPError as http_error:
-        raise ValueError(f"Invalid Homeserver, could not connect to {matrix_version_url}") from http_error
+        raise ValueError(
+            f"Invalid Homeserver, could not connect to {matrix_version_url}"
+        ) from http_error
 
 
 class MatrixClient(AsyncClient):
@@ -76,13 +79,21 @@ class MatrixClient(AsyncClient):
             await self.keys_upload()
 
     def get_non_private_rooms(self):
-        return {room_id: room for room_id, room in self.rooms.items() if not room_is_direct_message(room)}
+        return {
+            room_id: room
+            for room_id, room in self.rooms.items()
+            if not room_is_direct_message(room)
+        }
 
     async def get_display_name(self):
         return (await self.get_displayname(self.user_id)).displayname
 
     async def _send_room(
-        self, room_id: str, content: dict, message_type: str = "m.room.message", ignore_unverified_devices: bool = None
+        self,
+        room_id: str,
+        content: dict,
+        message_type: str = "m.room.message",
+        ignore_unverified_devices: bool = None,
     ):
         """
         Send a custom event in a Matrix room.
@@ -108,7 +119,8 @@ class MatrixClient(AsyncClient):
                 room_id=room_id,
                 message_type=message_type,
                 content=content,
-                ignore_unverified_devices=ignore_unverified_devices or self.matrix_config.ignore_unverified_devices,
+                ignore_unverified_devices=ignore_unverified_devices
+                or self.matrix_config.ignore_unverified_devices,
             )
         except OlmUnverifiedDeviceError:
             logger.info(
@@ -119,7 +131,10 @@ class MatrixClient(AsyncClient):
             for user in self.rooms[room_id].users:
                 unverified: list[str] = []
                 for device_id, device in self.olm.device_store[user].items():
-                    if not (self.olm.is_device_verified(device) or self.olm.is_device_blacklisted(device)):
+                    if not (
+                        self.olm.is_device_verified(device)
+                        or self.olm.is_device_blacklisted(device)
+                    ):
                         self.olm.blacklist_device(device)
                         unverified.append(device_id)
                 if len(unverified) > 0:
@@ -129,7 +144,8 @@ class MatrixClient(AsyncClient):
                 room_id=room_id,
                 message_type=message_type,
                 content=content,
-                ignore_unverified_devices=ignore_unverified_devices or self.matrix_config.ignore_unverified_devices,
+                ignore_unverified_devices=ignore_unverified_devices
+                or self.matrix_config.ignore_unverified_devices,
             )
 
     async def send_text_message(self, room_id: str, message: str, msgtype: str = "m.text"):
@@ -194,16 +210,23 @@ class MatrixClient(AsyncClient):
 
         await self._send_room(
             room_id=room_id,
-            content={"m.relates_to": {"event_id": event.event_id, "key": key, "rel_type": "m.annotation"}},
+            content={
+                "m.relates_to": {"event_id": event.event_id, "key": key, "rel_type": "m.annotation"}
+            },
             message_type="m.reaction",
         )
 
-    async def _upload_file(self, file_path: str | Path) -> Tuple[UploadResponse, os.stat_result, str]:
+    async def _upload_file(
+        self, file_path: str | Path
+    ) -> tuple[UploadResponse, os.stat_result, str]:
         mime_type = mimetypes.guess_type(file_path)[0]
         file_stat = await aiofiles.os.stat(file_path)
         async with aiofiles.open(file_path, "r+b") as file:
             uploaded_file, _maybe_keys = await self.upload(
-                file, content_type=mime_type, filename=os.path.basename(file_path), filesize=file_stat.st_size
+                file,
+                content_type=mime_type,
+                filename=os.path.basename(file_path),
+                filesize=file_stat.st_size,
             )
         if not isinstance(uploaded_file, UploadResponse):
             logger.error(f"Failed Upload Response: {uploaded_file}")
