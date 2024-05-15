@@ -52,9 +52,10 @@ Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle p
 
 Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables suivantes :
 - `albert_api_url` : l'url de l'API Albert à consommer
-- `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert
+- `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert. Pour plus d'informations, consultez la documentation de l'API Albert
 - `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
-
+- `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
+- `albert_api_model_name` : le nom du modèle Albert à utiliser pour le bot (exemple : `albert_api_model_name='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le hub des modèles Albert de HuggingFace
 
 ### Utilisation en dehors de Docker
 
@@ -149,8 +150,10 @@ It is advisable to change the value of the salt (salt) so as not to have the def
 
 For the bot to connect to Albert's API, you need to provide the following variables:
 - `albert_api_url`: the URL of the Albert API to consume
-- `albert_api_token`: the API token used to authorize the bot to consume the Albert API
+- `albert_api_token`: the API token used to authorize the bot to consume the Albert API. For more info, check the Albert API documentation
 - `groups_used=['albert']`: allows, in this example, to activate all commands that are part of the albert group
+- `user_allowed_domains` : list of allowed email domains for Tchap users to interact with the bot (example: `user_allowed_domains='["ministere.gouv.fr"]'`)
+- `albert_api_model_name`: the name of the model to use for the bot (example: `albert_api_model_name='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the HuggingFace Albert models hub.
 
 ### Usage outside of Docker
 
@@ -180,7 +183,7 @@ Before contributing to the repository, it is necessary to initialize the pre-com
 pre-commit install
 ```
 
-If you cannot use pre-commit, it is necessary to format, lint, and sort imports with Ruff:
+If you cannot use pre-commit, it is necessary to format, lint, and sort imports with [Ruff](https://docs.astral.sh/ruff/) before committing:
 ```bash
 ruff check --fix --select I .
 ```
