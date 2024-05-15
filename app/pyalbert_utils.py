@@ -37,7 +37,8 @@ def new_chat(config: Config) -> int:
 
 def generate(config: Config, query: str):
     api_token = config.albert_api_token
-    url = config.albert_api_url
+    api_model = config.albert_api_model_name
+    api_url = config.albert_api_url
     with_history = config.with_history
 
     # Create Stream:
@@ -46,7 +47,7 @@ def generate(config: Config, query: str):
     }
     data = {
         "query": query,
-        "model_name": "AgentPublic/guillaumetell-7b",
+        "model_name": api_model,
         "mode": "rag",
         "with_history": with_history,
         # "postprocessing": ["check_url", "check_mail", "check_number"],
@@ -54,9 +55,9 @@ def generate(config: Config, query: str):
     if with_history:
         if not config.chat_id:
             config.chat_id = new_chat(config)
-        response = requests.post(f"{url}/stream/chat/{config.chat_id}", headers=headers, json=data)
+        response = requests.post(f"{api_url}/stream/chat/{config.chat_id}", headers=headers, json=data)
     else:
-        response = requests.post(f"{url}/stream", headers=headers, json=data)
+        response = requests.post(f"{api_url}/stream", headers=headers, json=data)
     log_and_raise_for_status(response)
 
     stream_id = response.json()["id"]
@@ -66,7 +67,7 @@ def generate(config: Config, query: str):
     # @TODO: implement non-streaming response
     data = {"stream_id": stream_id}
     response = requests.get(
-        f"{url}/stream/{stream_id}/start", headers=headers, json=data, stream=True
+        f"{api_url}/stream/{stream_id}/start", headers=headers, json=data, stream=True
     )
     log_and_raise_for_status(response)
 
@@ -93,13 +94,13 @@ def generate(config: Config, query: str):
 
 def generate_sources(config: Config, stream_id: int) -> list[dict]:
     api_token = config.albert_api_token
-    url = config.albert_api_url
+    api_url = config.albert_api_url
 
     # Create Stream:
     headers = {
         "Authorization": f"Bearer {api_token}",
     }
-    response = requests.get(f"{url}/stream/{stream_id}", headers=headers)
+    response = requests.get(f"{api_url}/stream/{stream_id}", headers=headers)
     log_and_raise_for_status(response)
     stream = response.json()
 
@@ -107,7 +108,7 @@ def generate_sources(config: Config, stream_id: int) -> list[dict]:
     if not stream.get("rag_sources"):
         return []
     data = {"uids": stream["rag_sources"]}
-    response = requests.post(f"{url}/get_chunks", headers=headers, json=data)
+    response = requests.post(f"{api_url}/get_chunks", headers=headers, json=data)
     log_and_raise_for_status(response)
     sources = response.json()
     return sources
