@@ -16,10 +16,11 @@ services:
       - errors_room_id=${ERRORS_ROOM_ID}
       - session_path=/data/session.txt
       - groups_used=["basic", "albert"]
-      - users_allowed_domains=${USER_ALLOWED_DOMAINS}
+      - user_allowed_domains=${USER_ALLOWED_DOMAINS}
       - salt=${SALT}
       - albert_api_url=${ALBERT_API_URL}
       - albert_api_token=${ALBERT_API_TOKEN}
+      - albert_api_model_name=${ALBERT_API_MODEL_NAME}
     ports:
       - 443:443
       - 80:80

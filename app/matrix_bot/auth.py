@@ -52,7 +52,7 @@ class Credentials:
     """The username of the bot to connect to"""
     password: str
     """The password of the bot to connect to"""
-    session_stored_file: str = bot_lib_config.session_path
+    session_stored_file: Path = bot_lib_config.session_path
     """Path to the file that will be used to store the session informations"""
 
 
@@ -70,8 +70,8 @@ class AuthLogin:
 
     def __post_init__(self):
         self.session_stored_file_path = (
-            Path(self.credentials.session_stored_file)
-            if self.credentials.session_stored_file
+            self.credentials.session_stored_file
+            if self.credentials.session_stored_file.exists()
             else None
         )
         self.device_name = f"Bot Client using Matrix-Bot id {secrets.token_urlsafe(20)}"
