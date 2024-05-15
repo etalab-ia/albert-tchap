@@ -19,6 +19,7 @@ services:
       - salt=${SALT}
       - albert_api_url=${ALBERT_API_URL}
       - albert_api_token=${ALBERT_API_TOKEN}
+      - albert_api_model_name=${ALBERT_API_MODEL_NAME}
     ports:
       - 443:443
       - 80:80
