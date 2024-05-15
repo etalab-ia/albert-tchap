@@ -161,11 +161,12 @@ cd app
 ```
 
 ### Usage with Docker
-Create a .env file at the root of the project with the environment variables mentioned in the "For docker-compose deployment" section of the app/.env.example file
 
-Launch the bot container at the root of the project:
+1. Create a `.env` file at the root of the project with the environment variables mentioned in [app/.env.example](./app/.env.example), including those mentionned in the *"For docker-compose deployment"* section
+
+2. Launch the bot container at the root of the project:
 ```bash
-docker compose .env up --detach
+docker compose up --detach
 ```
 
 ### Troubleshooting
