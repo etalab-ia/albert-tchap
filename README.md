@@ -37,6 +37,9 @@ git clone ${GITHUB_URL}
 # Création d'un environnement virtuel Python
 python3 -m venv .venv
 
+# Activation de l'environnement virtuel Python
+source .venv/bin/activate
+
 # Installation des dépendances
 pip install .
 ```
@@ -136,6 +139,9 @@ git clone ${GITHUB_URL}
 
 # Creating a Python virtual environment
 python3 -m venv .venv
+
+# Activating the Python virtual environment
+source .venv/bin/activate
 
 # Installing dependencies
 pip install .
