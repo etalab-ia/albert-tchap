@@ -83,6 +83,8 @@ Le premier sync est assez long, et a priori non bloquant. Si vous avez une inter
 
 ### Contribution
 
+Le projet est en open source, sous [licence MIT](LICENSES/MIT.txt). Toutes les contributions sont bienvenues, sous forme de pull requests ou d'ouvertures d'issues sur le [repo officiel GitHub](https://github.com/etalab-ia/albert-tchapbot).
+
 Avant de contribuer au dépôt, il est nécessaire d'initialiser les _hooks_ de _pre-commit_ :
 ```bash
 pre-commit install
@@ -177,6 +179,8 @@ docker compose up --detach
 The first sync is quite long, and apparently non-blocking. If you interact with the bot before it has synced properly, you risk leaving it in an unstable state (where the bot does not have the room listing).
 
 ### Contribution
+
+This project is open source, under the [MIT license](LICENSES/MIT.txt). All contributions are welcome, in the form of pull requests or issue openings on the [repo officiel GitHub](https://github.com/etalab-ia/albert-tchapbot).
 
 Before contributing to the repository, it is necessary to initialize the pre-commit hooks:
 ```bash
