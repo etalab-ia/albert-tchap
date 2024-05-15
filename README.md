@@ -68,7 +68,7 @@ cd app
 
 ### Utilisation avec Docker
 
-1. Créez un fichier `.env` à la racine du projet avec les variables d'environnement mentionnées dans la section *"For docker-compose deployment"* du fichier [app/.env.example](./app/.env.example)
+1. Créez un fichier `.env` à la racine du projet avec les variables d'environnement mentionnées dans [app/.env.example](./app/.env.example) y compris celles mentionnées dans la section *"For docker-compose deployment"*
 
 2. Lancer le container du bot à la racine du projet :
 ```bash
@@ -167,9 +167,9 @@ cd app
 
 ### Usage with Docker
 
-Create a `.env` file at the root of the project with the environment variables mentioned in the "For docker-compose deployment" section of the app/.env.example file
+1. Create a `.env` file at the root of the project with the environment variables mentioned in [app/.env.example](./app/.env.example), including those mentionned in the *"For docker-compose deployment"* section
 
-Launch the bot container at the root of the project:
+2. Launch the bot container at the root of the project:
 ```bash
 docker compose up --detach
 ```
