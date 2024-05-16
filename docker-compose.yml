@@ -21,6 +21,7 @@ services:
       - ALBERT_API_URL=${ALBERT_API_URL}
       - ALBERT_API_TOKEN=${ALBERT_API_TOKEN}
       - ALBERT_API_MODEL_NAME=${ALBERT_API_MODEL_NAME}
+      - ALBERT_API_MODE=${ALBERT_API_MODE}
     ports:
       - 443:443
       - 80:80

@@ -38,6 +38,7 @@ def new_chat(config: Config) -> int:
 def generate(config: Config, query: str) -> str:
     api_token = config.albert_api_token
     api_model = config.albert_api_model_name
+    api_mode = config.albert_api_mode
     api_url = config.albert_api_url
     with_history = config.with_history
 
@@ -48,14 +49,16 @@ def generate(config: Config, query: str) -> str:
     data = {
         "query": query,
         "model_name": api_model,
-        "mode": "rag",
+        "mode": api_mode,
         "with_history": with_history,
         # "postprocessing": ["check_url", "check_mail", "check_number"],
     }
     if with_history:
         if not config.chat_id:
             config.chat_id = new_chat(config)
-        response = requests.post(f"{api_url}/stream/chat/{config.chat_id}", headers=headers, json=data)
+        response = requests.post(
+            f"{api_url}/stream/chat/{config.chat_id}", headers=headers, json=data
+        )
     else:
         response = requests.post(f"{api_url}/stream", headers=headers, json=data)
     log_and_raise_for_status(response)
