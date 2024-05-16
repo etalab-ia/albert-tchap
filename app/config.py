@@ -32,11 +32,16 @@ class Config(BaseConfig):
         True, description="Enable / disable logging with systemd.journal.JournalHandler"
     )
     matrix_home_server: str = Field("", description="Tchap home server URL")
-    matrix_bot_username: str = Field("", description="username of our matrix bot")
-    matrix_bot_password: str = Field("", description="password of our matrix bot")
+    matrix_bot_username: str = Field("", description="Username of our matrix bot")
+    matrix_bot_password: str = Field("", description="Password of our matrix bot")
+    errors_room_id: str | None = Field(None, description="Room ID to send errors to")
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
-    albert_api_token: str = Field("", description="Albert API TOKEN")
+    albert_api_token: str = Field("", description="Albert API Token")
+    albert_api_model_name: str = Field(
+        "AgentPublic/albertlight-7b",
+        description="Albert model name to use (see Albert models hub on HuggingFace)",
+    )
     user_allowed_domains: list[str] = Field(
         [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
     )

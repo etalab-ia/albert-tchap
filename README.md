@@ -37,6 +37,9 @@ git clone ${GITHUB_URL}
 # Création d'un environnement virtuel Python
 python3 -m venv .venv
 
+# Activation de l'environnement virtuel Python
+source .venv/bin/activate
+
 # Installation des dépendances
 pip install .
 ```
@@ -52,10 +55,10 @@ Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle p
 
 Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables suivantes :
 - `albert_api_url` : l'url de l'API Albert à consommer
-- `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert
+- `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert. Pour plus d'informations, consultez la documentation de l'API Albert
 - `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
 - `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
-
+- `albert_api_model_name` : le nom du modèle Albert à utiliser pour le bot (exemple : `albert_api_model_name='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le hub des modèles Albert de HuggingFace
 
 ### Utilisation en dehors de Docker
 
@@ -68,7 +71,7 @@ cd app
 
 ### Utilisation avec Docker
 
-1. Créez un fichier `.env` à la racine du projet avec les variables d'environnement mentionnées dans la section *"For docker-compose deployment"* du fichier [app/.env.example](./app/.env.example)
+1. Créez un fichier `.env` à la racine du projet avec les variables d'environnement mentionnées dans [app/.env.example](./app/.env.example) y compris celles mentionnées dans la section *"For docker-compose deployment"*
 
 2. Lancer le container du bot à la racine du projet :
 ```bash
@@ -82,6 +85,8 @@ Le premier sync est assez long, et a priori non bloquant. Si vous avez une inter
 
 
 ### Contribution
+
+Le projet est en open source, sous [licence MIT](LICENSES/MIT.txt). Toutes les contributions sont bienvenues, sous forme de pull requests ou d'ouvertures d'issues sur le [repo officiel GitHub](https://github.com/etalab-ia/albert-tchapbot).
 
 Avant de contribuer au dépôt, il est nécessaire d'initialiser les _hooks_ de _pre-commit_ :
 ```bash
@@ -135,6 +140,9 @@ git clone ${GITHUB_URL}
 # Creating a Python virtual environment
 python3 -m venv .venv
 
+# Activating the Python virtual environment
+source .venv/bin/activate
+
 # Installing dependencies
 pip install .
 ```
@@ -150,9 +158,10 @@ It is advisable to change the value of the salt (salt) so as not to have the def
 
 For the bot to connect to Albert's API, you need to provide the following variables:
 - `albert_api_url`: the URL of the Albert API to consume
-- `albert_api_token`: the API token used to authorize the bot to consume the Albert API
+- `albert_api_token`: the API token used to authorize the bot to consume the Albert API. For more info, check the Albert API documentation
 - `groups_used=['albert']`: allows, in this example, to activate all commands that are part of the albert group
 - `user_allowed_domains` : list of allowed email domains for Tchap users to interact with the bot (example: `user_allowed_domains='["ministere.gouv.fr"]'`)
+- `albert_api_model_name`: the name of the model to use for the bot (example: `albert_api_model_name='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the HuggingFace Albert models hub.
 
 ### Usage outside of Docker
 
@@ -164,9 +173,9 @@ cd app
 
 ### Usage with Docker
 
-Create a `.env` file at the root of the project with the environment variables mentioned in the "For docker-compose deployment" section of the app/.env.example file
+1. Create a `.env` file at the root of the project with the environment variables mentioned in [app/.env.example](./app/.env.example), including those mentionned in the *"For docker-compose deployment"* section
 
-Launch the bot container at the root of the project:
+2. Launch the bot container at the root of the project:
 ```bash
 docker compose up --detach
 ```
@@ -176,6 +185,8 @@ docker compose up --detach
 The first sync is quite long, and apparently non-blocking. If you interact with the bot before it has synced properly, you risk leaving it in an unstable state (where the bot does not have the room listing).
 
 ### Contribution
+
+This project is open source, under the [MIT license](LICENSES/MIT.txt). All contributions are welcome, in the form of pull requests or issue openings on the [repo officiel GitHub](https://github.com/etalab-ia/albert-tchapbot).
 
 Before contributing to the repository, it is necessary to initialize the pre-commit hooks:
 ```bash
