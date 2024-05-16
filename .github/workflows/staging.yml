@@ -27,7 +27,8 @@ jobs:
         run: |
           jobs=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id}}/attempts/${{ github.run_attempt }}/jobs)
           job_id=$(echo $jobs | jq -r '.jobs[] | select(.runner_name=="${{ runner.name }}") | .id')
-          echo "GITHUB_JOB_ID=$job_id" >> $GITHUB_ENV
+          echo "CI_JOB_ID=$job_id" >> $GITHUB_ENV
+          echo "This CI job ID is ${{ env.CI_JOB_ID }}"
 
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
@@ -41,11 +42,11 @@ jobs:
 
       - name: Prepare deployment files on runner for this CI job ID
         run: |
-          mkdir -p ./${{ env.GITHUB_JOB_ID }}
-          cp -r ./app ./${{ env.GITHUB_JOB_ID }}
-          cp ./docker-compose.yml ./${{ env.GITHUB_JOB_ID }}/docker-compose.yml
-          cp ./Dockerfile ./${{ env.GITHUB_JOB_ID }}/Dockerfile
-          cp ./pyproject.toml ./${{ env.GITHUB_JOB_ID }}/pyproject.toml
+          mkdir -p ./${{ env.CI_JOB_ID }}
+          cp -r ./app ./${{ env.CI_JOB_ID }}
+          cp ./docker-compose.yml ./${{ env.CI_JOB_ID }}/docker-compose.yml
+          cp ./Dockerfile ./${{ env.CI_JOB_ID }}/Dockerfile
+          cp ./pyproject.toml ./${{ env.CI_JOB_ID }}/pyproject.toml
 
       - name: Copy deployment files to remote server via SCP
         uses: appleboy/scp-action@master
@@ -53,8 +54,8 @@ jobs:
           host: ${{ secrets.CI_DEPLOY_HOST }}
           username: ${{ secrets.CI_DEPLOY_USER }}
           key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
-          source: "./${{ env.GITHUB_JOB_ID }}"
-          target: "/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}"
+          source: "./${{ env.CI_JOB_ID }}"
+          target: "/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}"
 
       - name: Execute server commands for deploy
         uses: appleboy/ssh-action@master
@@ -63,10 +64,10 @@ jobs:
           username: ${{ secrets.CI_DEPLOY_USER }}
           key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
           script: |
-            cd /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}
+            cd /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}
             mkdir -p /data/tchapbot
             
-            export COMPOSE_FILE=/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}/docker-compose.yml
+            export COMPOSE_FILE=/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}/docker-compose.yml
             export COMPOSE_PROJECT_NAME=albert-tchapbot
 
             docker compose down
@@ -75,4 +76,4 @@ jobs:
             docker compose up --detach
             docker image rm albert/tchapbot:old || true
 
-            rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}
+            rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}
