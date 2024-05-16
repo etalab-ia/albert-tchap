@@ -9,6 +9,8 @@ jobs:
 
   deploy-prod:
 
+    environment: prod
+
     name: Deploy to staging from ${{ github.ref_name }}/${{ github.sha }}
 
     runs-on: ubuntu-latest

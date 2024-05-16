@@ -10,6 +10,8 @@ jobs:
 
   deploy-staging:
 
+    environment: staging
+
     name: Deploy to staging from ${{ github.ref_name }}/${{ github.sha }}
 
     runs-on: ubuntu-latest
