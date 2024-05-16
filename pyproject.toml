@@ -21,15 +21,16 @@ dependencies = [
     "structlog==24.1.0",
 ]
 
-[tool]
-rye = { dev-dependencies = ["ruff==0.4.3"] }
+[tool.pdm]
+distribution = false
+dev-dependencies = { dev = ["ruff==0.4.4"] }
 
-[tool.setuptools]
-py-modules = []
+[tool.rye]
+dev-dependencies = ["ruff==0.4.4"]
 
 [tool.ruff]
 line-length = 100
+lint = { ignore-init-module-imports = true, select = ["I"] }
 
-[tool.ruff.lint]
-ignore-init-module-imports = true
-select = ["I"]                    # sort imports
+[tool.setuptools]
+py-modules = []
