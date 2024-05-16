@@ -27,7 +27,7 @@ jobs:
         run: |
           jobs=$(gh api repos/${{ github.repository }}/actions/runs/${{ github.run_id}}/attempts/${{ github.run_attempt }}/jobs)
           job_id=$(echo $jobs | jq -r '.jobs[] | select(.runner_name=="${{ runner.name }}") | .id')
-          echo "job_id=$job_id" >> $GITHUB_OUTPUT
+          echo "GITHUB_JOB_ID=$job_id" >> $GITHUB_ENV
 
       - name: Install SSH key
         uses: shimataro/ssh-key-action@v2
@@ -39,15 +39,14 @@ jobs:
       - name: Adding server to known hosts
         run: ssh-keyscan -H ${{ secrets.CI_DEPLOY_HOST }}  >> ~/.ssh/known_hosts
 
-      - name: Send deployment files to remote server
+      - name: Prepare deployment files on runner for this CI job ID, and send them to remote server
         run: |
-          mkdir -p ./${{ steps.get-job-id.outputs.job_id }}
-          cp -r ./app ./${{ steps.get-job-id.outputs.job_id }}
-          cp ./docker-compose.yml ./${{ steps.get-job-id.outputs.job_id }}/docker-compose.yml
-          cp ./Dockerfile ./${{ steps.get-job-id.outputs.job_id }}/Dockerfile
-          cp ./pyproject.toml ./${{ steps.get-job-id.outputs.job_id }}/pyproject.toml
-          cp ./.env ./${{ steps.get-job-id.outputs.job_id }}/.env
-          scp -i  ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no -r ./${{ steps.get-job-id.outputs.job_id }} ${{ secrets.CI_DEPLOY_USER }}@${{ secrets.CI_DEPLOY_HOST }}:/home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
+          mkdir -p ./${{ env.GITHUB_JOB_ID }}
+          cp -r ./app ./${{ env.GITHUB_JOB_ID }}
+          cp ./docker-compose.yml ./${{ env.GITHUB_JOB_ID }}/docker-compose.yml
+          cp ./Dockerfile ./${{ env.GITHUB_JOB_ID }}/Dockerfile
+          cp ./pyproject.toml ./${{ env.GITHUB_JOB_ID }}/pyproject.toml
+          scp -i  ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no -r ./${{ env.GITHUB_JOB_ID }} ${{ secrets.CI_DEPLOY_USER }}@${{ secrets.CI_DEPLOY_HOST }}:/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}
 
       - name: Execute server commands for deploy
         uses: appleboy/ssh-action@master
@@ -56,10 +55,10 @@ jobs:
           username: ${{ secrets.CI_DEPLOY_USER }}
           key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
           script: |
-            cd /home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
+            cd /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}
             mkdir -p /data/tchapbot
             
-            export COMPOSE_FILE=/home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}/docker-compose.yml
+            export COMPOSE_FILE=/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}/docker-compose.yml
             export COMPOSE_PROJECT_NAME=albert-tchapbot
 
             docker compose down
@@ -68,4 +67,4 @@ jobs:
             docker compose up --detach
             docker image rm albert/tchapbot:old || true
 
-            rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
+            rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.GITHUB_JOB_ID }}
