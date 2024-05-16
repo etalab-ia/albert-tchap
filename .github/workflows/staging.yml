@@ -21,7 +21,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get GitHub Actions job ID
+      - name: Get current CI job ID
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

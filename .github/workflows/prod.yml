@@ -11,7 +11,7 @@ jobs:
 
     environment: prod
 
-    name: Deploy to staging from ${{ github.ref_name }}/${{ github.sha }}
+    name: Deploy to prod from ${{ github.ref_name }}/${{ github.sha }}
 
     runs-on: ubuntu-latest
 
@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get GitHub Actions job ID
+      - name: Get current CI job ID
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
