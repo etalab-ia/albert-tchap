@@ -59,6 +59,7 @@ Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables 
 - `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
 - `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
 - `albert_api_model_name` : le nom du modèle Albert à utiliser pour le bot (exemple : `albert_api_model_name='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le hub des modèles Albert de HuggingFace
+- `albert_api_mode` : le mode d'Albert à utiliser pour le bot (exemple : `albert_api_mode='rag'`). Pour plus d'informations, consultez la documentation de l'API Albert
 
 ### Utilisation en dehors de Docker
 
@@ -162,6 +163,7 @@ For the bot to connect to Albert's API, you need to provide the following variab
 - `groups_used=['albert']`: allows, in this example, to activate all commands that are part of the albert group
 - `user_allowed_domains` : list of allowed email domains for Tchap users to interact with the bot (example: `user_allowed_domains='["ministere.gouv.fr"]'`)
 - `albert_api_model_name`: the name of the model to use for the bot (example: `albert_api_model_name='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the HuggingFace Albert models hub.
+- `albert_api_mode`: the mode of Albert to use for the bot (example: `albert_api_mode='rag'`). For more info, check the Albert API documentation
 
 ### Usage outside of Docker
 

@@ -42,6 +42,7 @@ class Config(BaseConfig):
         "AgentPublic/albertlight-7b",
         description="Albert model name to use (see Albert models hub on HuggingFace)",
     )
+    albert_api_mode: str = Field("rag", description="Albert API mode")
     user_allowed_domains: list[str] = Field(
         [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
     )
