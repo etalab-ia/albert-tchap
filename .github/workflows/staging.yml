@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - staging
+      - feat/github-ci
 
 jobs:
 
@@ -29,10 +30,10 @@ jobs:
         with:
           key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
           name: id_rsa
-          known_hosts: ${{ secrets.CI_DEPLOY_STAGING_HOST }}
+          known_hosts: ${{ secrets.CI_DEPLOY_HOST }}
 
       - name: Adding server to known hosts
-        run: ssh-keyscan -H ${{ secrets.CI_DEPLOY_STAGING_HOST }}  >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H ${{ secrets.CI_DEPLOY_HOST }}  >> ~/.ssh/known_hosts
 
       - name: Send deployment files to remote server
         run: |
@@ -42,12 +43,12 @@ jobs:
           cp ./Dockerfile ./${{ steps.get-job-id.outputs.job_id }}/Dockerfile
           cp ./pyproject.toml ./${{ steps.get-job-id.outputs.job_id }}/pyproject.toml
           cp ./.env ./${{ steps.get-job-id.outputs.job_id }}/.env
-          scp -i  ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no -r ./${{ steps.get-job-id.outputs.job_id }} ${{ secrets.CI_DEPLOY_USER }}@${{ secrets.CI_DEPLOY_STAGING_HOST }}:/home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
+          scp -i  ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }} -o StrictHostKeyChecking=no -r ./${{ steps.get-job-id.outputs.job_id }} ${{ secrets.CI_DEPLOY_USER }}@${{ secrets.CI_DEPLOY_HOST }}:/home/${{ secrets.CI_DEPLOY_USER }}/${{ steps.get-job-id.outputs.job_id }}
 
       - name: Execute server commands for deploy
         uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.CI_DEPLOY_STAGING_HOST }}
+          host: ${{ secrets.CI_DEPLOY_HOST }}
           username: ${{ secrets.CI_DEPLOY_USER }}
           key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
           script: |
