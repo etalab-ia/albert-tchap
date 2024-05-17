@@ -70,8 +70,8 @@ class AuthLogin:
 
     def __post_init__(self):
         self.session_stored_file_path = (
-            self.credentials.session_stored_file
-            if self.credentials.session_stored_file.exists()
+            Path(self.credentials.session_stored_file)
+            if self.credentials.session_stored_file
             else None
         )
         self.device_name = f"Bot Client using Matrix-Bot id {secrets.token_urlsafe(20)}"

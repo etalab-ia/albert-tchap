@@ -44,6 +44,7 @@ source .venv/bin/activate
 pip install .
 ```
 
+
 ### Configuration
 
 Créez le fichier d'environnement `app/.env` avec les informations de connexion (ou fournissez-les en variables d'environnement). Vous pouvez vous inspirer du fichier `app/.env.example` qui est initialisé avec les valeurs par défaut :
@@ -60,6 +61,7 @@ Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables 
 - `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
 - `albert_api_model_name` : le nom du modèle Albert à utiliser pour le bot (exemple : `albert_api_model_name='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le hub des modèles Albert de HuggingFace
 - `albert_api_mode` : le mode d'Albert à utiliser pour le bot (exemple : `albert_api_mode='rag'`). Pour plus d'informations, consultez la documentation de l'API Albert
+
 
 ### Utilisation en dehors de Docker
 
