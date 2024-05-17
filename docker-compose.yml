@@ -17,7 +17,7 @@ services:
       - SESSION_PATH=/data/session.txt
       - GROUPS_USED=["basic", "albert"]
       - USER_ALLOWED_DOMAINS=${USER_ALLOWED_DOMAINS}
-      - SALT=${salt}
+      - SALT=${SALT}
       - ALBERT_API_URL=${ALBERT_API_URL}
       - ALBERT_API_TOKEN=${ALBERT_API_TOKEN}
       - ALBERT_API_MODEL_NAME=${ALBERT_API_MODEL_NAME}
