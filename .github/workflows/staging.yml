@@ -71,9 +71,6 @@ jobs:
             export COMPOSE_PROJECT_NAME=albert-tchapbot
 
             docker compose down
-            docker tag albert/tchapbot:latest albert/tchapbot:old || true
-            docker image rm albert/tchapbot:latest || true
             docker compose up --detach
-            docker image rm albert/tchapbot:old || true
 
             rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}
