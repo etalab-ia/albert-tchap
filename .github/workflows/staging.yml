@@ -48,6 +48,23 @@ jobs:
           cp ./Dockerfile ./${{ env.CI_JOB_ID }}/Dockerfile
           cp ./pyproject.toml ./${{ env.CI_JOB_ID }}/pyproject.toml
 
+      - name: Create .env file with current secrets
+        run: |
+          cd ./${{ env.CI_JOB_ID }}
+          touch .env
+          echo API_KEY=${{ secrets.API_KEY }} >> .env
+          echo MATRIX_HOME_SERVER=${{ secrets.MATRIX_HOME_SERVER }} >> .env
+          echo MATRIX_BOT_USERNAME=${{ secrets.MATRIX_BOT_USERNAME }} >> .env
+          echo MATRIX_BOT_PASSWORD=${{ secrets.MATRIX_BOT_PASSWORD }} >> .env
+          echo ERRORS_ROOM_ID=${{ secrets.ERRORS_ROOM_ID }} >> .env
+          echo USER_ALLOWED_DOMAINS=${{ secrets.USER_ALLOWED_DOMAINS }} >> .env
+          echo SALT=${{ secrets.SALT }} >> .env
+          echo ALBERT_API_URL=${{ secrets.ALBERT_API_URL }} >> .env
+          echo ALBERT_API_TOKEN=${{ secrets.ALBERT_API_TOKEN }} >> .env
+          echo ALBERT_API_MODEL_NAME=${{ secrets.ALBERT_API_MODEL_NAME }} >> .env
+          echo ALBERT_API_MODE=${{ secrets.ALBERT_API_MODE }} >> .env
+          cat .env
+
       - name: Copy deployment files to remote server via SCP
         uses: appleboy/scp-action@master
         with:
@@ -71,6 +88,9 @@ jobs:
             export COMPOSE_PROJECT_NAME=albert-tchapbot
 
             docker compose down
+            docker tag albert/tchapbot:latest albert/tchapbot:old || true
+            docker image rm albert/tchapbot:latest || true
             docker compose up --detach
+            docker image rm albert/tchapbot:old || true
 
             rm -rf /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}
