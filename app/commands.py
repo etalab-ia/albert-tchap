@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from config import COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
-from matrix_bot.eventparser import EventParser
+from matrix_bot.eventparser import EventParser, EventNotConcerned
 from nio import Event, RoomMemberEvent, RoomMessageText
 from pyalbert_utils import generate, generate_sources, new_chat
 
