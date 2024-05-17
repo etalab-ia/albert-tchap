@@ -54,7 +54,7 @@ jobs:
           username: ${{ secrets.CI_DEPLOY_USER }}
           key: ${{ secrets.CI_DEPLOY_USER_SSH_PRIVATE_KEY }}
           source: "./${{ env.CI_JOB_ID }}"
-          target: "/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}"
+          target: "/home/${{ secrets.CI_DEPLOY_USER }}"
 
       - name: Execute server commands for deploy
         uses: appleboy/ssh-action@master
