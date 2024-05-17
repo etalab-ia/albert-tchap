@@ -1,8 +1,9 @@
-name: Deploy to staging when pushing on staging
+name: Build and deploy when pushing on staging or main
 
 on:
   push:
     branches:
+      - main
       - staging
       - feat/github-ci
 
@@ -10,7 +11,7 @@ jobs:
 
   deploy-staging:
 
-    environment: staging
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
 
     name: Deploy to staging from ${{ github.ref_name }}/${{ github.sha }}
 
@@ -83,7 +84,7 @@ jobs:
           script: |
             cd /home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}
             mkdir -p /data/tchapbot
-            
+
             export COMPOSE_FILE=/home/${{ secrets.CI_DEPLOY_USER }}/${{ env.CI_JOB_ID }}/docker-compose.yml
             export COMPOSE_PROJECT_NAME=albert-tchapbot
 
