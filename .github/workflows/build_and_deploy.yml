@@ -9,11 +9,11 @@ on:
 
 jobs:
 
-  deploy-staging:
+  build-and-deploy:
 
     environment: ${{ github.ref_name == 'main' && 'prod' || 'staging' }}
 
-    name: Deploy to staging from ${{ github.ref_name }}/${{ github.sha }}
+    name: Deploy from ${{ github.ref_name }}/${{ github.sha }}
 
     runs-on: ubuntu-latest
 
