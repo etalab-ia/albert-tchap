@@ -35,22 +35,22 @@ class Config(BaseConfig):
     matrix_bot_username: str = Field("", description="Username of our matrix bot")
     matrix_bot_password: str = Field("", description="Password of our matrix bot")
     errors_room_id: str | None = Field(None, description="Room ID to send errors to")
-    groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
-    albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
-    albert_api_token: str = Field("", description="Albert API Token")
-    albert_api_model_name: str = Field(
-        "AgentPublic/albertlight-7b",
-        description="Albert model name to use (see Albert models hub on HuggingFace)",
-    )
-    albert_api_mode: str = Field("rag", description="Albert API mode")
     user_allowed_domains: list[str] = Field(
         [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
     )
-
-    # Conversational settings
-    with_history: bool = Field(True, description="Conversational mode")
-    chat_id: int | None = Field(None, description="Current chat id")
-    stream_id: int | None = Field(None, description="Current stream id")
+    groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
+    # Albert API settings
+    albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
+    albert_api_token: str = Field("", description="Albert API Token")
+    albert_model_name: str = Field(
+        "AgentPublic/albertlight-7b",
+        description="Albert model name to use (see Albert models hub on HuggingFace)",
+    )
+    albert_mode: str = Field("rag", description="Albert API mode")
+    ## Albert Conversational settings
+    albert_with_history: bool = Field(True, description="Conversational mode")
+    albert_chat_id: int | None = Field(None, description="Current chat id")
+    albert_stream_id: int | None = Field(None, description="Current stream id")
 
 
 env_config = Config()

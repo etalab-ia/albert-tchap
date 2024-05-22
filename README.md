@@ -55,12 +55,13 @@ cp app/.env.example app/.env
 Il est conseillé de changer la valeur du sel (`salt`) pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
 
 Pour que le bot se connecte à l'API d'Albert, il faut renseigner les variables suivantes :
+- `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
+- `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
 - `albert_api_url` : l'url de l'API Albert à consommer
 - `albert_api_token` : le token API utilisé pour authoriser le bot a consommer l'API Albert. Pour plus d'informations, consultez la documentation de l'API Albert
-- `groups_used=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe albert
-- `user_allowed_domains` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `user_allowed_domains='["ministere.gouv.fr"]'`)
-- `albert_api_model_name` : le nom du modèle Albert à utiliser pour le bot (exemple : `albert_api_model_name='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le hub des modèles Albert de HuggingFace
-- `albert_api_mode` : le mode d'Albert à utiliser pour le bot (exemple : `albert_api_mode='rag'`). Pour plus d'informations, consultez la documentation de l'API Albert
+- `albert_model_name` : le nom du modèle Albert à utiliser pour le bot (exemple : `albert_model_name='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le hub des modèles Albert de HuggingFace
+- `albert_mode` : le mode d'Albert à utiliser pour le bot (exemple : `albert_mode='rag'`). Pour plus d'informations, consultez la documentation de l'API Albert
+- `albert_with_history` : booléen pour activer ou non l'historique des messages (exemple : `albert_with_history=True`)
 
 
 ### Utilisation en dehors de Docker
@@ -160,12 +161,13 @@ cp app/.env.example app/.env
 It is advisable to change the value of the salt (salt) so as not to have the default one. However, it should not change between two sessions.
 
 For the bot to connect to Albert's API, you need to provide the following variables:
+- `user_allowed_domains` : list of allowed email domains for Tchap users to interact with the bot (example: `user_allowed_domains='["ministere.gouv.fr"]'`)
+- `groups_used=['albert']`: allows, in this example, to activate all commands that are part of the albert group
 - `albert_api_url`: the URL of the Albert API to consume
 - `albert_api_token`: the API token used to authorize the bot to consume the Albert API. For more info, check the Albert API documentation
-- `groups_used=['albert']`: allows, in this example, to activate all commands that are part of the albert group
-- `user_allowed_domains` : list of allowed email domains for Tchap users to interact with the bot (example: `user_allowed_domains='["ministere.gouv.fr"]'`)
-- `albert_api_model_name`: the name of the model to use for the bot (example: `albert_api_model_name='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the HuggingFace Albert models hub.
-- `albert_api_mode`: the mode of Albert to use for the bot (example: `albert_api_mode='rag'`). For more info, check the Albert API documentation
+- `albert_model_name`: the name of the model to use for the bot (example: `albert_model_name='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the HuggingFace Albert models hub.
+- `albert_mode`: the mode of Albert to use for the bot (example: `albert_mode='rag'`). For more info, check the Albert API documentation
+- `albert_with_history` : boolean to enable or disable message history (example: `albert_with_history=True`)
 
 ### Usage outside of Docker
 
