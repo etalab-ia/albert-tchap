@@ -68,7 +68,6 @@ class CommandRegistry:
         help_message += "\n"
         help_message += "Vous pouvez utiliser les commandes spéciales suivantes :\n\n"
         help_message += "- " + "\n- ".join(cmds)
-        help_message += "\n\n"
 
         return help_message
 
