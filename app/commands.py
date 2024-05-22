@@ -68,11 +68,6 @@ class CommandRegistry:
         help_message += "\n"
         help_message += "Vous pouvez utiliser les commandes spéciales suivantes :\n\n"
         help_message += "- " + "\n- ".join(cmds)
-        help_message += "\n\n"
-        if config.with_history:
-            help_message += "Le mode conversation est activé."
-        else:
-            help_message += "Le mode conversation est désactivé."
 
         return help_message
 
