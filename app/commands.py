@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from config import COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
-from matrix_bot.eventparser import EventParser, EventNotConcerned
+from matrix_bot.eventparser import EventNotConcerned, EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
 from pyalbert_utils import generate, generate_sources, new_chat
 
@@ -235,7 +235,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         if config.errors_room_id:
             await matrix_client.send_markdown_message(
                 config.errors_room_id,
-                f"\u26a0\ufe0f **Albert API erreur**\n\n{albert_exception}",
+                f"\u26a0\ufe0f **Albert API erreur**\n\n{albert_exception}\n\nMatrix server: {config.matrix_home_server}",
             )
         return
 
@@ -259,6 +259,6 @@ async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
     if not user_prompt.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
         raise EventNotConcerned
     await matrix_client.send_markdown_message(
-                ep.room.room_id,
-                f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands()}",
-            )
+        ep.room.room_id,
+        f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands()}",
+    )
