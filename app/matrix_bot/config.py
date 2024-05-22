@@ -41,7 +41,7 @@ class BotLibConfig(BaseSettings):
     model_config = SettingsConfigDict(env_file=Path(".matrix_bot_env"))
 
 
-bot_lib_config = BotLibConfig(join_on_invite=False)
+bot_lib_config = BotLibConfig()
 structlog.configure(
     wrapper_class=structlog.make_filtering_bound_logger(bot_lib_config.log_level),
 )
