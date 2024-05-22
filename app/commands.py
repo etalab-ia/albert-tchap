@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from config import COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
-from matrix_bot.eventparser import EventParser, EventNotConcerned
+from matrix_bot.eventparser import EventNotConcerned, EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
 from pyalbert_utils import generate, generate_sources, new_chat
 
@@ -69,10 +69,6 @@ class CommandRegistry:
         help_message += "Vous pouvez utiliser les commandes spéciales suivantes :\n\n"
         help_message += "- " + "\n- ".join(cmds)
         help_message += "\n\n"
-        if config.with_history:
-            help_message += "Le mode conversation est activé."
-        else:
-            help_message += "Le mode conversation est désactivé."
 
         return help_message
 
@@ -259,6 +255,6 @@ async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
     if not user_prompt.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
         raise EventNotConcerned
     await matrix_client.send_markdown_message(
-                ep.room.room_id,
-                f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands()}",
-            )
+        ep.room.room_id,
+        f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands()}",
+    )
