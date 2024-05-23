@@ -54,10 +54,10 @@ def generate(config: Config, query: str) -> str:
         # "postprocessing": ["check_url", "check_mail", "check_number"],
     }
     if with_history:
-        if not config.chat_id:
-            config.chat_id = new_chat(config)
+        if not config.albert_chat_id:
+            config.albert_chat_id = new_chat(config)
         response = requests.post(
-            f"{api_url}/stream/chat/{config.chat_id}", headers=headers, json=data
+            f"{api_url}/stream/chat/{config.albert_chat_id}", headers=headers, json=data
         )
     else:
         response = requests.post(f"{api_url}/stream", headers=headers, json=data)
