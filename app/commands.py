@@ -174,7 +174,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     group="albert_debug",
     onEvent=RoomMessageText,
     command="mode",
-    help=f"**{COMMAND_PREFIX}mode** MODE : Modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé).",
+    help=f"**{COMMAND_PREFIX}mode** MODE : modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé)",
 )
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
