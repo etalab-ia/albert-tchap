@@ -146,7 +146,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    if config.with_history:
+    if config.albert_with_history:
         config.chat_id = new_chat(config)
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message)
@@ -161,11 +161,11 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    if config.with_history:
-        config.with_history = False
+    if config.albert_with_history:
+        config.albert_with_history = False
         reset_message = "Le mode conversation est activé."
     else:
-        config.with_history = True
+        config.albert_with_history = True
         reset_message = "Le mode conversation est désactivé."
     await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
