@@ -171,6 +171,25 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
 
 
 @register_feature(
+    group="albert_debug",
+    onEvent=RoomMessageText,
+    command="mode",
+    help=f"**{COMMAND_PREFIX}mode** MODE : Modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé).",
+)
+async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
+    commands = ep.event.body.split()
+    if len(commands) <= 1:
+        reset_message = "La commande !mode nécessite un argument. Se référer à !help."
+    else:
+        mode = commands[1]
+        config.albert_api_mode = mode
+        reset_message = "Le mode a été modifié."
+    await matrix_client.send_text_message(ep.room.room_id, reset_message)
+
+
+@register_feature(
     group="albert",
     onEvent=RoomMessageText,
     command="sources",
