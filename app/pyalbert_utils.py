@@ -64,7 +64,7 @@ def generate(config: Config, query: str) -> str:
     log_and_raise_for_status(response)
 
     stream_id = response.json()["id"]
-    config.stream_id = stream_id
+    config.albert_stream_id = stream_id
 
     # Start Stream:
     # @TODO: implement non-streaming response

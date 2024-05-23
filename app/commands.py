@@ -200,8 +200,8 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
 
     try:
-        if config.stream_id:
-            sources = generate_sources(config=config, stream_id=config.stream_id)
+        if config.albert_stream_id:
+            sources = generate_sources(config=config, stream_id=config.albert_stream_id)
             sources_msg = ""
             for source in sources:
                 extra_context = ""
