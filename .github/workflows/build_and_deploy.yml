@@ -49,7 +49,7 @@ jobs:
           cp ./Dockerfile ./${{ env.CI_JOB_ID }}/Dockerfile
           cp ./pyproject.toml ./${{ env.CI_JOB_ID }}/pyproject.toml
 
-      - name: Create .env file with current secrets
+      - name: Create .env file with current variables and secrets
         run: |
           cd ./${{ env.CI_JOB_ID }}
           touch .env
