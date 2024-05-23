@@ -63,8 +63,8 @@ jobs:
           echo GROUPS_USED=${{ vars.GROUPS_USED }} >> .env
           echo ALBERT_API_URL=${{ secrets.ALBERT_API_URL }} >> .env
           echo ALBERT_API_TOKEN=${{ secrets.ALBERT_API_TOKEN }} >> .env
-          echo ALBERT_MODEL_NAME=${{ secrets.ALBERT_MODEL_NAME }} >> .env
-          echo ALBERT_MODE=${{ secrets.ALBERT_MODE }} >> .env
+          echo ALBERT_MODEL_NAME=${{ vars.ALBERT_MODEL_NAME }} >> .env
+          echo ALBERT_MODE=${{ vars.ALBERT_MODE }} >> .env
           cat .env
 
       - name: Copy deployment files to remote server via SCP
