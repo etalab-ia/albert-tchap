@@ -37,10 +37,10 @@ def new_chat(config: Config) -> int:
 
 def generate(config: Config, query: str) -> str:
     api_token = config.albert_api_token
-    api_model = config.albert_api_model_name
-    api_mode = config.albert_api_mode
+    api_model = config.albert_model_name
+    api_mode = config.albert_mode
     api_url = config.albert_api_url
-    with_history = config.with_history
+    with_history = config.albert_with_history
 
     # Create Stream:
     headers = {

@@ -53,19 +53,18 @@ jobs:
         run: |
           cd ./${{ env.CI_JOB_ID }}
           touch .env
-          echo API_KEY=${{ secrets.API_KEY }} >> .env
+          echo JOIN_ON_INVITE=${{ vars.JOIN_ON_INVITE }} >> .env
+          echo SALT=${{ secrets.SALT }} >> .env
           echo MATRIX_HOME_SERVER=${{ secrets.MATRIX_HOME_SERVER }} >> .env
           echo MATRIX_BOT_USERNAME=${{ secrets.MATRIX_BOT_USERNAME }} >> .env
           echo MATRIX_BOT_PASSWORD=${{ secrets.MATRIX_BOT_PASSWORD }} >> .env
           echo ERRORS_ROOM_ID=${{ secrets.ERRORS_ROOM_ID }} >> .env
           echo USER_ALLOWED_DOMAINS=${{ secrets.USER_ALLOWED_DOMAINS }} >> .env
-          echo JOIN_ON_INVITE=${{ vars.JOIN_ON_INVITE }} >> .env
-          echo SALT=${{ secrets.SALT }} >> .env
+          echo GROUPS_USED=${{ vars.GROUPS_USED }} >> .env
           echo ALBERT_API_URL=${{ secrets.ALBERT_API_URL }} >> .env
           echo ALBERT_API_TOKEN=${{ secrets.ALBERT_API_TOKEN }} >> .env
-          echo ALBERT_API_MODEL_NAME=${{ vars.ALBERT_API_MODEL_NAME }} >> .env
-          echo ALBERT_API_MODE=${{ vars.ALBERT_API_MODE }} >> .env
-          echo GROUPS_USED=${{ vars.GROUPS_USED }} >> .env
+          echo ALBERT_MODEL_NAME=${{ secrets.ALBERT_MODEL_NAME }} >> .env
+          echo ALBERT_MODE=${{ secrets.ALBERT_MODE }} >> .env
           cat .env
 
       - name: Copy deployment files to remote server via SCP
