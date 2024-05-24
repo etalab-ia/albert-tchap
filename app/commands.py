@@ -184,7 +184,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
         reset_message = "La commande !mode nécessite un argument. Se référer à !help."
     else:
         mode = commands[1]
-        config.albert_api_mode = mode
+        config.albert_mode = mode
         reset_message = "Le mode a été modifié."
     await matrix_client.send_text_message(ep.room.room_id, reset_message)
 
