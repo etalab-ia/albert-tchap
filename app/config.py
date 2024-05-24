@@ -4,18 +4,21 @@
 # SPDX-License-Identifier: MIT
 
 import logging
+import tomllib
 from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-PACKAGE_PATH = Path(__file__).resolve().parent
-SRC_PATH = PACKAGE_PATH.parent
-_ROOT_PATH = PACKAGE_PATH.parent.parent  # Accessible from clone of the project, not from package
-DOCUMENTATION_DIR = _ROOT_PATH / "docs"
-README_PATH = _ROOT_PATH / "README.md"
-
 COMMAND_PREFIX = "!"
+
+APP_VERSION = "unknown"
+try:
+    with open("pyproject.toml", "rb") as f:
+        pyproject: dict = tomllib.load(f)
+        APP_VERSION = pyproject["project"]["version"]
+except Exception as e:
+    logging.warning(f"Error while reading pyproject.toml: {e}")
 
 
 class BaseConfig(BaseSettings):
