@@ -5,8 +5,9 @@
 
 from collections import defaultdict
 from dataclasses import dataclass
+from doctest import debug
 
-from config import COMMAND_PREFIX, Config
+from config import APP_VERSION, COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
@@ -168,6 +169,25 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
         config.albert_with_history = True
         reset_message = "Le mode conversation est désactivé."
     await matrix_client.send_text_message(ep.room.room_id, reset_message)
+
+
+@register_feature(
+    group="albert_debug",
+    onEvent=RoomMessageText,
+    command="debug",
+    help=f"**{COMMAND_PREFIX}debug** : affiche des informations sur la configuration actuelle",
+)
+async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
+    debug_message = f"Configuration actuelle :\n\n"
+    debug_message += f"- Version: {APP_VERSION}\n"
+    debug_message += f"- Model: {config.albert_model_name}\n"
+    debug_message += f"- Mode: {config.albert_mode}\n"
+    debug_message += f"- With history: {config.albert_with_history}\n"
+    debug_message += f"- Chat ID: {config.albert_chat_id}\n"
+    debug_message += f"- Stream ID: {config.albert_stream_id}\n"
+    await matrix_client.send_text_message(ep.room.room_id, debug_message)
 
 
 @register_feature(
