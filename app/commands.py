@@ -150,6 +150,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         config.albert_chat_id = new_chat(config)
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message)
+        await matrix_client.send_text_message(ep.room.room_id, command_registry.get_help(config))
 
 
 @register_feature(
@@ -163,11 +164,11 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     if config.albert_with_history:
         config.albert_with_history = False
-        reset_message = "Le mode conversation est activé."
+        message = "Le mode conversation est activé."
     else:
         config.albert_with_history = True
-        reset_message = "Le mode conversation est désactivé."
-    await matrix_client.send_text_message(ep.room.room_id, reset_message)
+        message = "Le mode conversation est désactivé."
+    await matrix_client.send_text_message(ep.room.room_id, message)
 
 
 @register_feature(
@@ -181,12 +182,12 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     commands = ep.event.body.split()
     if len(commands) <= 1:
-        reset_message = "La commande !mode nécessite un argument. Se référer à !help."
+        message = "La commande !mode nécessite un argument. Se référer à !help."
     else:
         mode = commands[1]
         config.albert_mode = mode
-        reset_message = "Le mode a été modifié."
-    await matrix_client.send_text_message(ep.room.room_id, reset_message)
+        message = "Le mode a été modifié."
+    await matrix_client.send_text_message(ep.room.room_id, message)
 
 
 @register_feature(
