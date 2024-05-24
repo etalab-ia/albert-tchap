@@ -151,7 +151,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         config.albert_chat_id = new_chat(config)
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message)
-        await matrix_client.send_text_message(ep.room.room_id, command_registry.get_help(config))
+        await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
 @register_feature(
