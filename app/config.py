@@ -39,7 +39,8 @@ class Config(BaseConfig):
     matrix_bot_password: str = Field("", description="Password of our matrix bot")
     errors_room_id: str | None = Field(None, description="Room ID to send errors to")
     user_allowed_domains: list[str] = Field(
-        [], description="List of allowed Tchap users email domains allowed to use Albert Tchap bot"
+        ["*"],
+        description="List of allowed Tchap users email domains allowed to use Albert Tchap bot",
     )
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     # Albert API settings

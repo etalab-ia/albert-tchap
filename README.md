@@ -62,7 +62,7 @@ Les variables d'environnement à renseigner sont les suivantes :
 - `ERRORS_ROOM_ID` : l'identifiant du salon Tchap où les erreurs seront envoyées (exemple : `ERRORS_ROOM_ID="!roomid:matrix.agent.ministere_example.tchap.gouv.fr"`). **Attention** : le bot doit être invité dans ce salon pour pouvoir y envoyer ses messages d'erreur !
 
 Pour que le bot se connecte à l'API d'Albert, il faut également renseigner les variables suivantes :
-- `USER_ALLOWED_DOMAINS` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `USER_ALLOWED_DOMAINS='["ministere1.gouv.fr", "ministere2.gouv.fr"]'`)
+- `USER_ALLOWED_DOMAINS` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `USER_ALLOWED_DOMAINS='["ministere1.gouv.fr", "ministere2.gouv.fr"]'`. Par défaut : `["*"]` (tous les domaines sont autorisés))
 - `GROUPS_USED=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe "albert"
 - `ALBERT_API_URL` : l'url de l'API Albert à consommer
 - `ALBERT_API_TOKEN` : le token API utilisé pour authoriser le bot a consommer l'API Albert. Pour plus d'informations, consultez la documentation de l'API Albert
@@ -174,7 +174,7 @@ The following environment variables must be entered:
 - `ERRORS_ROOM_ID`: the Tchap room ID where errors will be sent (example: `ERRORS_ROOM_ID=“!roomid:matrix.agent.ministere_example.tchap.gouv.fr”`). **Warning**: the bot must be invited to this room to be able to send error messages!
 
 For the bot to connect to Albert API, you also need to provide the following variables:
-- `USER_ALLOWED_DOMAINS` : list of allowed email domains for Tchap users to interact with the bot (example: `USER_ALLOWED_DOMAINS='["ministere.gouv.fr"]'`)
+- `USER_ALLOWED_DOMAINS`: list of allowed email domains for Tchap users to interact with the bot (example: `USER_ALLOWED_DOMAINS='["ministere.gouv.fr"]'`. Default: `["*"]` (all domains are allowed))
 - `GROUPS_USED=['albert']`: allows, in this example, to activate all commands that are part of the albert group
 - `ALBERT_API_URL`: the URL of the Albert API to consume
 - `ALBERT_API_TOKEN`: the API token used to authorize the bot to consume the Albert API. For more info, check the Albert API documentation
