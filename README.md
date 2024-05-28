@@ -13,8 +13,8 @@ SPDX-License-Identifier: MIT
 
 ## Description du projet
 
-Bot pour Tchap, l'application de messagerie de l'administration française.
-Ce bot utilise Albert, l'agent conversationnel (*large language models*, LLM) de l'administration française, pour répondre à des questions sur Tchap.
+Bot pour [Tchap, l'application de messagerie de l'administration française](https://tchap.beta.gouv.fr/).
+Ce bot utilise [Albert](https://github.com/etalab-ia/albert), l'agent conversationnel (*large language models*, LLM) de l'administration française, pour répondre à des questions sur [Tchap, l'application de messagerie de l'administration française](https://tchap.beta.gouv.fr/).
 
 Le projet est un POC (Proof of Concept - preuve de concept) pour montrer comment un bot peut être utilisé pour répondre à des questions sur Tchap en utilisant Albert.
 Il s'agit d'un travail WIP (Work In Progress - en cours de développement) et n'est pas (encore) destiné à être utilisé en production.
@@ -126,8 +126,8 @@ Ce projet est sous licence MIT. Une copie intégrale du texte de la licence se t
 
 ## Project Description
 
-Bot for Tchap, the French government messaging application.
-This bot uses Albert, the conversational agent (large language models, LLM) of the French government, to answer questions about Tchap.
+Bot for [Tchap, the French government messaging application](https://tchap.beta.gouv.fr/).
+This bot uses [Albert](https://github.com/etalab-ia/albert), the conversational agent (large language models, LLM) of the French government, to answer questions about [Tchap](https://tchap.beta.gouv.fr/).
 
 The project is a Proof of Concept (POC) to show how a bot can be used to answer questions about Tchap using Albert.
 It is a Work In Progress (WIP) and is not (yet) intended for production use.
