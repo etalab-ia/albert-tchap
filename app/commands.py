@@ -62,7 +62,10 @@ class CommandRegistry:
             if name in self.activated_functions and feature["help"]
         ]
 
-        help_message = "Bonjour, je m'appelle Albert et je suis votre assistant automatique dédié aux questions légales et administratives. N'hésitez pas à me soumettre vos interrogations, je suis là pour vous aider au mieux.\n\n"
+        model_url = f"https://huggingface.co/{config.albert_model_name}"
+        model_short_name = config.albert_model_name.split("/")[-1]
+
+        help_message = f"Bonjour, je m'appelle Albert et je suis votre assistant automatique dédié aux questions légales et administratives. J'utilise actuellement le modèle _[{model_short_name}]({model_url})_. N'hésitez pas à me soumettre vos interrogations, je suis là pour vous aider au mieux.\n\n"
         help_message += "Attention :\n\n"
         help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière imprécise\n"
         help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement\n"
