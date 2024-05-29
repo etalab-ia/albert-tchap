@@ -128,7 +128,7 @@ class Callbacks:
             # Send a message to the room to say that we are leaving
             await self.matrix_client.send_text_message(
                 room.room_id,
-                "I am leaving this room because it has more than 2 members.",
+                "Albert n'accepte pas encore les salons avec plus d'un interlocuteur et quitte donc la conversation. En attendant, vous pouvez toujours lui parler en privé !",
                 msgtype="m.notice",
             )
             await self.matrix_client.room_leave(room.room_id)
