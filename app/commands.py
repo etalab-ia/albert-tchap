@@ -5,7 +5,6 @@
 
 from collections import defaultdict
 from dataclasses import dataclass
-from doctest import debug
 
 from config import APP_VERSION, COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
