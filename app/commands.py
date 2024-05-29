@@ -151,7 +151,9 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         config.albert_chat_id = new_chat(config)
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message)
-        await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
+        await matrix_client.send_markdown_message(
+            ep.room.room_id, command_registry.get_help(config)
+        )
 
 
 @register_feature(
@@ -183,12 +185,13 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     debug_message = f"Configuration actuelle :\n\n"
     debug_message += f"- Version: {APP_VERSION}\n"
+    debug_message += f"- API: {config.albert_api_url}\n"
     debug_message += f"- Model: {config.albert_model_name}\n"
     debug_message += f"- Mode: {config.albert_mode}\n"
     debug_message += f"- With history: {config.albert_with_history}\n"
     debug_message += f"- Chat ID: {config.albert_chat_id}\n"
     debug_message += f"- Stream ID: {config.albert_stream_id}\n"
-    await matrix_client.send_text_message(ep.room.room_id, debug_message)
+    await matrix_client.send_markdown_message(ep.room.room_id, debug_message)
 
 
 @register_feature(
