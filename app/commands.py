@@ -64,13 +64,30 @@ class CommandRegistry:
         model_url = f"https://huggingface.co/{config.albert_model_name}"
         model_short_name = config.albert_model_name.split("/")[-1]
 
-        help_message = f"Bonjour, je m'appelle Albert et je suis votre assistant automatique dédié aux questions légales et administratives. J'utilise actuellement le modèle _[{model_short_name}]({model_url})_. N'hésitez pas à me soumettre vos interrogations, je suis là pour vous aider au mieux.\n\n"
-        help_message += "Attention :\n\n"
-        help_message += "- Je suis en phase de pré-test, il est possible que je sois en maintenance et que je ne réponde pas ou de manière imprécise\n"
-        help_message += "- Les échanges que j'ai avec vous peuvent être déchiffrés et stockés pour analyser mes performances ultérieurement\n"
-        help_message += "\n"
-        help_message += "Vous pouvez utiliser les commandes spéciales suivantes :\n\n"
+        help_message = "👋 Bonjour, je suis **Albert**, votre **assistant automatique dédié aux questions légales et administratives** mis à disposition par la **DINUM**. Je suis actuellement en phase de **test**.\n\n"
+        help_message += f"J'utilise le modèle de langage _[{model_short_name}]({model_url})_ et j'ai été alimenté par des bases de connaissances gouvernementales, comme les fiches pratiques de service-public.fr éditées par la Direction de l'information légale et administrative (DILA).\n\n"
+
+        help_message += "Maintenant que nous avons fait plus connaissance, quelques **règles pour m'utiliser** :\n\n"
+
+        help_message += (
+            "🔮 Ne m'utilisez pas pour élaborer une décision administrative individuelle.\n\n"
+        )
+        help_message += "❌️ **Ne me transmettez pas** :\n"
+        help_message += "- des **fichiers** (pdf, images, etc.) ;\n"
+        help_message += (
+            "- des données permettant de **vous** identifier ou **d'autres personnes** ;\n"
+        )
+        help_message += "- des données **confidentielles** ;\n\n"
+
+        help_message += "Enfin, quelques informations pratiques :\n\n"
+
+        help_message += "🛠️ **Pour gérer notre conversation** :\n"
         help_message += "- " + "\n- ".join(cmds)
+        help_message += "\n\n"
+
+        help_message += "📁 **Sur l'usage des données**\nLes conversations sont stockées de manière anonyme. Elles me permettent de contextualiser les conversations et l'équipe qui me développe les utilise pour m'évaluer et analyser mes performances.\n\n"
+
+        help_message += "📯 Nous contacter : albert-contact@data.gouv.fr"
 
         return help_message
 
@@ -116,7 +133,7 @@ def register_feature(
     group="basic",
     onEvent=RoomMessageText,
     command="aide",
-    help=f"**{COMMAND_PREFIX}aide** : afficher l'aide",
+    help=f"Pour retrouver ce message informatif, utilisez **{COMMAND_PREFIX}aide**",
 )
 async def help(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -144,7 +161,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="reset",
-    help=f"**{COMMAND_PREFIX}reset** : remettre à zéro la conversation avec Albert",
+    help=f"Pour ré-initialiser notre conversation, utilisez **{COMMAND_PREFIX}reset**",
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -162,7 +179,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     group="albert_debug",
     onEvent=RoomMessageText,
     command="conversation",
-    help=f"**{COMMAND_PREFIX}conversation** : activer/désactiver le mode conversation",
+    help=f"Pour activer/désactiver le mode conversation, utilisez **{COMMAND_PREFIX}conversation**",
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -180,7 +197,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     group="albert_debug",
     onEvent=RoomMessageText,
     command="debug",
-    help=f"**{COMMAND_PREFIX}debug** : affiche des informations sur la configuration actuelle",
+    help=f"Pour afficher des informations sur la configuration actuelle, **{COMMAND_PREFIX}debug**",
 )
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -200,7 +217,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     group="albert_debug",
     onEvent=RoomMessageText,
     command="mode",
-    help=f"**{COMMAND_PREFIX}mode** MODE : modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé)",
+    help=f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), utilisez **{COMMAND_PREFIX}mode** MODE",
 )
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -219,7 +236,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="sources",
-    help=f"**{COMMAND_PREFIX}sources** : afficher les références utilisées lors de la dernière réponse",
+    help=f"Pour obtenir les sources utilisées pour générer mes réponses, utilisez **{COMMAND_PREFIX}sources**",
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
