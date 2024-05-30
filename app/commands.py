@@ -87,8 +87,8 @@ class CommandRegistry:
 
         return help_message
 
-    def show_commands(self):
-        cmds = self._get_cmds()
+    def show_commands(self, config: Config):
+        cmds = self._get_cmds(config)
         available_cmd = "Les commandes spéciales suivantes sont disponibles :\n\n"
         available_cmd += "- " + "\n- ".join(cmds)
         return available_cmd
@@ -97,7 +97,8 @@ class CommandRegistry:
         cmds = [
             feature["help"]
             for name, feature in self.function_register.items()
-            if name in self.activated_functions and feature["help"]
+            if name in self.activated_functions
+            and feature["help"]
             and not (feature.get("command") == "sources" and config.albert_mode == "norag")
         ]
         return cmds
@@ -318,11 +319,12 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     help=None,
 )
 async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
     user_prompt = ep.event.body
     command = user_prompt.split()[0][1:]
     if not user_prompt.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
         raise EventNotConcerned
     await matrix_client.send_markdown_message(
         ep.room.room_id,
-        f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands()}",
+        f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands(config)}",
     )
