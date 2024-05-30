@@ -72,7 +72,7 @@ class CommandRegistry:
         help_message += (
             "🔮 Ne m'utilisez pas pour élaborer une décision administrative individuelle.\n\n"
         )
-        help_message += "❌️ **Ne me transmettez pas** :\n"
+        help_message += "❌ **Ne me transmettez pas** :\n"
         help_message += "- des **fichiers** (pdf, images, etc.) ;\n"
         help_message += (
             "- des données permettant de **vous** identifier ou **d'autres personnes** ;\n"
