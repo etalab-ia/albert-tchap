@@ -244,7 +244,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="sources",
-    help=f"Pour obtenir les sources utilisées pour générer mes réponses, utilisez **{COMMAND_PREFIX}sources**",
+    help=f"Pour obtenir les sources utilisées pour générer ma dernière réponse, utilisez **{COMMAND_PREFIX}sources**",
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
