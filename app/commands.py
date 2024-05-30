@@ -11,7 +11,7 @@ from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
-from pyalbert_utils import generate, generate_sources, new_chat
+from pyalbert_utils import generate, generate_sources, get_available_modes, new_chat
 
 
 @dataclass
@@ -55,11 +55,7 @@ class CommandRegistry:
         ]
 
     def get_help(self, config: Config) -> str:
-        cmds = [
-            feature["help"]
-            for name, feature in self.function_register.items()
-            if name in self.activated_functions and feature["help"]
-        ]
+        cmds = self._get_cmds()
 
         model_url = f"https://huggingface.co/{config.albert_model_name}"
         model_short_name = config.albert_model_name.split("/")[-1]
@@ -92,15 +88,19 @@ class CommandRegistry:
         return help_message
 
     def show_commands(self):
-        cmds = [
-            feature["help"]
-            for name, feature in self.function_register.items()
-            if name in self.activated_functions and feature["help"]
-        ]
-
+        cmds = self._get_cmds()
         available_cmd = "Les commandes spéciales suivantes sont disponibles :\n\n"
         available_cmd += "- " + "\n- ".join(cmds)
         return available_cmd
+
+ def _get_cmds(self):
+    cmds = [
+        feature["help"]
+        for name, feature in self.function_register.items()
+        if name in self.activated_functions and feature["help"]
+        and not (feature.get("command") == "sources" && config.albert_mode == "norag")
+    ]
+    return cmds
 
 
 command_registry = CommandRegistry({}, set())
@@ -223,12 +223,19 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
     commands = ep.event.body.split()
+    # Get all available mode for the current model
+    all_modes = get_available_modes(config)
+    all_modes += ["norag"]
     if len(commands) <= 1:
-        message = "La commande !mode nécessite un argument. Se référer à !help."
+        message = f"La commande !mode nécessite de donner un mode parmi : {", ".join(all_modes)}"
     else:
         mode = commands[1]
-        config.albert_mode = mode
-        message = "Le mode a été modifié."
+        if mode not in all_modes:
+            message = f"Mode inconnu. Les modes disponibles sont : {", ".join(all_modes)}"
+        else:
+            old_mode = config.albert_mode
+            config.albert_mode = mode
+            message = f"Le mode a été modifié: {old_mode} -> {mode}"
     await matrix_client.send_text_message(ep.room.room_id, message)
 
 
