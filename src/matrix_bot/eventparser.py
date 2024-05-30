@@ -5,6 +5,7 @@
 
 from dataclasses import dataclass
 from functools import wraps
+from typing import Optional
 
 from nio import Event, MatrixRoom, RoomMessageText
 
@@ -108,17 +109,20 @@ class MessageEventParser(EventParser):
         """
         return self._command(command=command, prefix=prefix, command_name=command_name, body=self.event.body)
 
-    async def hl(self, consider_hl_when_direct_message=True):
+    async def hl(self, consider_hl_when_direct_message=True, command_prefix: Optional[str] = None):
         """
         if the event is a hl (highlight, i.e begins with the name of the bot),
         returns the text after the hl. Raise EventNotConcerned otherwise
 
         :param consider_hl_when_direct_message: if True, consider a direct message as an highlight.
+        :param command_prefix: if given, will ignore messages beginning by this command in a direct message
         :return: the text after the highlight
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
         display_name = await self.matrix_client.get_display_name()
         if consider_hl_when_direct_message and self.room_is_direct_message():
+            if self.event.body.startswith(command_prefix):
+                raise EventNotConcerned
             return self._command(
                 "",
                 prefix="",
