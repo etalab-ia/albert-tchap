@@ -215,7 +215,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
 
 
 @register_feature(
-    group="albert_debug",
+    group="albert",
     onEvent=RoomMessageText,
     command="mode",
     help=f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), utilisez **{COMMAND_PREFIX}mode** MODE",
