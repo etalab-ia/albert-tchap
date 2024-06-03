@@ -3,6 +3,7 @@
 # SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
+import re
 from dataclasses import dataclass
 
 from config import env_config
@@ -54,9 +55,13 @@ class EventParser:
     def sender_domain(self) -> str:
         """
         Sender IDs are formatted like this: "@<mail_username>-<mail_domain>:<matrix_server>
-        e.g. @john-doe-ministere_example.gouv.fr:agent.ministere_example.tchap.gouv.fr
+        e.g. @john.doe-ministere_example.gouv.fr1:agent.ministere_example.tchap.gouv.fr
         """
-        return self.event.sender.split(":")[0].split("-")[-1]
+        match: re.Match[str] | None = re.search(
+            r"(?<=\-)(.*?)[0-9]*(?=\:)", self.event.sender
+        )  # match the domain name (between the first "-" and ":", with optional numbers to ignore at the end)
+        if match:
+            return match.group(0)
 
     def do_not_accept_own_message(self) -> None:
         """
