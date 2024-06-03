@@ -52,7 +52,7 @@ class EventParser:
     def sender_username(self) -> str:
         return self.room.users[self.event.sender].name
 
-    def sender_domain(self) -> str:
+    def sender_domain(self) -> str | None:
         """
         Sender IDs are formatted like this: "@<mail_username>-<mail_domain>:<matrix_server>
         e.g. @john.doe-ministere_example.gouv.fr1:agent.ministere_example.tchap.gouv.fr
@@ -62,6 +62,7 @@ class EventParser:
         )  # match the domain name (between the first "-" and ":", with optional numbers to ignore at the end)
         if match:
             return match.group(0)
+        logger.warning("Could not extract domain from sender ID", sender_id=self.sender_id)
 
     def do_not_accept_own_message(self) -> None:
         """
