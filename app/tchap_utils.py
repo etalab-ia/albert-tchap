@@ -56,6 +56,6 @@ def user_name_to_non_hl_user(complete_user_name: str) -> str:
     return complete_user_name.split("[")[0].strip()
 
 
-def users_print(matrix_user_name: list[str]):
+def users_print(matrix_user_name: list[str]) -> str:
     """Print a list of user without highlighting them in the tchap case"""
     return ", ".join(user_name for user_name in matrix_user_name)

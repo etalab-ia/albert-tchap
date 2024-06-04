@@ -19,7 +19,7 @@ def log_and_raise_for_status(response: requests.Response):
         response.raise_for_status()
 
 
-def get_available_modes(config: Config) -> list[str]:
+def get_available_modes(config: Config) -> list[str] | None:
     api_token = config.albert_api_token
     url = config.albert_api_url
     headers = {"Authorization": f"Bearer {api_token}"}
@@ -31,7 +31,6 @@ def get_available_modes(config: Config) -> list[str]:
     model_config = model_prompts.get(api_model, {})
     if not model_config:
         return None
-
 
     modes = [x["mode"] for x in model_config.get("config", {}).get("prompts", []) if "mode" in x]
     return modes
@@ -54,7 +53,7 @@ def new_chat(config: Config) -> int:
 def generate(config: Config, query: str) -> str:
     api_token = config.albert_api_token
     api_model = config.albert_model_name
-    api_mode = None if  config.albert_mode == "norag" else config.albert_mode
+    api_mode = None if config.albert_mode == "norag" else config.albert_mode
     api_url = config.albert_api_url
     with_history = config.albert_with_history
 
