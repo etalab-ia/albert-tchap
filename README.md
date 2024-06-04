@@ -198,6 +198,20 @@ cd app
 docker compose up --detach
 ```
 
+### Run tests
+
+1. Activate the virtual environment and install the dev dependencies.
+
+2. Navigate to the `app` directory:
+```bash
+cd app
+```
+
+3. Run the tests with coverage and generate a JUnit report:
+```bash
+pytest
+```
+
 ### Troubleshooting
 
 The first sync is quite long, and apparently non-blocking. If you interact with the bot before it has synced properly, you risk leaving it in an unstable state (where the bot does not have the room listing).
