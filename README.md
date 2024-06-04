@@ -88,6 +88,20 @@ cd app
 docker compose up --detach
 ```
 
+### Exécution des tests
+
+1. Activer l'environnement virtuel et installer les dépendances de développement.
+
+2. Naviguer dans le répertoire `app` :
+```bash
+cd app
+```
+
+3. Exécuter les tests avec :
+```bash
+pytest
+```
+
 
 ### Troubleshooting
 
@@ -207,7 +221,7 @@ docker compose up --detach
 cd app
 ```
 
-3. Run the tests with coverage and generate a JUnit report:
+1. Run the tests with:
 ```bash
 pytest
 ```
