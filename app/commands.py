@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import time
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -155,6 +156,8 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     ep.only_on_direct_message()
     ep.only_on_join()
+    time.sleep(3)  # wait for the room to be ready - otherwise the encryption seems to be not ready
+    await matrix_client.room_typing(ep.room.room_id)
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
