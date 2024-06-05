@@ -4,7 +4,7 @@
 
 [tool.poetry]
 name = "tchap_bot"
-version = "1.0"
+version = "1.1"
 description = "Un bot pour tchap"
 authors = ["Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>"]
 license = "MIT"
@@ -14,7 +14,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.11"
 matrix-nio = {extras = ["e2e"], version = "^0.23.0"}
 pillow = "^10.1.0"
 markdown = "^3.5.2"
