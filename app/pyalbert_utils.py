@@ -9,7 +9,7 @@ from config import Config
 from matrix_bot.config import logger
 
 
-def log_and_raise_for_status(response: requests.Response):
+def log_and_raise_for_status(response: requests.Response) -> None:
     if not response.ok:
         try:
             error_detail = response.json().get("detail")

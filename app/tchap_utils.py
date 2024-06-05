@@ -15,7 +15,7 @@ default_power_to_title = {
 }
 
 
-def get_user_to_power_level(salon: MatrixRoom):
+def get_user_to_power_level(salon: MatrixRoom) -> dict:
     users = {user_id: user.name for user_id, user in salon.users.items()}
     return {
         user_name_to_non_hl_user(user_name): salon.power_levels.users.get(user_id, 0)
@@ -23,7 +23,7 @@ def get_user_to_power_level(salon: MatrixRoom):
     }
 
 
-def get_salon_users_str(salon: MatrixRoom):
+def get_salon_users_str(salon: MatrixRoom) -> str:
     user_to_power_level = get_user_to_power_level(salon)
     user_to_print = defaultdict(list)
     for user_name, power_level in user_to_power_level.items():
