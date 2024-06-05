@@ -3,6 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 from functools import wraps
+from typing import Optional
 
 from nio import Event, InviteMemberEvent, MatrixRoom, ToDeviceEvent, UnknownEvent, MegolmEvent, RoomMessageText
 
@@ -39,7 +40,11 @@ class Callbacks:
         self.startup = []
         self.client_callback = []
 
-    def register_on_message_event(self, func, matrix_client) -> None:
+    def register_on_message_event(self, func, matrix_client: Optional[MatrixClient] = None) -> None:
+        if not matrix_client:
+            matrix_client = self.matrix_client
+        else:
+            logger.warn("Use of matrix client in the arguments of register_on_message_event is deprecated", DeprecationWarning)
         def wrapped_func(*args, **kwargs):
             return func(*args, matrix_client=matrix_client, **kwargs)
 
