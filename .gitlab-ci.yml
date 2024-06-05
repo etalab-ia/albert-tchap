@@ -17,7 +17,7 @@ variables:
   CACHE_COMPRESSION_LEVEL: "fastest"
 
 default:
-  image: python:3.9-bullseye
+  image: python:3.11-bookworm
   interruptible: true
   cache:
     key:
@@ -39,6 +39,10 @@ default:
 
 .check:
   stage: check
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs: []
 
 licensing:
@@ -60,6 +64,10 @@ linting:
 
 .test:
   stage: test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs: []
 
 test:
@@ -89,8 +97,8 @@ package-build:
 
 package-publish:
   stage: package-publish
-  only:
-     - main
+  rules:
+     - if: $CI_COMMIT_BRANCH == "main"
   script:
      - /root/.local/bin/poetry config repositories.gitlab "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi"
      - /root/.local/bin/poetry config http-basic.gitlab -- gitlab-ci-token "$CI_JOB_TOKEN"
