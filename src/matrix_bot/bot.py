@@ -48,7 +48,7 @@ class MatrixBot:
             key = self.matrix_client.olm.account.identity_keys["ed25519"]
             logger.info(
                 f'This bot\'s public fingerprint ("Session key") for one-sided verification is: '
-                f"{' '.join([key[i:i+4] for i in range(0, len(key), 4)])}"
+                f"{' '.join([key[i:i + 4] for i in range(0, len(key), 4)])}"
             )
 
     def run(self):
