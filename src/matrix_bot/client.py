@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 import aiofiles.os
+from html.parser import HTMLParser
 
 import markdown
 import requests
@@ -29,6 +30,22 @@ def check_valid_homeserver(homeserver: str):
         response.raise_for_status()
     except requests.HTTPError as http_error:
         raise ValueError(f"Invalid Homeserver, could not connect to {matrix_version_url}") from http_error
+
+
+def extract_text_from_html(html: str) -> str:
+    """This is used to get a rough non-HTML fallback version to put in `body`"""
+
+    class HTMLFilter(HTMLParser):
+        text = ""
+
+        def handle_data(self, data):
+            """Extract and contatenate all text inside and outside of HTML tags, which are ignored"""
+            self.text += data
+
+    filter = HTMLFilter()
+    filter.feed(html)
+
+    return filter.text
 
 
 class MatrixClient(AsyncClient):
@@ -194,10 +211,50 @@ class MatrixClient(AsyncClient):
             room_id=room_id, content={"msgtype": msgtype, "body": message}, reply_to=reply_to, thread_root=thread_root
         )
 
+    async def send_html_message(
+        self,
+        room_id: str,
+        message: str,
+        msgtype: str = "m.text",
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
+        """
+        Send an HTML message in a Matrix room.
+
+        Parameters
+        -----------
+        room_id : str
+            The room id of the destination of the message.
+
+        message : str
+            The content of the message to be sent.
+
+        msgtype : str, optional
+            The type of message to send: m.text (default), m.notice, etc
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
+        """
+        return await self._send_room(
+            room_id=room_id,
+            content={
+                "msgtype": msgtype,
+                "body": extract_text_from_html(message),
+                "format": "org.matrix.custom.html",
+                "formatted_body": message,
+            },
+            reply_to=reply_to,
+            thread_root=thread_root,
+        )
+
     async def send_markdown_message(
         self,
         room_id: str,
-        message,
+        message: str,
         msgtype: str = "m.text",
         reply_to: Optional[str] = None,
         thread_root: Optional[str] = None,
@@ -223,14 +280,10 @@ class MatrixClient(AsyncClient):
             The event id of the message acting as a thread root for the message.
         """
 
-        return await self._send_room(
+        return await self.send_html_message(
             room_id=room_id,
-            content={
-                "msgtype": msgtype,
-                "body": message,
-                "format": "org.matrix.custom.html",
-                "formatted_body": markdown.markdown(message, extensions=["fenced_code", "nl2br"]),
-            },
+            message=markdown.markdown(message, extensions=["fenced_code", "nl2br"]),
+            msgtype=msgtype,
             reply_to=reply_to,
             thread_root=thread_root,
         )
