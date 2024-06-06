@@ -44,7 +44,10 @@ class Callbacks:
         if not matrix_client:
             matrix_client = self.matrix_client
         else:
-            logger.warn("Use of matrix client in the arguments of register_on_message_event is deprecated", DeprecationWarning)
+            logger.warn(
+                "Use of matrix client in the arguments of register_on_message_event is deprecated", DeprecationWarning
+            )
+
         def wrapped_func(*args, **kwargs):
             return func(*args, matrix_client=matrix_client, **kwargs)
 

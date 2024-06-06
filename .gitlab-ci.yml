@@ -54,12 +54,12 @@ licensing:
 linting:
   extends: .check
   script:
-    - "./.venv/bin/flake8 src/tchap_bot/"
+    - "./.venv/bin/flake8 src/"
     # flake8-nb could be used to lint python files as well
     # but we split checks for notebooks linting to have dedicated options
     - "find . -name '*.ipynb' -exec flake8_nb {} \\;"
-    - "./.venv/bin/pylint --output-format=colorized src/tchap_bot tests/ -d R,C || ./.venv/bin/pylint-exit $?"
-    - "./.venv/bin/black --check src/tchap_bot/"
+    - "./.venv/bin/pylint --output-format=colorized src/ tests/ -d R,C || ./.venv/bin/pylint-exit $?"
+    - "./.venv/bin/black --check src/"
 
 
 .test:

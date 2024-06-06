@@ -25,7 +25,7 @@ def check_valid_homeserver(homeserver: str):
         raise ValueError(f"Invalid Homeserver, should start with http:// or https://, is {homeserver} instead")
     matrix_version_url = f"{homeserver}/_matrix/client/versions"
     try:
-        response = requests.get(matrix_version_url)
+        response = requests.get(matrix_version_url, timeout=60)
         response.raise_for_status()
     except requests.HTTPError as http_error:
         raise ValueError(f"Invalid Homeserver, could not connect to {matrix_version_url}") from http_error
@@ -275,7 +275,7 @@ class MatrixClient(AsyncClient):
         if not mime_type:
             mime_type = "application/octet-stream"
         if not filename:
-            Path(file_path).name
+            filename = Path(file_path).name
         file_stat = await aiofiles.os.stat(file_path)
         async with aiofiles.open(file_path, "r+b") as file:
             uploaded_file, maybe_keys = await self.upload(
