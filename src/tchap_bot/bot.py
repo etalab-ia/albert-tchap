@@ -11,7 +11,7 @@ def main():
     tchap_bot = MatrixBot(env_config.matrix_home_server, env_config.matrix_bot_username, env_config.matrix_bot_password)
     for callback in [
         feature
-        for feature_group in env_config.group_used
+        for feature_group in env_config.group_used  # pylint: disable=not-an-iterable
         for feature in command_registry.activate_and_retrieve_group(feature_group)
     ]:
         logger.info("loaded feature", feature=callback.__name__)

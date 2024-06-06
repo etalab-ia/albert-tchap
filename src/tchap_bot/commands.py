@@ -26,8 +26,8 @@ class CommandRegistry:
     function_register: dict
     activated_functions: set[str]
 
-    def add_command(self, *, name: str, help: str, group: str, func):
-        self.function_register[name] = {"help": help, "group": group, "func": func}
+    def add_command(self, *, name: str, help_message: str, group: str, func):
+        self.function_register[name] = {"help": help_message, "group": group, "func": func}
 
     def get_help(self) -> list[str]:
         return [
@@ -46,9 +46,9 @@ class CommandRegistry:
 command_registry = CommandRegistry({}, set())
 
 
-def register_feature(help: str, group: str):
+def register_feature(help: str, group: str):  # pylint: disable=redefined-builtin
     def decorator(func):
-        command_registry.add_command(name=func.__name__, help=help, group=group, func=func)
+        command_registry.add_command(name=func.__name__, help_message=help, group=group, func=func)
         return func
 
     return decorator

@@ -4,7 +4,6 @@
 
 import logging
 from pathlib import Path
-from typing import List
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -41,7 +40,7 @@ class Config(BaseConfig):
     matrix_home_server: str = Field("https://matrix.agent.finances.tchap.gouv.fr", description="adresse du serveur")
     matrix_bot_username: str = Field("", description="username of our matrix bot")
     matrix_bot_password: str = Field("", description="password of our matrix bot")
-    group_used: List[str] = Field(["basic"], description="listes des groupes à utiliser")
+    group_used: list[str] = Field(["basic"], description="listes des groupes à utiliser")
     llm: LlmConfig = Field(default_factory=LlmConfig, description="llm configuration")
 
 
