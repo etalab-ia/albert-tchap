@@ -28,6 +28,7 @@ class CommandRegistry:
         command: str | None,
         prefix: str | None,
         help: str | None,
+        hidden: bool,
         func,
     ):
         self.function_register[name] = {
@@ -37,6 +38,7 @@ class CommandRegistry:
             "command": command,
             "prefix": prefix,
             "help": help,
+            "hidden": hidden,
             "func": func,
         }
 
@@ -88,21 +90,22 @@ class CommandRegistry:
 
         return help_message
 
-    def show_commands(self, config: Config):
+    def show_commands(self, config: Config) -> str:
         cmds = self._get_cmds(config)
         available_cmd = "Les commandes spéciales suivantes sont disponibles :\n\n"
         available_cmd += "- " + "\n- ".join(cmds)
         return available_cmd
 
-    def _get_cmds(self, config):
-        cmds = [
+    def _get_cmds(self, config) -> list[str]:
+        cmds = set(
             feature["help"]
             for name, feature in self.function_register.items()
             if name in self.activated_functions
             and feature["help"]
+            and not feature["hidden"]
             and not (feature.get("command") == "sources" and config.albert_mode == "norag")
-        ]
-        return cmds
+        )
+        return list(cmds)
 
 
 command_registry = CommandRegistry({}, set())
@@ -115,6 +118,7 @@ def register_feature(
     command: str | None = None,
     prefix: str = COMMAND_PREFIX,
     help: str | None = None,
+    hidden: bool = False,
 ):
     def decorator(func):
         command_registry.add_command(
@@ -124,6 +128,7 @@ def register_feature(
             command=command,
             prefix=prefix,
             help=help,
+            hidden=hidden,
             func=func,
         )
         return func
@@ -180,10 +185,11 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 
 
 @register_feature(
-    group="albert_debug",
+    group="albert",
     onEvent=RoomMessageText,
     command="conversation",
     help=f"Pour activer/désactiver le mode conversation, utilisez **{COMMAND_PREFIX}conversation**",
+    hidden=True,
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -198,10 +204,11 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
 
 
 @register_feature(
-    group="albert_debug",
+    group="albert",
     onEvent=RoomMessageText,
     command="debug",
     help=f"Pour afficher des informations sur la configuration actuelle, **{COMMAND_PREFIX}debug**",
+    hidden=True,
 )
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
