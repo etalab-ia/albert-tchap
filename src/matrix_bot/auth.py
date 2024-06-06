@@ -47,7 +47,7 @@ class Credentials:
     """The username of the bot to connect to"""
     password: str
     """The password of the bot to connect to"""
-    session_stored_file: str = bot_lib_config.session_path
+    session_stored_file_path: Path = bot_lib_config.session_path
     """Path to the file that will be used to store the session informations"""
 
 
@@ -64,17 +64,14 @@ class AuthLogin:
     device_name: str = ""
 
     def __post_init__(self):
-        self.session_stored_file_path = (
-            Path(self.credentials.session_stored_file) if self.credentials.session_stored_file else None
-        )
         self.device_name = f"Bot Client using Matrix-Bot id {secrets.token_urlsafe(20)}"
         self.read_session_file()
 
     def read_session_file(self):
         """Reads and decrypts the device_id and access_token from file"""
-        if not self.session_stored_file_path or not self.session_stored_file_path.exists():
+        if not self.credentials.session_stored_file_path or not self.credentials.session_stored_file_path.exists():
             return
-        with open(self.session_stored_file_path, "r") as store_file:
+        with open(self.credentials.session_stored_file_path, "r") as store_file:
             encrypted_session_data = store_file.read()
         try:
             self.device_id, self.access_token, self.device_name = json.loads(
@@ -82,13 +79,13 @@ class AuthLogin:
             )
         except InvalidToken as invalid_token:
             raise ValueError(
-                f"session saved is not loaded. The file {self.session_stored_file_path.resolve()} "
+                f"session saved is not loaded. The file {self.credentials.session_stored_file_path.resolve()} "
                 f"is not compatible with this version of botlib and should be removed"
             ) from invalid_token
 
     def write_session_file(self):
         """Encrypts and writes to file the device_id and access_token."""
-        if not self.session_stored_file_path:
+        if not self.credentials.session_stored_file_path:
             logger.info("device_id and access_token will not be saved")
             return
 
@@ -97,5 +94,5 @@ class AuthLogin:
         encrypted_session = encrypt(
             json.dumps([self.device_id, self.access_token, self.device_name]), self.credentials.password
         )
-        with open(self.session_stored_file_path, "w") as store_file:
+        with open(self.credentials.session_stored_file_path, "w") as store_file:
             store_file.write(encrypted_session)

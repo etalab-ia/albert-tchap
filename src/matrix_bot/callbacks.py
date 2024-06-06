@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
+import warnings
 from functools import wraps
 from typing import Optional
 
@@ -44,7 +45,7 @@ class Callbacks:
         if not matrix_client:
             matrix_client = self.matrix_client
         else:
-            logger.warn(
+            warnings.warn(
                 "Use of matrix client in the arguments of register_on_message_event is deprecated", DeprecationWarning
             )
 
@@ -81,6 +82,9 @@ class Callbacks:
 
     async def invite_callback(self, room: MatrixRoom, event: InviteMemberEvent):
         """Callback for handling invites."""
+        if not isinstance(event, InviteMemberEvent):
+            return
+
         if not event.membership == "invite":
             return
 
@@ -98,7 +102,8 @@ class Callbacks:
         logger.error(
             f"Failed to decrypt message: {event.event_id} from {event.sender} in {room.room_id}. "
             "If this error persists despite verification, reset the crypto session by deleting "
-            f"{self.matrix_client.matrix_config.store_path} and {self.matrix_client.auth.session_stored_file_path}. "
+            f"{self.matrix_client.matrix_config.store_path} "
+            f"and {self.matrix_client.auth.credentials.session_stored_file_path}. "
             "You will have to verify any verified devices anew."
         )
         await self.matrix_client.send_text_message(
