@@ -11,7 +11,15 @@ from html.parser import HTMLParser
 
 import markdown
 import requests
-from nio import AsyncClient, AsyncClientConfig, RoomMessage, RoomSendResponse
+from nio import (
+    AsyncClient,
+    AsyncClientConfig,
+    ErrorResponse,
+    RemoteProtocolError,
+    RoomMessage,
+    RoomSendResponse,
+    UploadError,
+)
 from nio.exceptions import OlmUnverifiedDeviceError
 from nio.responses import UploadResponse
 from PIL import Image
@@ -78,6 +86,8 @@ class MatrixClient(AsyncClient):
         if self.auth.access_token:
             self.access_token = self.auth.access_token
             who_am_i = await self.whoami()
+            if isinstance(who_am_i, ErrorResponse):
+                raise RemoteProtocolError(str(who_am_i))
             self.user_id = who_am_i.user_id
             if self.matrix_config.encryption_enabled:
                 self.load_store()
@@ -85,6 +95,8 @@ class MatrixClient(AsyncClient):
             login_response = await self.login(
                 password=self.auth.credentials.password, device_name=self.auth.device_name
             )
+            if isinstance(login_response, ErrorResponse):
+                raise RemoteProtocolError(str(login_response))
             self.auth.device_id = login_response.device_id
             self.auth.access_token = login_response.access_token
             self.auth.write_session_file()
@@ -96,7 +108,10 @@ class MatrixClient(AsyncClient):
         return {room_id: room for room_id, room in self.rooms.items() if not room_is_direct_message(room)}
 
     async def get_display_name(self):
-        return (await self.get_displayname(self.user_id)).displayname
+        res = await self.get_displayname(self.user_id)
+        if isinstance(res, ErrorResponse):
+            return None
+        return res.displayname
 
     async def _send_room(
         self,
@@ -160,6 +175,7 @@ class MatrixClient(AsyncClient):
             logger.info("Automatically blacklisting the following devices:")
             for user in self.rooms[room_id].users:
                 unverified: List[str] = []
+                assert self.olm
                 for device_id, device in self.olm.device_store[user].items():
                     if not (self.olm.is_device_verified(device) or self.olm.is_device_blacklisted(device)):
                         self.olm.blacklist_device(device)
@@ -322,7 +338,7 @@ class MatrixClient(AsyncClient):
         mime_type: Optional[str] = None,
         filename: Optional[str] = None,
         encrypt: bool = False,
-    ) -> Tuple[UploadResponse, os.stat_result, str, Optional[Dict[str, Any]]]:
+    ) -> Tuple[Union[UploadResponse, UploadError], os.stat_result, str, Optional[Dict[str, Any]]]:
         if not mime_type:
             mime_type, _ = mimetypes.guess_type(file_path)
         if not mime_type:
@@ -369,6 +385,8 @@ class MatrixClient(AsyncClient):
         encrypt = room_id in self.encrypted_rooms
 
         uploaded_file, file_stat, mime_type, maybe_keys = await self._upload_file(image_filepath, encrypt=encrypt)
+        if isinstance(uploaded_file, ErrorResponse):
+            return None
 
         image = Image.open(image_filepath)
         (width, height) = image.size
@@ -424,6 +442,9 @@ class MatrixClient(AsyncClient):
         encrypt = room_id in self.encrypted_rooms
 
         uploaded_file, file_stat, mime_type, maybe_keys = await self._upload_file(video_filepath, encrypt=encrypt)
+        if isinstance(uploaded_file, ErrorResponse):
+            return None
+
         content = {
             "body": os.path.basename(video_filepath),
             "info": {
@@ -482,6 +503,8 @@ class MatrixClient(AsyncClient):
         uploaded_file, file_stat, mime_type, maybe_keys = await self._upload_file(
             filepath, mime_type, filename, encrypt
         )
+        if isinstance(uploaded_file, ErrorResponse):
+            return None
 
         if not filename:
             filename = os.path.basename(filepath)

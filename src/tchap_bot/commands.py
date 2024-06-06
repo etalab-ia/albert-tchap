@@ -99,14 +99,14 @@ async def fomo(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
         salon_item.name: get_salon_moderators(salon_item, fomo_user_name=missing_out_user)
         for salon_item in salons.values()
     }
-    message = f"Les salons **géniaux** que {missing_out_user} loupe sont :\n - " + "\n - ".join(
+    text = f"Les salons **géniaux** que {missing_out_user} loupe sont :\n - " + "\n - ".join(
         [
             f"{salon_name} : demande à {users_print(salon_moderators)}"
             for salon_name, salon_moderators in missing_out_salons.items()
             if salon_moderators is not None
         ]
     )
-    await matrix_client.send_markdown_message(room.room_id, message)
+    await matrix_client.send_markdown_message(room.room_id, text)
 
 
 @register_feature(
@@ -129,14 +129,14 @@ async def kick(room: MatrixRoom, message: Event, matrix_client: MatrixClient):
         for salon_item in salons.values()
     }
     maybe_user_name = f"**{maybe_user_name}**"
-    message = f"Pour expulser {maybe_user_name} :\n - " + "\n - ".join(
+    text = f"Pour expulser {maybe_user_name} :\n - " + "\n - ".join(
         [
             f"{salon_name} : demande à {users_print(salon_moderators) or maybe_user_name}"
             for salon_name, salon_moderators in kick_out_salons.items()
             if salon_moderators is not None
         ]
     )
-    await matrix_client.send_markdown_message(room.room_id, message)
+    await matrix_client.send_markdown_message(room.room_id, text)
 
 
 @register_feature(
