@@ -1,6 +1,6 @@
 [project]
 name = "albert-tchapbot"
-version = "0.1.2"
+version = "0.1.3"
 description = "Albert Tchap Bot"
 authors = [
     { name = "Pôle d'Expertise de la Régulation Numérique", email = "contact.peren@finances.gouv.fr" },
