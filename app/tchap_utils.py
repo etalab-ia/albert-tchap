@@ -7,7 +7,8 @@ import time
 from collections import defaultdict
 from typing import Optional
 
-from matrix_bot.config import Config
+from config import Config
+from matrix_bot.config import bot_lib_config
 from nio import MatrixRoom
 
 default_power_to_title = {
@@ -15,8 +16,6 @@ default_power_to_title = {
     50: "modérateur",
     100: "administrateur",
 }
-
-CONVERSATION_OBSOLESCENCE = 60  # in seconds
 
 
 def get_user_to_power_level(salon: MatrixRoom) -> dict:
@@ -65,10 +64,10 @@ def users_print(matrix_user_name: list[str]) -> str:
     return ", ".join(user_name for user_name in matrix_user_name)
 
 
-def update_last_activity(config: Config) -> int:
-    config.last_activity = int(time.time())
-    return config.last_activity
+def update_last_activity(user_config: Config) -> int:
+    user_config.last_activity = int(time.time())
+    return user_config.last_activity
 
 
-def is_conversation_obsolete(config: Config) -> bool:
-    return int(time.time()) - config.last_activity > CONVERSATION_OBSOLESCENCE
+def is_conversation_obsolete(user_config: Config) -> bool:
+    return int(time.time()) - user_config.last_activity > bot_lib_config.conversation_obsolescence

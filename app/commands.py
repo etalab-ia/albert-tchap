@@ -9,11 +9,11 @@ from dataclasses import dataclass
 
 from config import APP_VERSION, COMMAND_PREFIX, Config
 from matrix_bot.client import MatrixClient
-from matrix_bot.config import logger
+from matrix_bot.config import bot_lib_config, logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
 from pyalbert_utils import generate, generate_sources, get_available_modes, new_chat
-from tchap_utils import CONVERSATION_OBSOLESCENCE, is_conversation_obsolete, update_last_activity
+from tchap_utils import is_conversation_obsolete, update_last_activity
 
 
 @dataclass
@@ -298,15 +298,16 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
 
     ep.only_on_direct_message()
     query = user_prompt
-    update_last_activity(config)
 
     if config.albert_with_history and is_conversation_obsolete(config):
         config.albert_chat_id = new_chat(config)
-        reset_message = f"Comme vous n'avez continué votre conversation avec Albert depuis plus de {int(CONVERSATION_OBSOLESCENCE/60)} minutes, la conversation a été automatiquement remise à zéro."
+        obsolescence_in_minutes = str(bot_lib_config.conversation_obsolescence // 60)
+        reset_message = f"Comme vous n'avez continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, la conversation a été automatiquement remise à zéro."
         await matrix_client.room_typing(ep.room.room_id)
         await matrix_client.send_text_message(ep.room.room_id, reset_message, msgtype="m.notice")
 
     else:
+        update_last_activity(config)
         await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
         try:
             answer = generate(config=config, query=query)
