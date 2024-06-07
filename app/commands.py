@@ -90,6 +90,17 @@ class CommandRegistry:
 
         return help_message
 
+    def get_short_help(self, config: Config) -> str:
+        cmds = self._get_cmds(config)
+
+        short_help_message = "👋 Bonjour, je suis **Albert**, votre **assistant automatique dédié aux questions légales et administratives**. Je suis actuellement en phase de **test**.\n\n"
+
+        short_help_message += "🛠️ **Pour gérer notre conversation** :\n"
+        short_help_message += "- " + "\n- ".join(cmds)
+        short_help_message += "\n\n"
+
+        return short_help_message
+
     def show_commands(self, config: Config) -> str:
         cmds = self._get_cmds(config)
         available_cmd = "Les commandes spéciales suivantes sont disponibles :\n\n"
@@ -180,7 +191,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         reset_message = "La conversation a été remise à zéro."
         await matrix_client.send_text_message(ep.room.room_id, reset_message, msgtype="m.notice")
         await matrix_client.send_markdown_message(
-            ep.room.room_id, command_registry.get_help(config)
+            ep.room.room_id, command_registry.get_short_help(config)
         )
 
 
