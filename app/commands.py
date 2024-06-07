@@ -13,7 +13,6 @@ from matrix_bot.config import bot_lib_config, logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
 from pyalbert_utils import generate, generate_sources, get_available_modes, new_chat
-from tchap_utils import is_conversation_obsolete, update_last_activity
 
 
 @dataclass
@@ -299,39 +298,38 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     ep.only_on_direct_message()
     query = user_prompt
 
-    if config.albert_with_history and is_conversation_obsolete(config):
+    if config.albert_with_history and config.is_conversation_obsolete:
         config.albert_chat_id = new_chat(config)
         obsolescence_in_minutes = str(bot_lib_config.conversation_obsolescence // 60)
-        reset_message = f"Comme vous n'avez continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, la conversation a été automatiquement remise à zéro."
+        reset_message = f"Comme vous n'avez continué pas votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, la conversation a été automatiquement remise à zéro."
         await matrix_client.room_typing(ep.room.room_id)
         await matrix_client.send_text_message(ep.room.room_id, reset_message, msgtype="m.notice")
 
-    else:
-        update_last_activity(config)
-        await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
-        try:
-            answer = generate(config=config, query=query)
-        except Exception as albert_exception:
-            # Send an error message to the user
+    config.update_last_activity()
+    await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
+    try:
+        answer = generate(config=config, query=query)
+    except Exception as albert_exception:
+        # Send an error message to the user
+        await matrix_client.send_markdown_message(
+            ep.room.room_id,
+            f"\u26a0\ufe0f **Erreur**\n\nAlbert est actuellement en maintenance, étant encore en phase de test. Réessayez plus tard.",
+        )
+        # Redirect the error message to the errors room if it exists
+        if config.errors_room_id:
             await matrix_client.send_markdown_message(
-                ep.room.room_id,
-                f"\u26a0\ufe0f **Erreur**\n\nAlbert est actuellement en maintenance, étant encore en phase de test. Réessayez plus tard.",
+                config.errors_room_id,
+                f"\u26a0\ufe0f **Albert API erreur**\n\n{albert_exception}\n\nMatrix server: {config.matrix_home_server}",
             )
-            # Redirect the error message to the errors room if it exists
-            if config.errors_room_id:
-                await matrix_client.send_markdown_message(
-                    config.errors_room_id,
-                    f"\u26a0\ufe0f **Albert API erreur**\n\n{albert_exception}\n\nMatrix server: {config.matrix_home_server}",
-                )
-            return
+        return
 
-        logger.debug(f"{query=}")
-        logger.debug(f"{answer=}")
-        try:  # sometimes the async code fail (when input is big) with random asyncio errors
-            await matrix_client.send_markdown_message(ep.room.room_id, answer)
-        except Exception as llm_exception:  # it seems to work when we retry
-            logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
-            await matrix_client.send_markdown_message(ep.room.room_id, answer)
+    logger.debug(f"{query=}")
+    logger.debug(f"{answer=}")
+    try:  # sometimes the async code fail (when input is big) with random asyncio errors
+        await matrix_client.send_markdown_message(ep.room.room_id, answer)
+    except Exception as llm_exception:  # it seems to work when we retry
+        logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
+        await matrix_client.send_markdown_message(ep.room.room_id, answer)
 
 
 @register_feature(

@@ -3,12 +3,9 @@
 #
 # SPDX-License-Identifier: MIT
 
-import time
 from collections import defaultdict
 from typing import Optional
 
-from config import Config
-from matrix_bot.config import bot_lib_config
 from nio import MatrixRoom
 
 default_power_to_title = {
@@ -62,12 +59,3 @@ def user_name_to_non_hl_user(complete_user_name: str) -> str:
 def users_print(matrix_user_name: list[str]) -> str:
     """Print a list of user without highlighting them in the tchap case"""
     return ", ".join(user_name for user_name in matrix_user_name)
-
-
-def update_last_activity(user_config: Config) -> int:
-    user_config.last_activity = int(time.time())
-    return user_config.last_activity
-
-
-def is_conversation_obsolete(user_config: Config) -> bool:
-    return int(time.time()) - user_config.last_activity > bot_lib_config.conversation_obsolescence

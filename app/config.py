@@ -8,6 +8,7 @@ import time
 import tomllib
 from pathlib import Path
 
+from matrix_bot.config import bot_lib_config
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -57,6 +58,13 @@ class Config(BaseConfig):
     albert_with_history: bool = Field(True, description="Conversational mode")
     albert_chat_id: int | None = Field(None, description="Current chat id")
     albert_stream_id: int | None = Field(None, description="Current stream id")
+
+    @property
+    def is_conversation_obsolete(self) -> bool:
+        return int(time.time()) - self.last_activity > bot_lib_config.conversation_obsolescence
+
+    def update_last_activity(self) -> None:
+        self.last_activity = int(time.time())
 
 
 env_config = Config()
