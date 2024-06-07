@@ -43,6 +43,7 @@ class Config(BaseConfig):
         description="List of allowed Tchap users email domains allowed to use Albert Tchap bot",
     )
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
+    last_activity: int = Field(0, description="Last activity timestamp")
     # Albert API settings
     albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API Token")
