@@ -312,7 +312,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     if config.albert_with_history and config.is_conversation_obsolete:
         config.albert_chat_id = new_chat(config)
         obsolescence_in_minutes = str(bot_lib_config.conversation_obsolescence // 60)
-        reset_message = f"Comme vous n'avez continué pas votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, la conversation a été automatiquement remise à zéro."
+        reset_message = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, la conversation a été automatiquement remise à zéro."
         await matrix_client.room_typing(ep.room.room_id)
         await matrix_client.send_text_message(ep.room.room_id, reset_message, msgtype="m.notice")
 
