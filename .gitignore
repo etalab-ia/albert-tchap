@@ -5,8 +5,7 @@
 # Project-specific
 store
 session.txt
-users_pending.txt
-users_whitelist.txt
+users.json
 
 *.pyc
 __pycache__

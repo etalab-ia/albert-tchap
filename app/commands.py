@@ -3,7 +3,6 @@
 #
 # SPDX-License-Identifier: MIT
 
-import time
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -150,25 +149,7 @@ def register_feature(
 )
 async def help(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
-    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
-
-
-@register_feature(
-    group="albert",
-    onEvent=RoomMemberEvent,
-    # @DEBUG: RoomCreateEvent is not captured ?
-    help=None,
-)
-async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
-    """
-    Receive the join/invite event and send the welcome/help message
-    """
-    config = user_configs[ep.sender]
-    ep.only_on_direct_message()
-    ep.only_on_join()
-    config.update_last_activity()
-    time.sleep(3)  # wait for the room to be ready - otherwise the encryption seems to be not ready
+    await ep.only_allowed_sender(config)
     await matrix_client.room_typing(ep.room.room_id)
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
@@ -181,6 +162,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender(config)
     if config.albert_with_history:
         config.update_last_activity()
         await matrix_client.room_typing(ep.room.room_id)
@@ -201,6 +183,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender(config)
     await matrix_client.room_typing(ep.room.room_id)
     if config.albert_with_history:
         config.albert_with_history = False
@@ -222,6 +205,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender(config)
     await matrix_client.room_typing(ep.room.room_id)
     debug_message = f"Configuration actuelle :\n\n"
     debug_message += f"- Version: {APP_VERSION}\n"
@@ -271,6 +255,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender(config)
     await matrix_client.room_typing(ep.room.room_id)
     commands = ep.event.body.split()
     # Get all available mode for the current model
@@ -297,8 +282,8 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender(config)
     await matrix_client.room_typing(ep.room.room_id)
-
     try:
         if config.albert_stream_id:
             sources = generate_sources(config=config, stream_id=config.albert_stream_id)
@@ -328,8 +313,17 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     Receive a message event which is not a command, send the prompt to Albert API and return the response to the user
     """
-    # user_prompt: str = await ep.hl()
     config = user_configs[ep.sender]
+    await ep.only_allowed_sender(config)
+
+    # If the user has never used Albert, we send the help message
+    if not config.has_activity(ep.sender):
+        config.update_last_activity(ep.sender)
+        await matrix_client.room_typing(ep.room.room_id)
+        await matrix_client.send_markdown_message(
+            ep.room.room_id, command_registry.get_help(config)
+        )
+
     user_prompt = ep.event.body
     if user_prompt.startswith(COMMAND_PREFIX):
         raise EventNotConcerned
@@ -347,7 +341,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
 
-    config.update_last_activity()
+    config.update_last_activity(ep.sender)
     await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
     try:
         answer = generate(config=config, query=query)
