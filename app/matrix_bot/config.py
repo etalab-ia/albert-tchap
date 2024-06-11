@@ -45,6 +45,7 @@ class BotLibConfig(BaseSettings):
 
 
 bot_lib_config = BotLibConfig()
+print(bot_lib_config.dict())
 structlog.configure(
     wrapper_class=structlog.make_filtering_bound_logger(bot_lib_config.log_level),
 )

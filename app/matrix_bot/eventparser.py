@@ -57,11 +57,11 @@ class EventParser:
     def sender_domain(self) -> str | None:
         """
         Sender IDs are formatted like this: "@<mail_username>-<mail_domain>:<matrix_server>
-        e.g. @john.doe-ministere_example.gouv.fr1:agent.ministere_example.tchap.gouv.fr
+        e.g. @john.doe-ministere_example.gouv.fr1:agent.ministere_example.tchap.gouv.frmerci
         """
         match: re.Match[str] | None = re.search(
-            r"(?<=\-)(.*?)[0-9]*(?=\:)", self.event.sender
-        )  # match the domain name (between the first "-" and ":", with optional numbers to ignore at the end)
+            r"(?<=\-)[^\-\:]+[0-9]*(?=\:)", self.event.sender
+        )  # match the domain name (between the last "-" and ":", with optional numbers to ignore at the end of the domain) WARNING: this regex is not perfect and doesn't work for domain names with dashes in it like "developpement-durable.gouv.fr"
         if match:
             return match.group(0)
         logger.warning("Could not extract domain from sender ID", sender_id=self.sender_id)
