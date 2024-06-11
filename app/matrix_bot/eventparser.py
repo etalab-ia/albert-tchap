@@ -101,7 +101,7 @@ class EventParser:
         if not self.is_sender_allowed():
             await self.matrix_client.send_markdown_message(
                 self.room.room_id,
-                "Albert n'est pas encore disponible pour votre domaine. Merci de rester en contact, il sera disponible après un bêta test !",
+                "Albert n'est pas encore disponible pour votre domaine. Merci de rester en contact, il sera disponible après un beta test !",
             )
             raise EventNotConcerned
 
