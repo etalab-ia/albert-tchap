@@ -90,17 +90,6 @@ class CommandRegistry:
 
         return help_message
 
-    def get_short_help(self, config: Config) -> str:
-        cmds = self._get_cmds(config)
-
-        short_help_message = "👋 Bonjour, je suis **Albert**, votre **assistant automatique dédié aux questions légales et administratives**. Je suis actuellement en phase de **test**.\n\n"
-
-        short_help_message += "🛠️ **Pour gérer notre conversation** :\n"
-        short_help_message += "- " + "\n- ".join(cmds)
-        short_help_message += "\n\n"
-
-        return short_help_message
-
     def show_commands(self, config: Config) -> str:
         cmds = self._get_cmds(config)
         available_cmd = "Les commandes spéciales suivantes sont disponibles :\n\n"
@@ -188,10 +177,10 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     if config.albert_with_history:
         config.albert_chat_id = new_chat(config)
-        reset_message = "La conversation a été remise à zéro."
-        await matrix_client.send_text_message(ep.room.room_id, reset_message, msgtype="m.notice")
+        reset_message = "**La conversation a été remise à zéro.**\n\n"
+        reset_message += command_registry.show_commands(config)
         await matrix_client.send_markdown_message(
-            ep.room.room_id, command_registry.get_short_help(config)
+            ep.room.room_id, reset_message, msgtype="m.notice"
         )
 
 
@@ -312,9 +301,12 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     if config.albert_with_history and config.is_conversation_obsolete:
         config.albert_chat_id = new_chat(config)
         obsolescence_in_minutes = str(bot_lib_config.conversation_obsolescence // 60)
-        reset_message = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, la conversation a été automatiquement remise à zéro."
+        reset_message = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, **la conversation a été automatiquement remise à zéro.**\n\n"
+        reset_message += command_registry.show_commands(config)
         await matrix_client.room_typing(ep.room.room_id)
-        await matrix_client.send_text_message(ep.room.room_id, reset_message, msgtype="m.notice")
+        await matrix_client.send_markdown_message(
+            ep.room.room_id, reset_message, msgtype="m.notice"
+        )
 
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
