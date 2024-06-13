@@ -5,7 +5,7 @@ SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 SPDX-License-Identifier: MIT
 -->
 
-# Albert Tchap Bot
+# Albert Tchap
 
 *[English version below](#english-version)*
 
