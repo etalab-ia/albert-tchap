@@ -105,7 +105,7 @@ class CommandRegistry:
             and not feature["hidden"]
             and not (feature.get("command") == "sources" and config.albert_mode == "norag")
         )
-        return list(cmds)
+        return sorted(list(cmds))
 
 
 command_registry = CommandRegistry({}, set())
@@ -230,6 +230,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     command="mode",
     help=f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), utilisez **{COMMAND_PREFIX}mode** MODE",
+    hidden=True,
 )
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
