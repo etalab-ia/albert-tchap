@@ -175,8 +175,9 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
     if config.albert_with_history:
+        config.update_last_activity()
+        await matrix_client.room_typing(ep.room.room_id)
         config.albert_chat_id = new_chat(config)
         reset_message = "**La conversation a été remise à zéro.**\n\n"
         reset_message += command_registry.show_commands(config)
