@@ -323,6 +323,12 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, command_registry.get_help(config)
         )
+        # Redirect the error message to the errors room if it exists
+        if config.errors_room_id:
+            await matrix_client.send_markdown_message(
+                config.errors_room_id,
+                f"\u26a0\ufe0f **New Albert Tchap user access request**\n\n{ep.sender}\n\nMatrix server: {config.matrix_home_server}",
+            )
 
     user_prompt = ep.event.body
     if user_prompt.startswith(COMMAND_PREFIX):
