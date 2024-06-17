@@ -68,6 +68,7 @@ Pour que le bot se connecte à l'API d'Albert, il faut également renseigner les
 - `ALBERT_API_TOKEN` : le token API utilisé pour authoriser le bot a consommer l'API Albert. Pour plus d'informations, consultez la documentation de l'API Albert
 - `ALBERT_MODEL_NAME` : le nom du modèle Albert à utiliser pour le bot (exemple : `ALBERT_MODEL_NAME='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le [hub des modèles Albert de HuggingFace](https://huggingface.co/collections/AgentPublic/albert-662a1d95c93a47aca5cecc82)
 - `ALBERT_MODE` : le mode d'Albert à utiliser pour le bot (exemple : `ALBERT_MODE='rag'`). Pour plus d'informations, consultez la documentation de l'API Albert
+- `CONVERSATION_OBSOLESCENCE` : le temps en secondes après lequel une conversation se remet automatiquement à zéro (exemple : `CONVERSATION_OBSOLESCENCE=3600` pour une heure). Par défaut : `3600` (une heure)
 
 
 ### Utilisation en dehors de Docker
@@ -180,6 +181,7 @@ For the bot to connect to Albert API, you also need to provide the following var
 - `ALBERT_API_TOKEN`: the API token used to authorize the bot to consume the Albert API. For more info, check the Albert API documentation
 - `ALBERT_MODEL_NAME`: the name of the model to use for the bot (example: `ALBERT_MODEL_NAME='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the [Albert models hub on HuggingFace](https://huggingface.co/collections/AgentPublic/albert-662a1d95c93a47aca5cecc82).
 - `ALBERT_MODE`: the mode of Albert to use for the bot (example: `ALBERT_MODE='rag'`). For more info, check the Albert API documentation
+- `CONVERSATION_OBSOLESCENCE` : the time in seconds after which a conversation automatically resets (example: `CONVERSATION_OBSOLESCENCE=3600` for one hour). Default: `3600` (one hour)
 
 ### Usage outside of Docker
 

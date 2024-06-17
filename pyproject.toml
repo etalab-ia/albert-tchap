@@ -1,7 +1,7 @@
 [project]
 name = "albert-tchap"
 version = "0.1.8"
-description = "Albert Tchap Bot"
+description = "Albert Tchap"
 authors = [
     { name = "Pôle d'Expertise de la Régulation Numérique", email = "contact.peren@finances.gouv.fr" },
     { name = "Etalab", email = "etalab@modernisation.gouv.fr" },
