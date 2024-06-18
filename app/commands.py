@@ -42,7 +42,7 @@ class CommandRegistry:
             "func": func,
         }
 
-    def activate_and_retrieve_group(self, group_name: str):
+    def activate_and_retrieve_group(self, group_name: str) -> list:
         features = []
         for name, feature in self.function_register.items():
             if feature["group"] == group_name:
@@ -50,7 +50,7 @@ class CommandRegistry:
                 features.append(feature)
         return features
 
-    def is_valid_command(self, command):
+    def is_valid_command(self, command) -> bool:
         return command in [
             feature["command"]
             for name, feature in self.function_register.items()
@@ -96,7 +96,7 @@ class CommandRegistry:
         available_cmd += "- " + "\n- ".join(cmds)
         return available_cmd
 
-    def _get_cmds(self, config) -> list[str]:
+    def _get_cmds(self, config: Config) -> list[str]:
         cmds = set(
             feature["help"]
             for name, feature in self.function_register.items()
