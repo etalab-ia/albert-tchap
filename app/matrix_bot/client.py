@@ -4,12 +4,22 @@
 # SPDX-License-Identifier: MIT
 import mimetypes
 import os
+from html.parser import HTMLParser
 from pathlib import Path
+from typing import Any, Dict, Optional, Tuple, Union
 
 import aiofiles.os
 import markdown
 import requests
-from nio import AsyncClient, AsyncClientConfig
+from nio import (
+    AsyncClient,
+    AsyncClientConfig,
+    ErrorResponse,
+    RemoteProtocolError,
+    RoomMessage,
+    RoomSendResponse,
+    UploadError,
+)
 from nio.exceptions import OlmUnverifiedDeviceError
 from nio.responses import UploadResponse
 from PIL import Image
@@ -26,12 +36,28 @@ def check_valid_homeserver(homeserver: str):
         )
     matrix_version_url = f"{homeserver}/_matrix/client/versions"
     try:
-        response = requests.get(matrix_version_url)
+        response = requests.get(matrix_version_url, timeout=60)
         response.raise_for_status()
     except requests.HTTPError as http_error:
         raise ValueError(
             f"Invalid Homeserver, could not connect to {matrix_version_url}"
         ) from http_error
+
+
+def extract_text_from_html(html: str) -> str:
+    """This is used to get a rough non-HTML fallback version to put in `body`"""
+
+    class HTMLFilter(HTMLParser):
+        text = ""
+
+        def handle_data(self, data):
+            """Extract and contatenate all text inside and outside of HTML tags, which are ignored"""
+            self.text += data
+
+    filter = HTMLFilter()
+    filter.feed(html)
+
+    return filter.text
 
 
 class MatrixClient(AsyncClient):
@@ -64,6 +90,8 @@ class MatrixClient(AsyncClient):
         if self.auth.access_token:
             self.access_token = self.auth.access_token
             who_am_i = await self.whoami()
+            if isinstance(who_am_i, ErrorResponse):
+                raise RemoteProtocolError(str(who_am_i))
             self.user_id = who_am_i.user_id
             if self.matrix_config.encryption_enabled:
                 self.load_store()
@@ -71,6 +99,8 @@ class MatrixClient(AsyncClient):
             login_response = await self.login(
                 password=self.auth.credentials.password, device_name=self.auth.device_name
             )
+            if isinstance(login_response, ErrorResponse):
+                raise RemoteProtocolError(str(login_response))
             self.auth.device_id = login_response.device_id
             self.auth.access_token = login_response.access_token
             self.auth.write_session_file()
@@ -86,14 +116,19 @@ class MatrixClient(AsyncClient):
         }
 
     async def get_display_name(self):
-        return (await self.get_displayname(self.user_id)).displayname
+        res = await self.get_displayname(self.user_id)
+        if isinstance(res, ErrorResponse):
+            return None
+        return res.displayname
 
     async def _send_room(
         self,
         room_id: str,
         content: dict,
         message_type: str = "m.room.message",
-        ignore_unverified_devices: bool = None,
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+        ignore_unverified_devices: Optional[bool] = None,
     ):
         """
         Send a custom event in a Matrix room.
@@ -109,19 +144,40 @@ class MatrixClient(AsyncClient):
         message_type : str, optional
             The type of event to send, default m.room.message.
 
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
+
         ignore_unverified_devices : bool, optional
             Whether to ignore that devices are not verified and send the
             message to them regardless on a per-message basis.
+            If None is specified, the global config value is used.
         """
 
+        if thread_root:
+            content.setdefault("m.relates_to", {})["event_id"] = thread_root
+            content["m.relates_to"]["rel_type"] = "m.thread"
+
+        if reply_to:
+            content.setdefault("m.relates_to", {}).setdefault("m.in_reply_to", {})["event_id"] = (
+                reply_to
+            )
+
+        if thread_root and reply_to:
+            content["m.relates_to"]["is_falling_back"] = True
+
         try:
-            await self.room_send(
+            res = await self.room_send(
                 room_id=room_id,
                 message_type=message_type,
                 content=content,
                 ignore_unverified_devices=ignore_unverified_devices
                 or self.matrix_config.ignore_unverified_devices,
             )
+            if isinstance(res, RoomSendResponse):
+                return res.event_id
         except OlmUnverifiedDeviceError:
             logger.info(
                 "Message could not be sent. "
@@ -130,6 +186,7 @@ class MatrixClient(AsyncClient):
             logger.info("Automatically blacklisting the following devices:")
             for user in self.rooms[room_id].users:
                 unverified: list[str] = []
+                assert self.olm
                 for device_id, device in self.olm.device_store[user].items():
                     if not (
                         self.olm.is_device_verified(device)
@@ -140,15 +197,26 @@ class MatrixClient(AsyncClient):
                 if len(unverified) > 0:
                     logger.info(f"\tUser {user}: {', '.join(unverified)}")
 
-            await self.room_send(
+            res = await self.room_send(
                 room_id=room_id,
                 message_type=message_type,
                 content=content,
                 ignore_unverified_devices=ignore_unverified_devices
                 or self.matrix_config.ignore_unverified_devices,
             )
+            if isinstance(res, RoomSendResponse):
+                return res.event_id
 
-    async def send_text_message(self, room_id: str, message: str, msgtype: str = "m.text"):
+        return None
+
+    async def send_text_message(
+        self,
+        room_id: str,
+        message: str,
+        msgtype: str = "m.text",
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
         """
         Send a text message in a Matrix room.
 
@@ -162,11 +230,69 @@ class MatrixClient(AsyncClient):
 
         msgtype : str, optional
             The type of message to send: m.text (default), m.notice, etc
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
         """
 
-        await self._send_room(room_id=room_id, content={"msgtype": msgtype, "body": message})
+        return await self._send_room(
+            room_id=room_id,
+            content={"msgtype": msgtype, "body": message},
+            reply_to=reply_to,
+            thread_root=thread_root,
+        )
 
-    async def send_markdown_message(self, room_id: str, message, msgtype: str = "m.text"):
+    async def send_html_message(
+        self,
+        room_id: str,
+        message: str,
+        msgtype: str = "m.text",
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
+        """
+        Send an HTML message in a Matrix room.
+
+        Parameters
+        -----------
+        room_id : str
+            The room id of the destination of the message.
+
+        message : str
+            The content of the message to be sent.
+
+        msgtype : str, optional
+            The type of message to send: m.text (default), m.notice, etc
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
+        """
+        return await self._send_room(
+            room_id=room_id,
+            content={
+                "msgtype": msgtype,
+                "body": extract_text_from_html(message),
+                "format": "org.matrix.custom.html",
+                "formatted_body": message,
+            },
+            reply_to=reply_to,
+            thread_root=thread_root,
+        )
+
+    async def send_markdown_message(
+        self,
+        room_id: str,
+        message: str,
+        msgtype: str = "m.text",
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
         """
         Send a markdown message in a Matrix room.
 
@@ -180,19 +306,23 @@ class MatrixClient(AsyncClient):
 
         msgtype : str, optional
             The type of message to send: m.text (default), m.notice, etc
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
         """
 
-        await self._send_room(
+        return await self.send_html_message(
             room_id=room_id,
-            content={
-                "msgtype": msgtype,
-                "body": message,
-                "format": "org.matrix.custom.html",
-                "formatted_body": markdown.markdown(message, extensions=["fenced_code", "nl2br"]),
-            },
+            message=markdown.markdown(message, extensions=["fenced_code", "nl2br"]),
+            msgtype=msgtype,
+            reply_to=reply_to,
+            thread_root=thread_root,
         )
 
-    async def send_reaction(self, room_id: str, event, key: str):
+    async def send_reaction(self, room_id: str, event: RoomMessage, key: str):
         """
         Send a reaction to a message in a Matrix room.
 
@@ -208,31 +338,51 @@ class MatrixClient(AsyncClient):
             The content of the reaction. This is usually an emoji, but may technically be any text.
         """
 
-        await self._send_room(
+        return await self._send_room(
             room_id=room_id,
             content={
-                "m.relates_to": {"event_id": event.event_id, "key": key, "rel_type": "m.annotation"}
+                "m.relates_to": {
+                    "event_id": event.event_id,
+                    "key": key,
+                    "rel_type": "m.annotation",
+                }
             },
             message_type="m.reaction",
         )
 
     async def _upload_file(
-        self, file_path: str | Path
-    ) -> tuple[UploadResponse, os.stat_result, str]:
-        mime_type = mimetypes.guess_type(file_path)[0]
+        self,
+        file_path: Union[str, Path],
+        mime_type: Optional[str] = None,
+        filename: Optional[str] = None,
+        encrypt: bool = False,
+    ) -> Tuple[Union[UploadResponse, UploadError], os.stat_result, str, Optional[Dict[str, Any]]]:
+        if not mime_type:
+            mime_type, _ = mimetypes.guess_type(file_path)
+        if not mime_type:
+            mime_type = "application/octet-stream"
+        if not filename:
+            filename = Path(file_path).name
         file_stat = await aiofiles.os.stat(file_path)
         async with aiofiles.open(file_path, "r+b") as file:
-            uploaded_file, _maybe_keys = await self.upload(
+            uploaded_file, maybe_keys = await self.upload(
                 file,
                 content_type=mime_type,
-                filename=os.path.basename(file_path),
+                filename=filename,
                 filesize=file_stat.st_size,
+                encrypt=encrypt,
             )
         if not isinstance(uploaded_file, UploadResponse):
             logger.error(f"Failed Upload Response: {uploaded_file}")
-        return uploaded_file, file_stat, mime_type
+        return uploaded_file, file_stat, mime_type, maybe_keys
 
-    async def send_image_message(self, room_id: str, image_filepath: str):
+    async def send_image_message(
+        self,
+        room_id: str,
+        image_filepath: str,
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
         """
         Send an image message in a Matrix room.
 
@@ -243,8 +393,20 @@ class MatrixClient(AsyncClient):
 
         image_filepath : str
             The path to the image on your machine.
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
         """
-        uploaded_file, file_stat, mime_type = await self._upload_file(image_filepath)
+        encrypt = room_id in self.encrypted_rooms
+
+        uploaded_file, file_stat, mime_type, maybe_keys = await self._upload_file(
+            image_filepath, encrypt=encrypt
+        )
+        if isinstance(uploaded_file, ErrorResponse):
+            return None
 
         image = Image.open(image_filepath)
         (width, height) = image.size
@@ -260,14 +422,28 @@ class MatrixClient(AsyncClient):
                 "thumbnail_url": None,
             },
             "msgtype": "m.image",
-            "url": uploaded_file.content_uri,
         }
+
+        if encrypt and maybe_keys:
+            content["file"] = maybe_keys
+            content["file"]["url"] = uploaded_file.content_uri
+        else:
+            content["url"] = uploaded_file.content_uri
+
         try:
-            await self._send_room(room_id=room_id, content=content)
+            return await self._send_room(
+                room_id=room_id, content=content, reply_to=reply_to, thread_root=thread_root
+            )
         except Exception:
             logger.error(f"Failed to send image file {image_filepath}")
 
-    async def send_video_message(self, room_id: str, video_filepath: str):
+    async def send_video_message(
+        self,
+        room_id: str,
+        video_filepath: str,
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
         """
         Send a video message in a Matrix room.
 
@@ -278,16 +454,105 @@ class MatrixClient(AsyncClient):
 
         video_filepath : str
             The path to the video on your machine.
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
         """
-        uploaded_file, file_stat, mime_type = await self._upload_file(video_filepath)
+        encrypt = room_id in self.encrypted_rooms
+
+        uploaded_file, file_stat, mime_type, maybe_keys = await self._upload_file(
+            video_filepath, encrypt=encrypt
+        )
+        if isinstance(uploaded_file, ErrorResponse):
+            return None
+
         content = {
             "body": os.path.basename(video_filepath),
-            "info": {"size": file_stat.st_size, "mimetype": mime_type, "thumbnail_info": None},
+            "info": {
+                "size": file_stat.st_size,
+                "mimetype": mime_type,
+                "thumbnail_info": None,
+            },
             "msgtype": "m.video",
-            "url": uploaded_file.content_uri,
         }
 
+        if encrypt and maybe_keys:
+            content["file"] = maybe_keys
+            content["file"]["url"] = uploaded_file.content_uri
+        else:
+            content["url"] = uploaded_file.content_uri
+
         try:
-            await self._send_room(room_id=room_id, content=content)
+            return await self._send_room(
+                room_id=room_id, content=content, reply_to=reply_to, thread_root=thread_root
+            )
         except Exception:
             logger.error(f"Failed to send video file {video_filepath}")
+
+    async def send_file_message(
+        self,
+        room_id: str,
+        filepath: str,
+        mime_type: Optional[str] = None,
+        filename: Optional[str] = None,
+        reply_to: Optional[str] = None,
+        thread_root: Optional[str] = None,
+    ):
+        """
+        Send a file message in a Matrix room.
+
+        Parameters
+        -----------
+        room_id : str
+            The room id of the destination of the message.
+
+        filepath : str
+            The path to the image on your machine.
+
+        mime_type : str, optional
+            The MIME type of the file. If not specified it will try to
+            autodetect it.
+
+        filename (str, optional): The file's original name.
+
+        reply_to : str, optional
+            The event id of the message to reply to.
+
+        thread_root : str, optional
+            The event id of the message acting as a thread root for the message.
+        """
+        encrypt = room_id in self.encrypted_rooms
+
+        uploaded_file, file_stat, mime_type, maybe_keys = await self._upload_file(
+            filepath, mime_type, filename, encrypt
+        )
+        if isinstance(uploaded_file, ErrorResponse):
+            return None
+
+        if not filename:
+            filename = os.path.basename(filepath)
+
+        content = {
+            "body": filename,
+            "info": {
+                "size": file_stat.st_size,
+                "mimetype": mime_type,
+            },
+            "msgtype": "m.file",
+        }
+
+        if encrypt and maybe_keys:
+            content["file"] = maybe_keys
+            content["file"]["url"] = uploaded_file.content_uri
+        else:
+            content["url"] = uploaded_file.content_uri
+
+        try:
+            return await self._send_room(
+                room_id=room_id, content=content, reply_to=reply_to, thread_root=thread_root
+            )
+        except Exception:
+            logger.error(f"Failed to send file {filepath}")

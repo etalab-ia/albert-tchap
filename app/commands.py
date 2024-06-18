@@ -27,7 +27,7 @@ class CommandRegistry:
         onEvent: Event,
         command: str | None,
         prefix: str | None,
-        help: str | None,
+        help_message: str | None,
         hidden: bool,
         func,
     ):
@@ -127,7 +127,7 @@ def register_feature(
             onEvent=onEvent,
             command=command,
             prefix=prefix,
-            help=help,
+            help_message=help,
             hidden=hidden,
             func=func,
         )

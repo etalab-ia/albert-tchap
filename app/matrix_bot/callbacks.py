@@ -2,7 +2,9 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
+import warnings
 from functools import wraps
+from typing import Optional
 
 from nio import (
     Event,
@@ -63,12 +65,16 @@ class Callbacks:
         self.startup = []
         self.client_callback = []
 
-    def register_on_custom_event(self, func, onEvent: Event, feature: dict):
-        @properly_fail(self.matrix_client)
-        @ignore_when_not_concerned
-        async def wrapped_func(room, event):
-            if not isinstance(event, onEvent):
-                raise EventNotConcerned
+    def register_on_message_event(self, func, matrix_client: Optional[MatrixClient] = None) -> None:
+        if not matrix_client:
+            matrix_client = self.matrix_client
+        else:
+            warnings.warn(
+                "Use of matrix client in the arguments of register_on_message_event is deprecated", DeprecationWarning
+            )
+
+        def wrapped_func(*args, **kwargs):
+            return func(*args, matrix_client=matrix_client, **kwargs)
 
             if onEvent == RoomMessageText:
                 ep = MessageEventParser(
@@ -114,6 +120,9 @@ class Callbacks:
 
     async def invite_callback(self, room: MatrixRoom, event: InviteMemberEvent):
         """Callback for handling invites."""
+        if not isinstance(event, InviteMemberEvent):
+            return
+
         if not event.membership == "invite":
             return
 
@@ -131,7 +140,8 @@ class Callbacks:
         logger.error(
             f"Failed to decrypt message: {event.event_id} from {event.sender} in {room.room_id}. "
             "If this error persists despite verification, reset the crypto session by deleting "
-            f"{self.matrix_client.matrix_config.store_path} and {self.matrix_client.auth.session_stored_file_path}. "
+            f"{self.matrix_client.matrix_config.store_path} "
+            f"and {self.matrix_client.auth.credentials.session_stored_file_path}. "
             "You will have to verify any verified devices anew."
         )
         await self.matrix_client.send_text_message(
