@@ -5,8 +5,6 @@
 # SPDX-License-Identifier: MIT
 import re
 from dataclasses import dataclass
-from functools import wraps
-from typing import Generic, TypeVar
 
 from config import env_config
 from nio import Event, MatrixRoom, RoomMessageText
@@ -20,36 +18,15 @@ class EventNotConcerned(Exception):
     """Exception to say that the current event is not concerned by this parser"""
 
 
-def ignore_when_not_concerned(function):
-    """decorator to use with async function using EventParser"""
-
-    @wraps(function)
-    def decorated(*args, **kwargs):
-        function_instance = function(*args, **kwargs)
-
-        async def inner():
-            try:
-                return await function_instance
-            except EventNotConcerned:
-                return
-
-        return inner()
-
-    return decorated
-
-
-E = TypeVar("E", bound=Event)
-
-
 @dataclass
-class EventParser(Generic[E]):
+class EventParser:
     """
     Parse the current event for the callbacks.
     Many useful methods that raises a EventNotConcerned when the action do not concern the current event
     """
 
     room: MatrixRoom
-    event: E
+    event: Event
     matrix_client: MatrixClient
     log_usage: bool = False
 
@@ -132,7 +109,7 @@ class EventParser(Generic[E]):
 class MessageEventParser(EventParser):
     event: RoomMessageText
 
-    def _command(self, body: str, command: str, prefix="!", command_name: str = "") -> str:
+    def _command(self, command: str, prefix: str, body=None, command_name: str = "") -> str:
         command_prefix = f"{prefix}{command}"
         if body.split()[0] != command_prefix:
             raise EventNotConcerned
@@ -153,28 +130,25 @@ class MessageEventParser(EventParser):
         :return: the text after the command
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
-        return self._command(body=self.event.body, command=command, prefix=prefix, command_name=command_name)
+        return self._command(
+            command=command, prefix=prefix, command_name=command_name, body=self.event.body
+        )
 
-    async def hl(self, consider_hl_when_direct_message=True, command_prefix: str = ""):
+    async def hl(self, consider_hl_when_direct_message=True) -> str:
         """
         if the event is a hl (highlight, i.e begins with the name of the bot),
         returns the text after the hl. Raise EventNotConcerned otherwise
 
         :param consider_hl_when_direct_message: if True, consider a direct message as an highlight.
-        :param command_prefix: if given, will ignore messages beginning by this command in a direct message
         :return: the text after the highlight
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
         display_name = await self.matrix_client.get_display_name()
-        if not display_name:
-            display_name = ""
         if consider_hl_when_direct_message and self.room_is_direct_message():
-            if self.event.body.startswith(command_prefix):
-                raise EventNotConcerned
             return self._command(
-                body=self.event.body.removeprefix(display_name).removeprefix(": "),
-                command="",
+                "",
                 prefix="",
+                body=self.event.body.removeprefix(display_name).removeprefix(": "),
                 command_name="mention",
             )
         return self.command(display_name, prefix="", command_name="mention").removeprefix(": ")

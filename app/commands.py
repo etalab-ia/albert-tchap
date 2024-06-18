@@ -37,7 +37,7 @@ class CommandRegistry:
             "onEvent": onEvent,
             "command": command,
             "prefix": prefix,
-            "help": help,
+            "help": help_message,
             "hidden": hidden,
             "func": func,
         }
