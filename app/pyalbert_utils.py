@@ -19,6 +19,16 @@ def log_and_raise_for_status(response: requests.Response) -> None:
         response.raise_for_status()
 
 
+def get_available_models(config: Config) -> list[str] | None:
+    api_token = config.albert_api_token
+    url = config.albert_api_url
+    headers = {"Authorization": f"Bearer {api_token}"}
+    response = requests.get(f"{url}/models", headers=headers)
+    log_and_raise_for_status(response)
+    model_prompts = response.json()
+    return list(model_prompts.keys())
+
+
 def get_available_modes(config: Config) -> list[str] | None:
     api_token = config.albert_api_token
     url = config.albert_api_url
