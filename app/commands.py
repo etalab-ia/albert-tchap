@@ -12,7 +12,13 @@ from matrix_bot.client import MatrixClient
 from matrix_bot.config import bot_lib_config, logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
 from nio import Event, RoomMemberEvent, RoomMessageText
-from pyalbert_utils import generate, generate_sources, get_available_modes, new_chat
+from pyalbert_utils import (
+    generate,
+    generate_sources,
+    get_available_models,
+    get_available_modes,
+    new_chat,
+)
 
 
 @dataclass
@@ -231,6 +237,34 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
 @register_feature(
     group="albert",
     onEvent=RoomMessageText,
+    command="model",
+    help=f"Pour modifier le modèle, utilisez **{COMMAND_PREFIX}model** MODEL_NAME",
+    hidden=True,
+)
+async def albert_model(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
+    commands = ep.event.body.split()
+    # Get all available models
+    all_models = get_available_models(config)
+    if len(commands) <= 1:
+        message = (
+            f"La commande !model nécessite de donner un modèle parmi : {', '.join(all_models)}"
+        )
+    else:
+        model = commands[1]
+        if model not in all_models:
+            message = f"Modèle inconnu. Les modèles disponibles sont : {', '.join(all_models)}"
+        else:
+            previous_model = config.albert_model_name
+            config.albert_model_name = model
+            message = f"Le modèle a été modifié : {previous_model} -> {model}"
+    await matrix_client.send_text_message(ep.room.room_id, message)
+
+
+@register_feature(
+    group="albert",
+    onEvent=RoomMessageText,
     command="mode",
     help=f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), utilisez **{COMMAND_PREFIX}mode** MODE",
     hidden=True,
@@ -251,7 +285,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
         else:
             old_mode = config.albert_mode
             config.albert_mode = mode
-            message = f"Le mode a été modifié: {old_mode} -> {mode}"
+            message = f"Le mode a été modifié : {old_mode} -> {mode}"
     await matrix_client.send_text_message(ep.room.room_id, message)
 
 
