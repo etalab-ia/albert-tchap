@@ -8,17 +8,16 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from config import APP_VERSION, COMMAND_PREFIX, Config
-from matrix_bot.client import MatrixClient
-from matrix_bot.config import bot_lib_config, logger
-from matrix_bot.eventparser import EventNotConcerned, EventParser
-from nio import Event, RoomMemberEvent, RoomMessageText
-from pyalbert_utils import (
+from core_llm import (
     generate,
     generate_sources,
     get_available_models,
     get_available_modes,
-    new_chat,
 )
+from matrix_bot.client import MatrixClient
+from matrix_bot.config import bot_lib_config, logger
+from matrix_bot.eventparser import EventNotConcerned, EventParser
+from nio import Event, MessageDirection, RoomMemberEvent, RoomMessageText
 
 
 @dataclass
@@ -184,8 +183,8 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     if config.albert_with_history:
         config.update_last_activity()
         await matrix_client.room_typing(ep.room.room_id)
-        config.albert_chat_id = new_chat(config)
-        reset_message = "**La conversation a été remise à zéro.**\n\n"
+        config.albert_history_lookup = 0
+        reset_message = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
         reset_message += command_registry.show_commands(config)
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
@@ -204,7 +203,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     if config.albert_with_history:
         config.albert_with_history = False
-        config.albert_chat_id = None
+        config.albert_history_lookup = 0
         message = "Le mode conversation est désactivé."
     else:
         config.update_last_activity()
@@ -229,8 +228,6 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     debug_message += f"- Model: {config.albert_model_name}\n"
     debug_message += f"- Mode: {config.albert_mode}\n"
     debug_message += f"- With history: {config.albert_with_history}\n"
-    debug_message += f"- Chat ID: {config.albert_chat_id}\n"
-    debug_message += f"- Stream ID: {config.albert_stream_id}\n"
     await matrix_client.send_markdown_message(ep.room.room_id, debug_message)
 
 
@@ -328,20 +325,18 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     Receive a message event which is not a command, send the prompt to Albert API and return the response to the user
     """
-    # user_prompt: str = await ep.hl()
     config = user_configs[ep.sender]
-    user_prompt = ep.event.body
-    if user_prompt.startswith(COMMAND_PREFIX):
+    ep.only_on_direct_message()
+
+    user_query = ep.event.body
+    if user_query.startswith(COMMAND_PREFIX):
         raise EventNotConcerned
 
-    ep.only_on_direct_message()
-    query = user_prompt
-
     if config.albert_with_history and config.is_conversation_obsolete:
-        config.albert_chat_id = new_chat(config)
+        config.albert_history_lookup = 0
         obsolescence_in_minutes = str(bot_lib_config.conversation_obsolescence // 60)
-        reset_message = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, **la conversation a été automatiquement remise à zéro.**\n\n"
-        reset_message += command_registry.show_commands(config)
+        reset_message = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, **la conversation a été automatiquement remise à zéro. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
+        reset_message += "Entrez**!aide** pour obtenir plus d'informatin sur ma paramétrisatiion."
         await matrix_client.room_typing(ep.room.room_id)
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
@@ -350,12 +345,32 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
     try:
-        answer = generate(config=config, query=query)
+        config.albert_history_lookup += 1
+        starttoken = matrix_client.next_batch
+        roommessages = await matrix_client.room_messages(
+            ep.room.room_id,
+            starttoken,
+            limit=min(config.albert_history_lookup, config.albert_max_rewind),
+            message_direction=MessageDirection.back,
+            message_filter={"types": "m.room.message"},
+        )
+        messages = []
+        for i, event in enumerate(roommessages.chunk):
+            message = event.source["content"]["body"]
+            match event.source["sender"]:
+                case ep.sender:
+                    message = {"role": "user", "content": message}
+                case event.sender:
+                    message = {"role": "assistant", "content": message}
+            messages.insert(0, message)
+
+        answer = generate(config=config, messages=messages)
+
     except Exception as albert_exception:
         # Send an error message to the user
         await matrix_client.send_markdown_message(
             ep.room.room_id,
-            f"\u26a0\ufe0f **Erreur**\n\nAlbert est actuellement en maintenance, étant encore en phase de test. Réessayez plus tard.",
+            f"\u26a0\ufe0f **Erreur**\n\nAlbert a échoué à répondre. Veuillez Réessayez plus tard.",
         )
         # Redirect the error message to the errors room if it exists
         if config.errors_room_id:
@@ -365,7 +380,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
             )
         return
 
-    logger.debug(f"{query=}")
+    logger.debug(f"{user_query=}")
     logger.debug(f"{answer=}")
     try:  # sometimes the async code fail (when input is big) with random asyncio errors
         await matrix_client.send_markdown_message(ep.room.room_id, answer)
@@ -381,9 +396,9 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    user_prompt = ep.event.body
-    command = user_prompt.split()[0][1:]
-    if not user_prompt.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
+    user_query = ep.event.body
+    command = user_query.split()[0][1:]
+    if not user_query.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
         raise EventNotConcerned
     await matrix_client.send_markdown_message(
         ep.room.room_id,

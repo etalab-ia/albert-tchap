@@ -56,8 +56,8 @@ class Config(BaseConfig):
     albert_mode: str = Field("rag", description="Albert API mode")
     ## Albert Conversational settings
     albert_with_history: bool = Field(True, description="Conversational mode")
-    albert_chat_id: int | None = Field(None, description="Current chat id")
-    albert_stream_id: int | None = Field(None, description="Current stream id")
+    albert_history_lookup: int = Field(0, description="How far we lookup in the history")
+    albert_max_rewind: int = Field(20, description="Max history rewind for stability purposes")
 
     @property
     def is_conversation_obsolete(self) -> bool:

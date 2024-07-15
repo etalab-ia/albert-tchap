@@ -38,7 +38,7 @@ class BotLibConfig(BaseSettings):
         description="Salt to store your session credentials. Should not change between two runs",
     )
     conversation_obsolescence: int = Field(
-        60 * 60, description="time after which a conversation is considered obsolete, in seconds"
+        15 * 60, description="time after which a conversation is considered obsolete, in seconds"
     )
 
     model_config = SettingsConfigDict(env_file=Path(".matrix_bot_env"))
