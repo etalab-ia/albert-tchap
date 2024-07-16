@@ -37,7 +37,7 @@ class CommandRegistry:
         command: str | None,
         prefix: str | None,
         help_message: str | None,
-        hidden: bool,
+        for_geek: bool,
         func,
     ):
         self.function_register[name] = {
@@ -47,7 +47,7 @@ class CommandRegistry:
             "command": command,
             "prefix": prefix,
             "help": help_message,
-            "hidden": hidden,
+            "for_geek": for_geek,
             "func": func,
         }
 
@@ -66,8 +66,8 @@ class CommandRegistry:
             if name in self.activated_functions
         ]
 
-    def get_help(self, config: Config) -> str:
-        cmds = self._get_cmds(config)
+    def get_help(self, config: Config, verbose: bool = False) -> str:
+        cmds = self._get_cmds(config, verbose)
         model_url = f"https://huggingface.co/{config.albert_model}"
         model_short_name = config.albert_model.split("/")[-1]
         return AlbertMsg.help(model_url, model_short_name, cmds)
@@ -76,13 +76,13 @@ class CommandRegistry:
         cmds = self._get_cmds(config)
         return AlbertMsg.commands(cmds)
 
-    def _get_cmds(self, config: Config) -> list[str]:
+    def _get_cmds(self, config: Config, verbose: bool = False) -> list[str]:
         cmds = set(
             feature["help"]
             for name, feature in self.function_register.items()
             if name in self.activated_functions
             and feature["help"]
-            and not feature["hidden"]
+            and (not feature["for_geek"] or verbose)
             and not (feature.get("command") == "sources" and config.albert_mode == "norag")
         )
         return sorted(list(cmds))
@@ -98,7 +98,7 @@ def register_feature(
     command: str | None = None,
     prefix: str = COMMAND_PREFIX,
     help: str | None = None,
-    hidden: bool = False,
+    for_geek: bool = False,
 ):
     def decorator(func):
         command_registry.add_command(
@@ -108,7 +108,7 @@ def register_feature(
             command=command,
             prefix=prefix,
             help_message=help,
-            hidden=hidden,
+            for_geek=for_geek,
             func=func,
         )
         return func
@@ -124,8 +124,11 @@ def register_feature(
 )
 async def help(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
-    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
+    commands = ep.event.body.split()
+    verbose = False
+    if len(commands) > 1 and commands[1] in ["-v", "--verbose", "--more", "-a", "--all"]:
+        verbose = True
+    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config, verbose))
 
 
 @register_feature(
@@ -142,8 +145,8 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     ep.only_on_direct_message()
     ep.only_on_join()
     config.update_last_activity()
-    time.sleep(3)  # wait for the room to be ready - otherwise the encryption seems to be not ready
     await matrix_client.room_typing(ep.room.room_id)
+    time.sleep(3)  # wait for the room to be ready - otherwise the encryption seems to be not ready
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
@@ -157,8 +160,6 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     if config.albert_with_history:
         config.update_last_activity()
-        # Fast enough !
-        #await matrix_client.room_typing(ep.room.room_id)
         config.albert_history_lookup = 0
         reset_message = AlbertMsg.reset
         reset_message += command_registry.show_commands(config)
@@ -172,11 +173,10 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     command="conversation",
     help=AlbertMsg.shorts["conversation"],
-    hidden=True,
+    for_geek=True,
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
     if config.albert_with_history:
         config.albert_with_history = False
         config.albert_history_lookup = 0
@@ -193,11 +193,10 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     command="debug",
     help=AlbertMsg.shorts["debug"],
-    hidden=True,
+    for_geek=True,
 )
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
     debug_message = AlbertMsg.debug(config)
     await matrix_client.send_markdown_message(ep.room.room_id, debug_message)
 
@@ -207,7 +206,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     command="model",
     help=AlbertMsg.shorts["reset"],
-    hidden=True,
+    for_geek=True,
 )
 async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -235,7 +234,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     command="mode",
     help=AlbertMsg.shorts["mode"],
-    hidden=True,
+    for_geek=True,
 )
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -280,7 +279,9 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
             sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
     except Exception:
         traceback.print_exc()
-        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")
+        await matrix_client.send_markdown_message(
+            ep.room.room_id, AlbertMsg.failed, msgtype="m.notice"
+        )
         return
 
     await matrix_client.send_text_message(ep.room.room_id, sources_msg)
@@ -356,7 +357,9 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         logger.error(f"{albert_err}")
         traceback.print_exc()
         # Send an error message to the user
-        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")
+        await matrix_client.send_markdown_message(
+            ep.room.room_id, AlbertMsg.failed, msgtype="m.notice"
+        )
         # Redirect the error message to the errors room if it exists
         if config.errors_room_id:
             await matrix_client.send_markdown_message(
@@ -403,4 +406,6 @@ async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
         raise EventNotConcerned
 
     cmds_msg = command_registry.show_commands(config)
-    await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.unknown_command(cmds_msg), msgtype="m.notice")
+    await matrix_client.send_markdown_message(
+        ep.room.room_id, AlbertMsg.unknown_command(cmds_msg), msgtype="m.notice"
+    )
