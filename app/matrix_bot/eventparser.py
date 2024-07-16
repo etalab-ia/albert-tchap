@@ -6,8 +6,9 @@
 import re
 from dataclasses import dataclass
 
-from config import env_config
 from nio import Event, MatrixRoom, RoomMessageText
+
+from config import env_config
 
 from .client import MatrixClient
 from .config import logger
@@ -109,10 +110,14 @@ class EventParser:
 class MessageEventParser(EventParser):
     event: RoomMessageText
 
-    def _command(self, command: str, prefix: str, body=None, command_name: str = "") -> str:
-        command_prefix = f"{prefix}{command}"
-        if body.split()[0] != command_prefix:
+    def _command(self, command: str|list[str], prefix: str, body=None, command_name: str = "") -> str:
+        commands = [command] if isinstance(command, str) else command
+        user_com = body.split()[0]
+        if not any([ f"{prefix}{c}" == user_com for c in commands]):
             raise EventNotConcerned
+
+        command = commands[0]
+        command_prefix = f"{prefix}{command}"
         command_payload = body.removeprefix(command_prefix)
         if self.log_usage:
             logger.info(
@@ -120,13 +125,13 @@ class MessageEventParser(EventParser):
             )
         return command_payload
 
-    def command(self, command: str, prefix: str, command_name: str = "") -> str:
+    def command(self, command: str|list[str], prefix: str, command_name: str = "") -> str:
         """
         if the event is concerned by the command, returns the text after the command. Raise EventNotConcerned otherwise
 
         :param command: the command that is to be recognized.
         :param prefix: the prefix for this command (default is !).
-        :param command_name: name of the command, for logging purposes.
+        :param command_name: name(s) of the command, for logging purposes.
         :return: the text after the command
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """

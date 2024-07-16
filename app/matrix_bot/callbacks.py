@@ -79,8 +79,8 @@ class Callbacks:
                 ep = MessageEventParser(
                     room=room, event=event, matrix_client=self.matrix_client, log_usage=True
                 )
-                if feature.get("command"):
-                    ep.command(feature["command"], prefix=feature["prefix"])
+                if feature.get("commands"):
+                    ep.command(feature["commands"], prefix=feature["prefix"])
             else:
                 ep = EventParser(
                     room=room, event=event, matrix_client=self.matrix_client, log_usage=True

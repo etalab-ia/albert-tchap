@@ -35,16 +35,21 @@ class CommandRegistry:
         group: str,
         onEvent: Event,
         command: str | None,
+        aliases: list[str] | None,
         prefix: str | None,
         help_message: str | None,
         for_geek: bool,
         func,
     ):
+        commands = [command] if command else None
+        if aliases:
+            commands += aliases
+
         self.function_register[name] = {
             "name": name,
             "group": group,
             "onEvent": onEvent,
-            "command": command,
+            "commands": commands,
             "prefix": prefix,
             "help": help_message,
             "for_geek": for_geek,
@@ -60,11 +65,12 @@ class CommandRegistry:
         return features
 
     def is_valid_command(self, command) -> bool:
-        return command in [
-            feature["command"]
-            for name, feature in self.function_register.items()
-            if name in self.activated_functions
-        ]
+        valid_commands = []
+        for name, feature in self.function_register.items():
+            if name in self.activated_functions:
+                if feature.get("commands"):
+                    valid_commands += feature["commands"]
+        return command in valid_commands
 
     def get_help(self, config: Config, verbose: bool = False) -> str:
         cmds = self._get_cmds(config, verbose)
@@ -83,7 +89,7 @@ class CommandRegistry:
             if name in self.activated_functions
             and feature["help"]
             and (not feature["for_geek"] or verbose)
-            and not (feature.get("command") == "sources" and config.albert_mode == "norag")
+            and not ("sources" in feature.get("commands") and config.albert_mode == "norag")
         )
         return sorted(list(cmds))
 
@@ -96,6 +102,7 @@ def register_feature(
     group: str,
     onEvent: Event,
     command: str | None = None,
+    aliases: list[str] | None = None,
     prefix: str = COMMAND_PREFIX,
     help: str | None = None,
     for_geek: bool = False,
@@ -106,6 +113,7 @@ def register_feature(
             group=group,
             onEvent=onEvent,
             command=command,
+            aliases=aliases,
             prefix=prefix,
             help_message=help,
             for_geek=for_geek,
@@ -120,6 +128,7 @@ def register_feature(
     group="basic",
     onEvent=RoomMessageText,
     command="aide",
+    aliases=["help", "aiuto"],
     help=AlbertMsg.shorts["help"],
 )
 async def help(ep: EventParser, matrix_client: MatrixClient):
