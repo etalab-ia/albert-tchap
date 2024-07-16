@@ -7,9 +7,10 @@ import logging
 import time
 from pathlib import Path
 
-from _version import __version__
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from _version import __version__
 
 COMMAND_PREFIX = "!"
 

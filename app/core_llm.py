@@ -3,8 +3,9 @@
 # SPDX-License-Identifier: MIT
 
 import requests
-from config import Config
 from pyalbert.utils import log_and_raise_for_status
+
+from config import Config
 
 # FIX/FUTURE: with pyalbert v0.7
 API_PREFIX_V1 = "/api/v1"

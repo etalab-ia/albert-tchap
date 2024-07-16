@@ -31,4 +31,8 @@ py-modules = []
 
 [tool.ruff]
 line-length = 100
+src = ["app"]
+
+[tool.ruff.isort]
+known-third-party = ["nio", "matrix_bot"]
 

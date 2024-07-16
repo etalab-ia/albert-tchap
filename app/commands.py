@@ -4,20 +4,24 @@
 # SPDX-License-Identifier: MIT
 
 import time
+import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 
-from config import APP_VERSION, COMMAND_PREFIX, Config
+from matrix_bot.client import MatrixClient
+from matrix_bot.config import logger
+from matrix_bot.eventparser import EventNotConcerned, EventParser
+from nio import Event, RoomMemberEvent, RoomMessageText
+
+from bot_msg import AlbertMsg
+from config import COMMAND_PREFIX, Config
 from core_llm import (
     generate,
     generate_sources,
     get_available_models,
     get_available_modes,
 )
-from matrix_bot.client import MatrixClient
-from matrix_bot.config import bot_lib_config, logger
-from matrix_bot.eventparser import EventNotConcerned, EventParser
-from nio import Event, MessageDirection, RoomMemberEvent, RoomMessageText
+from tchap_utils import get_cleanup_body, get_previous_messages, get_thread_messages, isa_reply_to
 
 
 @dataclass
@@ -64,42 +68,13 @@ class CommandRegistry:
 
     def get_help(self, config: Config) -> str:
         cmds = self._get_cmds(config)
-
         model_url = f"https://huggingface.co/{config.albert_model}"
         model_short_name = config.albert_model.split("/")[-1]
-
-        help_message = "👋 Bonjour, je suis **Albert**, votre **assistant automatique dédié aux questions légales et administratives** mis à disposition par la **DINUM**. Je suis actuellement en phase de **test**.\n\n"
-        help_message += f"J'utilise le modèle de langage _[{model_short_name}]({model_url})_ et j'ai été alimenté par des bases de connaissances gouvernementales, comme les fiches pratiques de service-public.fr éditées par la Direction de l'information légale et administrative (DILA).\n\n"
-
-        help_message += "Maintenant que nous avons fait plus connaissance, quelques **règles pour m'utiliser** :\n\n"
-
-        help_message += (
-            "🔮 Ne m'utilisez pas pour élaborer une décision administrative individuelle.\n\n"
-        )
-        help_message += "❌ **Ne me transmettez pas** :\n"
-        help_message += "- des **fichiers** (pdf, images, etc.) ;\n"
-        help_message += (
-            "- des données permettant de **vous** identifier ou **d'autres personnes** ;\n"
-        )
-        help_message += "- des données **confidentielles** ;\n\n"
-
-        help_message += "Enfin, quelques informations pratiques :\n\n"
-
-        help_message += "🛠️ **Pour gérer notre conversation** :\n"
-        help_message += "- " + "\n- ".join(cmds)
-        help_message += "\n\n"
-
-        help_message += "📁 **Sur l'usage des données**\nLes conversations sont stockées de manière anonyme. Elles me permettent de contextualiser les conversations et l'équipe qui me développe les utilise pour m'évaluer et analyser mes performances.\n\n"
-
-        help_message += "📯 Nous contacter : albert-contact@data.gouv.fr"
-
-        return help_message
+        return AlbertMsg.help(model_url, model_short_name, cmds)
 
     def show_commands(self, config: Config) -> str:
         cmds = self._get_cmds(config)
-        available_cmd = "Les commandes spéciales suivantes sont disponibles :\n\n"
-        available_cmd += "- " + "\n- ".join(cmds)
-        return available_cmd
+        return AlbertMsg.commands(cmds)
 
     def _get_cmds(self, config: Config) -> list[str]:
         cmds = set(
@@ -145,7 +120,7 @@ def register_feature(
     group="basic",
     onEvent=RoomMessageText,
     command="aide",
-    help=f"Pour retrouver ce message informatif, utilisez **{COMMAND_PREFIX}aide**",
+    help=AlbertMsg.shorts["help"],
 )
 async def help(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -176,15 +151,16 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="reset",
-    help=f"Pour ré-initialiser notre conversation, utilisez **{COMMAND_PREFIX}reset**",
+    help=AlbertMsg.shorts["reset"],
 )
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     if config.albert_with_history:
         config.update_last_activity()
-        await matrix_client.room_typing(ep.room.room_id)
+        # Fast enough !
+        #await matrix_client.room_typing(ep.room.room_id)
         config.albert_history_lookup = 0
-        reset_message = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
+        reset_message = AlbertMsg.reset
         reset_message += command_registry.show_commands(config)
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
@@ -195,7 +171,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="conversation",
-    help=f"Pour activer/désactiver le mode conversation, utilisez **{COMMAND_PREFIX}conversation**",
+    help=AlbertMsg.shorts["conversation"],
     hidden=True,
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
@@ -216,18 +192,13 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="debug",
-    help=f"Pour afficher des informations sur la configuration actuelle, **{COMMAND_PREFIX}debug**",
+    help=AlbertMsg.shorts["debug"],
     hidden=True,
 )
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    debug_message = f"Configuration actuelle :\n\n"
-    debug_message += f"- Version: {APP_VERSION}\n"
-    debug_message += f"- API: {config.albert_api_url}\n"
-    debug_message += f"- Model: {config.albert_model}\n"
-    debug_message += f"- Mode: {config.albert_mode}\n"
-    debug_message += f"- With history: {config.albert_with_history}\n"
+    debug_message = AlbertMsg.debug(config)
     await matrix_client.send_markdown_message(ep.room.room_id, debug_message)
 
 
@@ -235,7 +206,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="model",
-    help=f"Pour modifier le modèle, utilisez **{COMMAND_PREFIX}model** MODEL_NAME",
+    help=AlbertMsg.shorts["reset"],
     hidden=True,
 )
 async def albert_model(ep: EventParser, matrix_client: MatrixClient):
@@ -263,7 +234,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="mode",
-    help=f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), utilisez **{COMMAND_PREFIX}mode** MODE",
+    help=AlbertMsg.shorts["mode"],
     hidden=True,
 )
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
@@ -290,7 +261,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="sources",
-    help=f"Pour obtenir les sources utilisées pour générer ma dernière réponse, utilisez **{COMMAND_PREFIX}sources**",
+    help=AlbertMsg.shorts["sources"],
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
@@ -307,10 +278,9 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
                 sources_msg += f'- {source["title"]} {extra_context}: {source["url"]} \n'
         else:
             sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
-    except Exception as albert_exception:
-        await matrix_client.send_markdown_message(
-            ep.room.room_id, f"\u26a0\ufe0f **Serveur erreur**\n\n{albert_exception}"
-        )
+    except Exception:
+        traceback.print_exc()
+        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")
         return
 
     await matrix_client.send_text_message(ep.room.room_id, sources_msg)
@@ -328,6 +298,8 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     ep.only_on_direct_message()
 
+    initial_history_lookup = config.albert_history_lookup
+
     user_query = ep.event.body
     if user_query.startswith(COMMAND_PREFIX):
         raise EventNotConcerned
@@ -335,8 +307,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     if config.albert_with_history and config.is_conversation_obsolete:
         config.albert_history_lookup = 0
         obsolescence_in_minutes = str(config.conversation_obsolescence // 60)
-        reset_message = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {obsolescence_in_minutes} minutes, **la conversation a été automatiquement remise à zéro. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
-        reset_message += "Entrez**!aide** pour obtenir plus d'informatin sur ma paramétrisatiion."
+        reset_message = AlbertMsg.reset_notif(obsolescence_in_minutes)
         await matrix_client.room_typing(ep.room.room_id)
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
@@ -345,28 +316,35 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
     try:
-        config.albert_history_lookup += 1
-        starttoken = matrix_client.next_batch
+        # Build the messages  history
+        # --
+        is_reply_to = isa_reply_to(ep.event)
+        if is_reply_to:
+            # Use the targeted thread history
+            # --
+            message_events = await get_thread_messages(
+                config, ep, max_rewind=config.albert_max_rewind
+            )
+        else:
+            # Use normal history
+            # --
+            # Add the current user query in the history count
+            config.albert_history_lookup += 1
+            message_events = await get_previous_messages(
+                config,
+                ep,
+                history_lookup=config.albert_history_lookup,
+                max_rewind=config.albert_max_rewind,
+            )
 
-        print(ep)
-        print()
-        print(starttoken)
-        roommessages = await matrix_client.room_messages(
-            ep.room.room_id,
-            starttoken,
-            limit=min(config.albert_history_lookup, config.albert_max_rewind),
-            direction=MessageDirection.back,
-            message_filter={"types": ["m.room.message", "m.room.encrypted"]},
-        )
-        messages = []
-        for i, event in enumerate(roommessages.chunk):
-            message = event.source["content"]["body"]
-            match event.source["sender"]:
-                case ep.sender:
-                    message = {"role": "user", "content": message}
-                case event.sender:
-                    message = {"role": "assistant", "content": message}
-            messages.insert(0, message)
+        # Map event to list of message {role, content} and cleanup message body
+        # @TODO: If bot should answer in multi-user canal, we could catch is own name here.
+        messages = [
+            {"role": "user", "content": get_cleanup_body(event)}
+            if event.source["sender"] == ep.sender
+            else {"role": "assistant", "content": get_cleanup_body(event)}
+            for event in message_events
+        ]
 
         # Empty chunk (i.e at startup)
         if not messages:
@@ -374,28 +352,42 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
 
         answer = generate(config=config, messages=messages)
 
-    except Exception as albert_exception:
-        logger.error(f"{albert_exception}")
+    except Exception as albert_err:
+        logger.error(f"{albert_err}")
+        traceback.print_exc()
         # Send an error message to the user
-        await matrix_client.send_markdown_message(
-            ep.room.room_id,
-            "\u26a0\ufe0f **Erreur**\n\nAlbert a échoué à répondre. Veuillez réessayez dans un moment.",
-        )
+        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")
         # Redirect the error message to the errors room if it exists
         if config.errors_room_id:
             await matrix_client.send_markdown_message(
-                config.errors_room_id,
-                f"\u26a0\ufe0f **Albert API erreur**\n\n{albert_exception}\n\nMatrix server: {config.matrix_home_server}",
+                config.errors_room_id, AlbertMsg.error_debug(albert_err, config)
             )
+
+        config.albert_history_lookup = initial_history_lookup
         return
 
     logger.debug(f"{user_query=}")
     logger.debug(f"{answer=}")
+
+    reply_to = None
+    if is_reply_to:
+        # "content" ->  "m.mentions": {"user_ids": [ep.sender]},
+        # "content" -> "m.relates_to": {"m.in_reply_to": {"event_id": ep.event.event_id}},
+        reply_to = ep.event.event_id
+
     try:  # sometimes the async code fail (when input is big) with random asyncio errors
-        await matrix_client.send_markdown_message(ep.room.room_id, answer)
+        await matrix_client.send_markdown_message(ep.room.room_id, answer, reply_to=reply_to)
     except Exception as llm_exception:  # it seems to work when we retry
         logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
-        await matrix_client.send_markdown_message(ep.room.room_id, answer)
+        time.sleep(1)
+        await matrix_client.send_markdown_message(ep.room.room_id, answer, reply_to=reply_to)
+
+        config.albert_history_lookup = initial_history_lookup
+        return
+
+    # Add agent answer in the history count
+    if not is_reply_to:
+        config.albert_history_lookup += 1
 
 
 @register_feature(
@@ -409,7 +401,6 @@ async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
     command = user_query.split()[0][1:]
     if not user_query.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
         raise EventNotConcerned
-    await matrix_client.send_markdown_message(
-        ep.room.room_id,
-        f"\u26a0\ufe0f **Commande inconnue**\n\n{command_registry.show_commands(config)}",
-    )
+
+    cmds_msg = command_registry.show_commands(config)
+    await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.unknown_command(cmds_msg), msgtype="m.notice")
