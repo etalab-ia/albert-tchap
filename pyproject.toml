@@ -1,13 +1,13 @@
 [project]
 name = "albert-tchap"
-version = "0.1.9"
+version = "0.2.0"
 description = "Albert Tchap"
 authors = [
     { name = "Pôle d'Expertise de la Régulation Numérique", email = "contact.peren@finances.gouv.fr" },
     { name = "Etalab", email = "etalab@modernisation.gouv.fr" },
 ]
 
-requires-python = ">= 3.11"
+requires-python = ">= 3.10"
 readme = "README.md"
 license = { text = "MIT" }
 dependencies = [
@@ -19,7 +19,7 @@ dependencies = [
     "matrix-nio[e2e]==0.24.0",
     "cryptography==42.0.8",
     "structlog==24.2.0",
-    "pyalbert==0.6.1"
+    "pyalbert==0.6.3",
 ]
 
 # Packaging

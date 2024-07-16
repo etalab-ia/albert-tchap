@@ -2,18 +2,18 @@
 #
 # SPDX-License-Identifier: MIT
 
-import json
-
 import requests
 from config import Config
-from matrix_bot.config import logger
 from pyalbert.utils import log_and_raise_for_status
 
+# FIX/FUTURE: with pyalbert v0.7
+API_PREFIX_V1 = "/api/v1"
+API_PREFIX_V2 = "/api/v2"
 
 def get_available_models(config: Config) -> list[str] | None:
-    api_token = config.albert_api_token
-    url = config.albert_api_url
-    headers = {"Authorization": f"Bearer {api_token}"}
+    api_key = config.albert_api_token
+    url = config.albert_api_url + API_PREFIX_V2
+    headers = {"Authorization": f"Bearer {api_key}"}
     response = requests.get(f"{url}/models", headers=headers)
     log_and_raise_for_status(response)
     model_prompts = response.json()
@@ -21,7 +21,7 @@ def get_available_models(config: Config) -> list[str] | None:
 
 
 def get_available_modes(config: Config) -> list[str] | None:
-    model = config.albert_model_name
+    model = config.albert_model
     model_prompts = get_available_models(config)
     model_config = model_prompts.get(model, {})
     if not model_config:
@@ -32,12 +32,12 @@ def get_available_modes(config: Config) -> list[str] | None:
 
 
 def generate_sources(config: Config, stream_id: int) -> list[dict]:
-    api_token = config.albert_api_token
-    api_url = config.albert_api_url
+    api_key = config.albert_api_token
+    url = config.albert_api_url + API_PREFIX_V2
 
     # Create Stream:
-    headers = {"Authorization": f"Bearer {api_token}"}
-    response = requests.get(f"{api_url}/stream/{stream_id}", headers=headers)
+    headers = {"Authorization": f"Bearer {api_key}"}
+    response = requests.get(f"{url}/stream/{stream_id}", headers=headers)
     log_and_raise_for_status(response)
     stream = response.json()
 
@@ -45,7 +45,7 @@ def generate_sources(config: Config, stream_id: int) -> list[dict]:
     if not stream.get("rag_sources"):
         return []
     data = {"uids": stream["rag_sources"]}
-    response = requests.post(f"{api_url}/get_chunks", headers=headers, json=data)
+    response = requests.post(f"{url}/get_chunks", headers=headers, json=data)
     log_and_raise_for_status(response)
     sources = response.json()
     return sources
@@ -53,20 +53,31 @@ def generate_sources(config: Config, stream_id: int) -> list[dict]:
 
 def generate(config: Config, messages: list, limit=7) -> str:
     api_key = config.albert_api_token
-    model = config.albert_model_name
+    url = config.albert_api_url + API_PREFIX_V1
+    model = config.albert_model
     mode = None if config.albert_mode == "norag" else config.albert_mode
-    api_url = config.albert_api_url
     if not config.albert_with_history:
         messages = messages[-1:]
 
-    # Build RAG prompt
-    prompter = get_prompter(model, mode)
-    messages = prompter.make_prompt(limit=limit, history=messages)
-
     # Query LLM API
-    sampling_params = prompter.get_upstream_sampling_params()
-    #llm_client = LlmClient(model=model, base_url=api_url, api_key=api_key)
-    llm_client = LlmClient(model=model, base_url=api_url, api_key=api_key)
-    result = llm_client.generate(messages, **sampling_params)
-    answer = result.choices[0].message.content
+    # TODO/FUTURE: pyalbert 0.7
+    # --
+    rag_params = {"strategy":"last", "mode": mode, "limit": 7}
+    #alclient = AlbertClient(base_url=url, api_key=api_key) # not MfsClient...
+    #result = alclient.generate(model=model, messages=messages, rag=rag_params)
+    #answer = result.choices[0].message.content
+    headers = {"Authorization": f"Bearer {api_key}"}
+    json_data = {
+        "model": model,
+        "messages": messages,
+        #"rag": "last",
+        #"mode": mode,
+        #"limit": 5
+    }
+    #response = requests.post(f"{url}/chat/completions", headers=headers, json=json_data)
+    response = requests.post("http://albert.gpu.003.etalab.gouv.fr:8080/v1/chat/completions", headers=headers, json=json_data)
+    log_and_raise_for_status(response)
+    result = response.json()
+    answer = result["choices"][0]["message"]["content"]
+
     return answer
