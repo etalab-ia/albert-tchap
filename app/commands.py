@@ -214,6 +214,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="model",
+    aliases=["models"],
     help=AlbertMsg.shorts["reset"],
     for_geek=True,
 )
@@ -242,6 +243,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     group="albert",
     onEvent=RoomMessageText,
     command="mode",
+    aliases=["modes"],
     help=AlbertMsg.shorts["mode"],
     for_geek=True,
 )

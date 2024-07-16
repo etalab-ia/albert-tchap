@@ -3,13 +3,15 @@
 # SPDX-License-Identifier: MIT
 
 import requests
+from pyalbert.clients import LlmClient
 from pyalbert.utils import log_and_raise_for_status
 
 from config import Config
 
-# FIX/FUTURE: with pyalbert v0.7
-API_PREFIX_V1 = "/api/v1"
+# FIX/FUTURE: with pyalbert v0.7 ?
+API_PREFIX_V1 = "/api"
 API_PREFIX_V2 = "/api/v2"
+
 
 def get_available_models(config: Config) -> list[str] | None:
     api_key = config.albert_api_token
@@ -61,24 +63,9 @@ def generate(config: Config, messages: list, limit=7) -> str:
         messages = messages[-1:]
 
     # Query LLM API
-    # TODO/FUTURE: pyalbert 0.7
     # --
-    rag_params = {"strategy":"last", "mode": mode, "limit": 7}
-    #alclient = AlbertClient(base_url=url, api_key=api_key) # not MfsClient...
-    #result = alclient.generate(model=model, messages=messages, rag=rag_params)
-    #answer = result.choices[0].message.content
-    headers = {"Authorization": f"Bearer {api_key}"}
-    json_data = {
-        "model": model,
-        "messages": messages,
-        #"rag": "last",
-        #"mode": mode,
-        #"limit": 5
-    }
-    #response = requests.post(f"{url}/chat/completions", headers=headers, json=json_data)
-    response = requests.post("http://albert.gpu.003.etalab.gouv.fr:8080/v1/chat/completions", headers=headers, json=json_data)
-    log_and_raise_for_status(response)
-    result = response.json()
-    answer = result["choices"][0]["message"]["content"]
-
+    rag_params = {"strategy": "last", "mode": mode, "limit": 7}
+    aclient = LlmClient(model, base_url=url, api_key=api_key)
+    result = aclient.generate(model=model, messages=messages, rag=rag_params)
+    answer = result.choices[0].message.content
     return answer
