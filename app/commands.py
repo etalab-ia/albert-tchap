@@ -137,7 +137,7 @@ async def help(ep: EventParser, matrix_client: MatrixClient):
     verbose = False
     if len(commands) > 1 and commands[1] in ["-v", "--verbose", "--more", "-a", "--all"]:
         verbose = True
-    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config, verbose))
+    await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config, verbose))  # fmt: off
 
 
 @register_feature(
@@ -175,6 +175,12 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
+    else:
+        await matrix_client.send_markdown_message(
+            ep.room.room_id,
+            "Le mode conversation n'est pas activé. tapez !conversation pour l'activer.",
+            msgtype="m.notice",
+        )
 
 
 @register_feature(
@@ -186,9 +192,9 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    config.albert_history_lookup = 0
     if config.albert_with_history:
         config.albert_with_history = False
-        config.albert_history_lookup = 0
         message = "Le mode conversation est désactivé."
     else:
         config.update_last_activity()
@@ -215,7 +221,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     command="model",
     aliases=["models"],
-    help=AlbertMsg.shorts["reset"],
+    help=AlbertMsg.shorts["model"],
     for_geek=True,
 )
 async def albert_model(ep: EventParser, matrix_client: MatrixClient):
@@ -225,15 +231,17 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     # Get all available models
     all_models = get_available_models(config)
     all_models = [k for k, v in all_models.items() if v["type"] == "text-generation"]
-    models_list = "\n- " + "\n- ".join(map(lambda x: x + (" *" if x == config.albert_model else ""), all_models))
+    models_list = "\n\n- " + "\n- ".join(
+        map(lambda x: x + (" *" if x == config.albert_model else ""), all_models)
+    )
     if len(commands) <= 1:
         message = "La commande !model nécessite de donner un modèle parmi :" + models_list
-        message += "Exemple: !mode " + all_models[-1]
+        message += "\n\nExemple: `!model " + all_models[-1] + "`"
     else:
         model = commands[1]
         if model not in all_models:
             message = "La commande !model nécessite de donner un modèle parmi :" + models_list
-            message += "Exemple: !mode " + all_models[-1]
+            message += "\n\nExemple: `!model " + all_models[-1] + "`"
         else:
             previous_model = config.albert_model
             config.albert_model = model
@@ -256,15 +264,17 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
     all_modes += ["norag"]
-    mode_list = "\n- " + "\n- ".join(map(lambda x: x + (" *" if x == config.albert_mode else ""), all_modes))
+    mode_list = "\n\n- " + "\n- ".join(
+        map(lambda x: x + (" *" if x == config.albert_mode else ""), all_modes)
+    )
     if len(commands) <= 1:
-        message = "La commande !mode nécessite de donner un mode parmi :\n- "+"\n- ".join(all_modes)
-        message += "Exemple: !mode " + all_modes[-1]
+        message = "La commande !mode nécessite de donner un mode parmi :" + mode_list
+        message += "\n\nExemple: `!mode " + all_modes[-1] + "`"
     else:
         mode = commands[1]
         if mode not in all_modes:
-            message = "La commande !mode nécessite de donner un mode parmi :\n- " + "\n- ".join(all_modes)
-            message += "Exemple: !mode " + all_modes[-1]
+            message = "La commande !mode nécessite de donner un mode parmi :" + mode_list
+            message += "\n\nExemple: `!mode " + all_modes[-1] + "`"
         else:
             old_mode = config.albert_mode
             config.albert_mode = mode
@@ -295,9 +305,7 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
             sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
     except Exception:
         traceback.print_exc()
-        await matrix_client.send_markdown_message(
-            ep.room.room_id, AlbertMsg.failed, msgtype="m.notice"
-        )
+        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")  # fmt: off
         return
 
     await matrix_client.send_markdown_message(ep.room.room_id, sources_msg)
@@ -378,9 +386,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         )
         # Redirect the error message to the errors room if it exists
         if config.errors_room_id:
-            await matrix_client.send_markdown_message(
-                config.errors_room_id, AlbertMsg.error_debug(albert_err, config)
-            )
+            await matrix_client.send_markdown_message(config.errors_room_id, AlbertMsg.error_debug(albert_err, config))  # fmt: off
 
         config.albert_history_lookup = initial_history_lookup
         return

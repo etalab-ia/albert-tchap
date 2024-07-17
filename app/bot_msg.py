@@ -10,13 +10,13 @@ class AlbertMsg:
         "**La conversation a été remise à zéro**",
     ]
     shorts = {
-        "help": f"Pour retrouver ce message informatif, tapez **{COMMAND_PREFIX}aide**",
-        "reset": f"Pour ré-initialiser notre conversation, tapez **{COMMAND_PREFIX}reset**",
-        "conversation": f"Pour activer/désactiver le mode conversation, tapez **{COMMAND_PREFIX}conversation**",
-        "debug": f"Pour afficher des informations sur la configuration actuelle, **{COMMAND_PREFIX}debug**",
-        "model": f"Pour modifier le modèle, tapez **{COMMAND_PREFIX}model** MODEL_NAME",
-        "mode": f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), tapez **{COMMAND_PREFIX}mode** MODE",
-        "sources": f"Pour obtenir les sources utilisées pour générer ma dernière réponse, tapez **{COMMAND_PREFIX}sources**",
+        "help": f"Pour retrouver ce message informatif, tapez `{COMMAND_PREFIX}aide`. Pour les geek tapez `{COMMAND_PREFIX}aide -v`.",
+        "reset": f"Pour ré-initialiser notre conversation, tapez `{COMMAND_PREFIX}reset`",
+        "conversation": f"Pour activer/désactiver le mode conversation, tapez `{COMMAND_PREFIX}conversation`",
+        "debug": f"Pour afficher des informations sur la configuration actuelle, `{COMMAND_PREFIX}debug`",
+        "model": f"Pour modifier le modèle, tapez `{COMMAND_PREFIX}model MODEL_NAME`",
+        "mode": f"Pour modifier le mode du modèle (c'est-à-dire le modèle de prompt utilisé), tapez `{COMMAND_PREFIX}mode MODE`",
+        "sources": f"Pour obtenir les sources utilisées pour générer ma dernière réponse, tapez `{COMMAND_PREFIX}sources`",
     }
 
     failed = "🤖 Albert a échoué à répondre. Veuillez réessayez dans un moment."
