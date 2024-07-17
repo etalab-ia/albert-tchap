@@ -224,19 +224,21 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     commands = ep.event.body.split()
     # Get all available models
     all_models = get_available_models(config)
+    all_models = [k for k, v in all_models.items() if v["type"] == "text-generation"]
+    models_list = "\n- " + "\n- ".join(map(lambda x: x + (" *" if x == config.albert_model else ""), all_models))
     if len(commands) <= 1:
-        message = (
-            f"La commande !model nécessite de donner un modèle parmi : {', '.join(all_models)}"
-        )
+        message = "La commande !model nécessite de donner un modèle parmi :" + models_list
+        message += "Exemple: !mode " + all_models[-1]
     else:
         model = commands[1]
         if model not in all_models:
-            message = f"Modèle inconnu. Les modèles disponibles sont : {', '.join(all_models)}"
+            message = "La commande !model nécessite de donner un modèle parmi :" + models_list
+            message += "Exemple: !mode " + all_models[-1]
         else:
             previous_model = config.albert_model
             config.albert_model = model
             message = f"Le modèle a été modifié : {previous_model} -> {model}"
-    await matrix_client.send_text_message(ep.room.room_id, message)
+    await matrix_client.send_markdown_message(ep.room.room_id, message)
 
 
 @register_feature(
@@ -254,17 +256,20 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
     all_modes += ["norag"]
+    mode_list = "\n- " + "\n- ".join(map(lambda x: x + (" *" if x == config.albert_mode else ""), all_modes))
     if len(commands) <= 1:
-        message = f"La commande !mode nécessite de donner un mode parmi : {', '.join(all_modes)}"
+        message = "La commande !mode nécessite de donner un mode parmi :\n- "+"\n- ".join(all_modes)
+        message += "Exemple: !mode " + all_modes[-1]
     else:
         mode = commands[1]
         if mode not in all_modes:
-            message = f"Mode inconnu. Les modes disponibles sont : {', '.join(all_modes)}"
+            message = "La commande !mode nécessite de donner un mode parmi :\n- " + "\n- ".join(all_modes)
+            message += "Exemple: !mode " + all_modes[-1]
         else:
             old_mode = config.albert_mode
             config.albert_mode = mode
             message = f"Le mode a été modifié : {old_mode} -> {mode}"
-    await matrix_client.send_text_message(ep.room.room_id, message)
+    await matrix_client.send_markdown_message(ep.room.room_id, message)
 
 
 @register_feature(
@@ -275,11 +280,11 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
 )
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
 
     try:
-        if config.albert_stream_id:
-            sources = generate_sources(config=config, stream_id=config.albert_stream_id)
+        if config.last_rag_references:
+            await matrix_client.room_typing(ep.room.room_id)
+            sources = generate_sources(config, config.last_rag_references)
             sources_msg = ""
             for source in sources:
                 extra_context = ""
@@ -295,7 +300,7 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
         )
         return
 
-    await matrix_client.send_text_message(ep.room.room_id, sources_msg)
+    await matrix_client.send_markdown_message(ep.room.room_id, sources_msg)
 
 
 @register_feature(
@@ -362,7 +367,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         if not messages:
             messages = [{"role": "user", "content": user_query}]
 
-        answer = generate(config=config, messages=messages)
+        answer = generate(config, messages)
 
     except Exception as albert_err:
         logger.error(f"{albert_err}")
