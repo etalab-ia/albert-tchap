@@ -19,7 +19,7 @@ dependencies = [
     "matrix-nio[e2e]==0.24.0",
     "cryptography==42.0.8",
     "structlog==24.2.0",
-    "pyalbert==0.6.5",
+    "pyalbert==0.6.16",
 ]
 
 # Packaging

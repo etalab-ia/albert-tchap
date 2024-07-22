@@ -65,4 +65,4 @@ def generate(config: Config, messages: list, limit=7) -> str:
     if hasattr(result, "rag_context"):
         config.last_rag_references = result.rag_context[0].references
 
-    return answer
+    return answer.strip()

@@ -8,6 +8,7 @@ class AlbertMsg:
         "\u26a0\ufe0f **Erreur**",
         "\u26a0\ufe0f **Commande inconnue**",
         "**La conversation a été remise à zéro**",
+        "🤖 Albert a échoué",
     ]
     shorts = {
         "help": f"Pour retrouver ce message informatif, tapez `{COMMAND_PREFIX}aide`. Pour les geek tapez `{COMMAND_PREFIX}aide -v`.",

@@ -200,7 +200,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
         config.update_last_activity()
         config.albert_with_history = True
         message = "Le mode conversation est activé."
-    await matrix_client.send_text_message(ep.room.room_id, message)
+    await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
 
 @register_feature(
@@ -213,7 +213,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     debug_message = AlbertMsg.debug(config)
-    await matrix_client.send_markdown_message(ep.room.room_id, debug_message)
+    await matrix_client.send_markdown_message(ep.room.room_id, debug_message, msgtype="m.notice")
 
 
 @register_feature(
@@ -246,7 +246,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
             previous_model = config.albert_model
             config.albert_model = model
             message = f"Le modèle a été modifié : {previous_model} -> {model}"
-    await matrix_client.send_markdown_message(ep.room.room_id, message)
+    await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
 
 @register_feature(
@@ -279,7 +279,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
             old_mode = config.albert_mode
             config.albert_mode = mode
             message = f"Le mode a été modifié : {old_mode} -> {mode}"
-    await matrix_client.send_markdown_message(ep.room.room_id, message)
+    await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
 
 @register_feature(

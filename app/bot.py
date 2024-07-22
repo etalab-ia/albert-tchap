@@ -3,10 +3,13 @@
 #
 # SPDX-License-Identifier: MIT
 
-from commands import command_registry
-from config import env_config
+import time
+
 from matrix_bot.bot import MatrixBot
 from matrix_bot.config import logger
+
+from commands import command_registry
+from config import env_config
 
 # TODO/IMPROVE:
 # - if albert-bot is invited in a salon, make it answer only when if it is tagged.
@@ -37,4 +40,14 @@ def main():
     #    await tchap_bot.matrix_client.send_markdown_message(room_id, command_registry.get_help())
     # tchap_bot.callbacks.register_on_startup(startup_action)
 
-    tchap_bot.run()
+    n_tries = 4
+    err = None
+    for i in range(n_tries):
+        try:
+            tchap_bot.run()
+        except Exception as err:
+            logger.error(f"Bot startup failed with error: {err}")
+            time.sleep(3)
+
+    if err:
+        raise err
