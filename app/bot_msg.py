@@ -22,7 +22,7 @@ class AlbertMsg:
 
     failed = "🤖 Albert a échoué à répondre. Veuillez réessayez dans un moment."
 
-    reset = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
+    reset = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion."
 
     user_not_allowed = "Albert est en phase de test et n'est pas encore disponible pour votre utilisateur. Contactez albert-contact@data.gouv.fr pour demander un accès."
 
@@ -60,7 +60,7 @@ class AlbertMsg:
         return msg
 
     def reset_notif(delay_min):
-        msg = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {delay_min} minutes, **la conversation a été automatiquement remise à zéro. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
+        msg = f"Comme vous n'avez pas continué votre conversation avec Albert depuis plus de {delay_min} minutes, **la conversation a été automatiquement remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion.\n\n"
         msg += "Entrez **!aide** pour obtenir plus d'informatin sur ma paramétrisatiion."
         return msg
 

@@ -106,6 +106,7 @@ tiam = TchapIam(Config())
 
 
 async def log_not_allowed(msg: str, ep: EventParser, matrix_client: MatrixClient):
+    """Send feedback message for unauthorized user"""
     config = user_configs[ep.sender]
     await matrix_client.send_markdown_message(ep.room.room_id, msg, msgtype="m.notice")
 
@@ -157,16 +158,18 @@ def only_allowed_user(func):
 
     @wraps(func)
     async def wrapper(ep: EventParser, matrix_client: MatrixClient):
+        ep.do_not_accept_own_message()  # avoid infinite loop
+        ep.only_on_direct_message()  # Only in direct room for now (need a spec for "saloon" conversation)
+
         config = user_configs[ep.sender]
         is_allowed, msg = await tiam.is_user_allowed(config, ep.sender, refresh=True)
         if is_allowed:
             return await func(ep, matrix_client)
 
-        user_query = ep.event.body
-        if not msg or user_query.startswith(COMMAND_PREFIX):
+        if not msg or ep.is_command(COMMAND_PREFIX):
             # Only send back the message for the generic albert_answer method
             # ignoring other callbacks.
-            return EventNotConcerned
+            raise EventNotConcerned
 
         await log_not_allowed(msg, ep, matrix_client)
 
@@ -189,7 +192,7 @@ def only_allowed_user(func):
 async def help(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
 
-    commands = ep.event.body.split()
+    commands = ep.get_command()
     verbose = False
     if len(commands) > 1 and commands[1] in ["-v", "--verbose", "--more", "-a", "--all"]:
         verbose = True
@@ -198,8 +201,8 @@ async def help(ep: EventParser, matrix_client: MatrixClient):
 
 @register_feature(
     group="albert",
-    onEvent=RoomMemberEvent,
     # @DEBUG: RoomCreateEvent is not captured ?
+    onEvent=RoomMemberEvent,
     help=None,
 )
 @only_allowed_user
@@ -209,7 +212,6 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     """
     config = user_configs[ep.sender]
 
-    ep.only_on_direct_message()
     ep.only_on_join()
 
     config.update_last_activity()
@@ -233,7 +235,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         config.update_last_activity()
         config.albert_history_lookup = 0
         reset_message = AlbertMsg.reset
-        reset_message += command_registry.show_commands(config)
+        # reset_message += command_registry.show_commands(config)
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
@@ -292,18 +294,18 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
 async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    commands = ep.event.body.split()
+    command = ep.get_command()
     # Get all available models
     all_models = get_available_models(config)
     all_models = [k for k, v in all_models.items() if v["type"] == "text-generation"]
     models_list = "\n\n- " + "\n- ".join(
         map(lambda x: x + (" *" if x == config.albert_model else ""), all_models)
     )
-    if len(commands) <= 1:
+    if len(command) <= 1:
         message = "La commande !model nécessite de donner un modèle parmi :" + models_list
         message += "\n\nExemple: `!model " + all_models[-1] + "`"
     else:
-        model = commands[1]
+        model = command[1]
         if model not in all_models:
             message = "La commande !model nécessite de donner un modèle parmi :" + models_list
             message += "\n\nExemple: `!model " + all_models[-1] + "`"
@@ -326,18 +328,18 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
-    commands = ep.event.body.split()
+    command = ep.get_command()
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
     all_modes += ["norag"]
     mode_list = "\n\n- " + "\n- ".join(
         map(lambda x: x + (" *" if x == config.albert_mode else ""), all_modes)
     )
-    if len(commands) <= 1:
+    if len(command) <= 1:
         message = "La commande !mode nécessite de donner un mode parmi :" + mode_list
         message += "\n\nExemple: `!mode " + all_modes[-1] + "`"
     else:
-        mode = commands[1]
+        mode = command[1]
         if mode not in all_modes:
             message = "La commande !mode nécessite de donner un mode parmi :" + mode_list
             message += "\n\nExemple: `!mode " + all_modes[-1] + "`"
@@ -389,12 +391,11 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     Receive a message event which is not a command, send the prompt to Albert API and return the response to the user
     """
     config = user_configs[ep.sender]
-    ep.only_on_direct_message()
 
     initial_history_lookup = config.albert_history_lookup
 
-    user_query = ep.event.body
-    if user_query.startswith(COMMAND_PREFIX):
+    user_query = ep.event.body.strip()
+    if ep.is_command(COMMAND_PREFIX):
         raise EventNotConcerned
 
     if config.albert_with_history and config.is_conversation_obsolete:
@@ -496,19 +497,24 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     help=None,
 )
 async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
+    """Special handler to catch invalid command"""
     config = user_configs[ep.sender]
-    user_query = ep.event.body
-    command = user_query.split()[0][1:]
-    if not user_query.strip().startswith(COMMAND_PREFIX):
+
+    ep.do_not_accept_own_message()  # avoid infinite loop
+    ep.only_on_direct_message()  # Only in direct room for now (need a spec for "saloon" conversation)
+
+    command = ep.event.body.strip().lstrip(COMMAND_PREFIX).split()
+    if not ep.is_command(COMMAND_PREFIX):
+        # Not a command
+        raise EventNotConcerned
+    elif command_registry.is_valid_command(command[0]):
+        # Valid command
         raise EventNotConcerned
 
     is_allowed, msg = await tiam.is_user_allowed(config, ep.sender, refresh=True)
     if not is_allowed:
         await log_not_allowed(msg, ep, matrix_client)
         return
-
-    if command_registry.is_valid_command(command):
-        raise EventNotConcerned
 
     cmds_msg = command_registry.show_commands(config)
     await matrix_client.send_markdown_message(

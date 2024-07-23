@@ -75,30 +75,18 @@ class EventParser:
         if not self.event.source.get("content", {}).get("membership") == "invite":
             raise EventNotConcerned
 
+    def is_command(self):
+        return False
+
 
 class MessageEventParser(EventParser):
     event: RoomMessageText
+    command: list[str] | None = None
 
-    def _command(
-        self, command: str | list[str], prefix: str, body=None, command_name: str = ""
-    ) -> str:
-        commands = [command] if isinstance(command, str) else command
-        user_com = body.split()[0].strip()
-        if not any([f"{prefix}{c}" == user_com for c in commands]):
-            raise EventNotConcerned
-
-        command = commands[0]
-        command_prefix = f"{prefix}{command}"
-        command_payload = body.removeprefix(command_prefix)
-        if self.log_usage:
-            logger.info(
-                "Handling command", command=command_name or command, command_payload=command_payload
-            )
-        return command_payload
-
-    def command(self, command: str | list[str], prefix: str, command_name: str = "") -> str:
+    def parse_command(self, commands: str | list[str], prefix: str, command_name: str = ""):
         """
-        if the event is concerned by the command, returns the text after the command. Raise EventNotConcerned otherwise
+        if the event is concerned by the command, returns the command line as a list.
+        Raise EventNotConcerned otherwise.
 
         :param command: the command that is to be recognized.
         :param prefix: the prefix for this command (default is !).
@@ -106,10 +94,28 @@ class MessageEventParser(EventParser):
         :return: the text after the command
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
-        return self._command(
-            command=command, prefix=prefix, command_name=command_name, body=self.event.body
-        )
+        commands = [commands] if isinstance(commands, str) else commands
+        body = self.event.body.strip()
+        user_command = body.split()
+        command = [commands[0]] + user_command[1:]
 
+        if not any([f"{prefix}{c}" == user_command[0] for c in commands]):
+            raise EventNotConcerned
+
+        if self.log_usage:
+            logger.info(
+                "Handling command", command=command_name or command[0], command_payload=command[1:]
+            )
+
+        self.command = command
+
+    def is_command(self, prefix: str) -> bool:
+        return self.event.body.strip().startswith(prefix)
+
+    def get_command(self) -> list[str] | None:
+        return self.command
+
+    # @deprecated: Not used/tested
     async def hl(self, consider_hl_when_direct_message=True) -> str:
         """
         if the event is a hl (highlight, i.e begins with the name of the bot),
@@ -121,10 +127,12 @@ class MessageEventParser(EventParser):
         """
         display_name = await self.matrix_client.get_display_name()
         if consider_hl_when_direct_message and self.room_is_direct_message():
-            return self._command(
+            return self.get_command_line(
                 "",
                 prefix="",
                 body=self.event.body.removeprefix(display_name).removeprefix(": "),
                 command_name="mention",
             )
-        return self.command(display_name, prefix="", command_name="mention").removeprefix(": ")
+        return self.get_command_line(display_name, prefix="", command_name="mention").removeprefix(
+            ": "
+        )
