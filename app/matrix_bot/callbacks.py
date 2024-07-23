@@ -87,7 +87,6 @@ class Callbacks:
                 )
 
             ep.do_not_accept_own_message()  # avoid infinite loop
-            await ep.only_allowed_sender()  # only allowed senders
             await func(ep=ep, matrix_client=self.matrix_client)
 
         self.client_callback.append((wrapped_func, onEvent))

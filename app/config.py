@@ -44,18 +44,22 @@ class Config(BaseConfig):
     # Grist Api Key
     grist_api_server: str = Field("", description="Grist Api Server")
     grist_api_key: str = Field("", description="Grist API Key")
-    grist_users_table_id: str = Field("", description="Grist Users table ID")
+    grist_users_table_id: str = Field("", description="Grist Users doc ID")
+    grist_users_table_name: str = Field("", description="Grist Users table name/ID")
 
     # Albert API settings
     albert_api_url: str = Field("http://localhost:8090", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API Token")
+
+    # Albert Conversation settings
+    # ============================
+    # PER USER SETTINGS !
+    # ============================
     albert_model: str = Field(
         "AgentPublic/albertlight-7b",
         description="Albert model name to use (see Albert models hub on HuggingFace)",
     )
     albert_mode: str = Field("rag", description="Albert API mode")
-
-    ## Albert Conversation settings
     albert_with_history: bool = Field(True, description="Conversational mode")
     albert_history_lookup: int = Field(0, description="How far we lookup in the history")
     albert_max_rewind: int = Field(20, description="Max history rewind for stability purposes")

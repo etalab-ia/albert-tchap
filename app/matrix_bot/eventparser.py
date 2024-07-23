@@ -3,12 +3,9 @@
 # SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
-import re
 from dataclasses import dataclass
 
 from nio import Event, MatrixRoom, RoomMessageText
-
-from config import env_config
 
 from .client import MatrixClient
 from .config import logger
@@ -41,11 +38,6 @@ class EventParser:
     def is_from_this_bot(self) -> bool:
         return self.is_from_userid(self.matrix_client.user_id)
 
-    def is_sender_allowed(self) -> bool:
-        if "*" in env_config.user_allowed_domains:
-            return True
-        return self.sender_domain() in env_config.user_allowed_domains
-
     def room_is_direct_message(self) -> bool:
         return room_is_direct_message(self.room)
 
@@ -54,18 +46,6 @@ class EventParser:
 
     def sender_username(self) -> str:
         return self.room.users[self.event.sender].name
-
-    def sender_domain(self) -> str | None:
-        """
-        Sender IDs are formatted like this: "@<mail_username>-<mail_domain>:<matrix_server>
-        e.g. @john.doe-ministere_example.gouv.fr1:agent.ministere_example.tchap.gouv.frmerci
-        """
-        match: re.Match[str] | None = re.search(
-            r"(?<=\-)[^\-\:]+[0-9]*(?=\:)", self.event.sender
-        )  # match the domain name (between the last "-" and ":", with optional numbers to ignore at the end of the domain) WARNING: this regex is not perfect and doesn't work for domain names with dashes in it like "developpement-durable.gouv.fr"
-        if match:
-            return match.group(0)
-        logger.warning("Could not extract domain from sender ID", sender_id=self.sender_id)
 
     def do_not_accept_own_message(self) -> None:
         """
@@ -95,25 +75,16 @@ class EventParser:
         if not self.event.source.get("content", {}).get("membership") == "invite":
             raise EventNotConcerned
 
-    async def only_allowed_sender(self) -> None:
-        """
-        :raise EventNotConcerned: if the sender is not allowed to send messages
-        """
-        if not self.is_sender_allowed():
-            await self.matrix_client.send_markdown_message(
-                self.room.room_id,
-                "Albert n'est pas encore disponible pour votre domaine. Merci de rester en contact, il sera disponible après un beta test !",
-            )
-            raise EventNotConcerned
-
 
 class MessageEventParser(EventParser):
     event: RoomMessageText
 
-    def _command(self, command: str|list[str], prefix: str, body=None, command_name: str = "") -> str:
+    def _command(
+        self, command: str | list[str], prefix: str, body=None, command_name: str = ""
+    ) -> str:
         commands = [command] if isinstance(command, str) else command
-        user_com = body.split()[0]
-        if not any([ f"{prefix}{c}" == user_com for c in commands]):
+        user_com = body.split()[0].strip()
+        if not any([f"{prefix}{c}" == user_com for c in commands]):
             raise EventNotConcerned
 
         command = commands[0]
@@ -125,7 +96,7 @@ class MessageEventParser(EventParser):
             )
         return command_payload
 
-    def command(self, command: str|list[str], prefix: str, command_name: str = "") -> str:
+    def command(self, command: str | list[str], prefix: str, command_name: str = "") -> str:
         """
         if the event is concerned by the command, returns the text after the command. Raise EventNotConcerned otherwise
 

@@ -3,10 +3,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-import time
+import asyncio
 import traceback
 from collections import defaultdict
 from dataclasses import dataclass
+from functools import wraps
 
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
@@ -21,6 +22,7 @@ from core_llm import (
     get_available_models,
     get_available_modes,
 )
+from iam import TchapIam
 from tchap_utils import get_cleanup_body, get_previous_messages, get_thread_messages, isa_reply_to
 
 
@@ -94,8 +96,34 @@ class CommandRegistry:
         return sorted(list(cmds))
 
 
+# ================================================================================
+# Globals lifespan
+# ================================================================================
+
 command_registry = CommandRegistry({}, set())
 user_configs = defaultdict(lambda: Config())
+tiam = TchapIam(Config())
+
+
+async def log_not_allowed(msg: str, ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.send_markdown_message(ep.room.room_id, msg, msgtype="m.notice")
+
+    # If user is new to the pending list, send a notification for a new pending user
+    if await tiam.add_pending_user(config, ep.sender):
+        if config.errors_room_id:
+            try:
+                await matrix_client.send_markdown_message(
+                    config.errors_room_id,
+                    f"\u26a0\ufe0f **New Albert Tchap user access request**\n\n{ep.sender}\n\nMatrix server: {config.matrix_home_server}",
+                )
+            except:
+                print("Failed to find error room ?!")
+
+
+# ================================================================================
+# Decorators
+# ================================================================================
 
 
 def register_feature(
@@ -124,6 +152,32 @@ def register_feature(
     return decorator
 
 
+def only_allowed_user(func):
+    """decorator to use with async function using EventParser"""
+
+    @wraps(func)
+    async def wrapper(ep: EventParser, matrix_client: MatrixClient):
+        config = user_configs[ep.sender]
+        is_allowed, msg = await tiam.is_user_allowed(config, ep.sender, refresh=True)
+        if is_allowed:
+            return await func(ep, matrix_client)
+
+        user_query = ep.event.body
+        if not msg or user_query.startswith(COMMAND_PREFIX):
+            # Only send back the message for the generic albert_answer method
+            # ignoring other callbacks.
+            return EventNotConcerned
+
+        await log_not_allowed(msg, ep, matrix_client)
+
+    return wrapper
+
+
+# ================================================================================
+# Bot commands
+# ================================================================================
+
+
 @register_feature(
     group="basic",
     onEvent=RoomMessageText,
@@ -131,8 +185,10 @@ def register_feature(
     aliases=["help", "aiuto"],
     help=AlbertMsg.shorts["help"],
 )
+@only_allowed_user
 async def help(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+
     commands = ep.event.body.split()
     verbose = False
     if len(commands) > 1 and commands[1] in ["-v", "--verbose", "--more", "-a", "--all"]:
@@ -146,16 +202,21 @@ async def help(ep: EventParser, matrix_client: MatrixClient):
     # @DEBUG: RoomCreateEvent is not captured ?
     help=None,
 )
+@only_allowed_user
 async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     """
     Receive the join/invite event and send the welcome/help message
     """
     config = user_configs[ep.sender]
+
     ep.only_on_direct_message()
     ep.only_on_join()
+
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id)
-    time.sleep(3)  # wait for the room to be ready - otherwise the encryption seems to be not ready
+    await asyncio.sleep(
+        3
+    )  # wait for the room to be ready - otherwise the encryption seems to be not ready
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
 
@@ -165,6 +226,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     command="reset",
     help=AlbertMsg.shorts["reset"],
 )
+@only_allowed_user
 async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     if config.albert_with_history:
@@ -190,6 +252,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
     help=AlbertMsg.shorts["conversation"],
     for_geek=True,
 )
+@only_allowed_user
 async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     config.albert_history_lookup = 0
@@ -210,6 +273,7 @@ async def albert_conversation(ep: EventParser, matrix_client: MatrixClient):
     help=AlbertMsg.shorts["debug"],
     for_geek=True,
 )
+@only_allowed_user
 async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     debug_message = AlbertMsg.debug(config)
@@ -224,6 +288,7 @@ async def albert_debug(ep: EventParser, matrix_client: MatrixClient):
     help=AlbertMsg.shorts["model"],
     for_geek=True,
 )
+@only_allowed_user
 async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
@@ -257,6 +322,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     help=AlbertMsg.shorts["mode"],
     for_geek=True,
 )
+@only_allowed_user
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     await matrix_client.room_typing(ep.room.room_id)
@@ -288,6 +354,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     command="sources",
     help=AlbertMsg.shorts["sources"],
 )
+@only_allowed_user
 async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
 
@@ -316,6 +383,7 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     onEvent=RoomMessageText,
     help=None,
 )
+@only_allowed_user
 async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
     """
     Receive a message event which is not a command, send the prompt to Albert API and return the response to the user
@@ -386,7 +454,10 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         )
         # Redirect the error message to the errors room if it exists
         if config.errors_room_id:
-            await matrix_client.send_markdown_message(config.errors_room_id, AlbertMsg.error_debug(albert_err, config))  # fmt: off
+            try:
+                await matrix_client.send_markdown_message(config.errors_room_id, AlbertMsg.error_debug(albert_err, config))  # fmt: off
+            except:
+                print("Failed to find error room ?!")
 
         config.albert_history_lookup = initial_history_lookup
         return
@@ -402,13 +473,17 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
 
     try:  # sometimes the async code fail (when input is big) with random asyncio errors
         await matrix_client.send_markdown_message(ep.room.room_id, answer, reply_to=reply_to)
+        await tiam.increment_user_question(ep.sender)
     except Exception as llm_exception:  # it seems to work when we retry
         logger.error(f"asyncio error when sending message {llm_exception=}. retrying")
-        time.sleep(1)
-        await matrix_client.send_markdown_message(ep.room.room_id, answer, reply_to=reply_to)
-
-        config.albert_history_lookup = initial_history_lookup
-        return
+        await asyncio.sleep(1)
+        try:
+            # Try once more
+            await matrix_client.send_markdown_message(ep.room.room_id, answer, reply_to=reply_to)
+            await tiam.increment_user_question(ep.sender)
+        except:
+            config.albert_history_lookup = initial_history_lookup
+            return
 
     # Add agent answer in the history count
     if not is_reply_to:
@@ -424,7 +499,15 @@ async def albert_wrong_command(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
     user_query = ep.event.body
     command = user_query.split()[0][1:]
-    if not user_query.startswith(COMMAND_PREFIX) or command_registry.is_valid_command(command):
+    if not user_query.strip().startswith(COMMAND_PREFIX):
+        raise EventNotConcerned
+
+    is_allowed, msg = await tiam.is_user_allowed(config, ep.sender, refresh=True)
+    if not is_allowed:
+        await log_not_allowed(msg, ep, matrix_client)
+        return
+
+    if command_registry.is_valid_command(command):
         raise EventNotConcerned
 
     cmds_msg = command_registry.show_commands(config)

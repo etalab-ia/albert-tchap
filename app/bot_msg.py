@@ -24,6 +24,10 @@ class AlbertMsg:
 
     reset = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion.**\n\n"
 
+    user_not_allowed = "Albert est en phase de test et n'est pas encore disponible pour votre utilisateur. Contactez albert-contact@data.gouv.fr pour demander un accès."
+
+    domain_not_allowed = "Albert n'est pas encore disponible pour votre domaine. Merci de rester en contact, il sera disponible après une phase beta test."
+
     def error_debug(reason, config):
         msg = f"\u26a0\ufe0f **Albert API error**\n\n{reason}\n\n- Albert API URL: {config.albert_api_url}\n- Matrix server: {config.matrix_home_server}"
         return msg
