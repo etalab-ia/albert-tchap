@@ -41,6 +41,11 @@ class Config(BaseConfig):
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     last_activity: int = Field(int(time.time()), description="Last activity timestamp")
 
+    # Grist Api Key
+    grist_api_server: str = Field("", description="Grist Api Server")
+    grist_api_key: str = Field("", description="Grist API Key")
+    grist_users_table_id: str = Field("", description="Grist Users table ID")
+
     # Albert API settings
     albert_api_url: str = Field("http://localhost:8090", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API Token")
