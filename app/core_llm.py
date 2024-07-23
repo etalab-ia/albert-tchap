@@ -56,13 +56,22 @@ def generate(config: Config, messages: list, limit=7) -> str:
     if not config.albert_with_history:
         messages = messages[-1:]
 
+    if mode is None:
+        system_prompt = "Tu es Albert, un bot de l'état français en charge d'informer les agents."
+        messages = [
+            {
+                "role": "system",
+                "content": system_prompt,
+            }
+        ] + messages
+
     # Query LLM API
     # --
     rag_params = {"strategy": "last", "mode": mode, "limit": 7}
     aclient = LlmClient(model, base_url=url, api_key=api_key)
     result = aclient.generate(messages=messages, rag=rag_params)
     answer = result.choices[0].message.content
-    if hasattr(result, "rag_context"):
+    if getattr(result, "rag_context"):
         config.last_rag_references = result.rag_context[0].references
 
     return answer.strip()
