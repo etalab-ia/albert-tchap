@@ -33,7 +33,7 @@ class AsyncGristDocAPI:
                 response.raise_for_status()
                 return await response.json()
 
-    async def fetch_table(self, table_id, filters=None):
+    async def fetch_table(self, table_id, filters=None) -> list[namedtuple]:
         endpoint = f"/docs/{self.doc_id}/tables/{table_id}/records"
         data = {}
         if filters:
