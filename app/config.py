@@ -76,6 +76,7 @@ class Config(BaseConfig):
         self.last_activity = int(time.time())
 
 
+# Default config
 env_config = Config()
 
 
