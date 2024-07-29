@@ -26,7 +26,7 @@ class MatrixBot:
 
     async def main(self):
         await self.matrix_client.automatic_login()
-        sync = await self.matrix_client.sync(timeout=bot_lib_config.timeout, full_state=False)  # Ignore prior messages
+        sync = await self.matrix_client.sync(timeout=bot_lib_config.timeout, full_state=True)  # Ignore prior messages
         self.print_sync_response(sync)
         await self.callbacks.setup_callbacks()
 

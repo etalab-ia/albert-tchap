@@ -23,7 +23,7 @@ Le projet est un fork de [tchap_bot](https://code.peren.fr/open-source/tchapbot)
 
 Contient :
 - `app/.` : la codebase pour le Tchap bot Albert
-- `app/matrix_bot` : une bibliothèque pour pouvoir faire des bots Matrix
+- `app/matrix_bot` : une bibliothèque qui encapsule [matrix-nio](https://github.com/matrix-nio/matrix-nio) faire des bots Matrix
 
 
 ### Installation locale
@@ -52,41 +52,14 @@ Créez le fichier d'environnement `app/.env` avec les informations de connexion 
 cp app/.env.example app/.env
 ```
 
-Les variables d'environnement à renseigner sont les suivantes :
-
-- `JOIN_ON_INVITE` : booléen facultatif pour activer ou non l'acceptation automatique des invitations dans les salons (exemple : `JOIN_ON_INVITE=True`. Par défaut, `False`)
-- `SALT` : il est conseillé de changer la valeur du salt pour ne pas avoir celle par défaut. Il faudra en revanche qu'elle de change pas entre deux sessions.
-- `MATRIX_HOME_SERVER` : l'URL du serveur Matrix à utiliser (exemple : `MATRIX_HOME_SERVER="https://matrix.agent.ministere_example.tchap.gouv.fr"`)
-- `MATRIX_BOT_USERNAME` : le nom d'utilisateur du bot Matrix (exemple : `MATRIX_BOT_USERNAME="tchapbot@ministere_example.gouv.fr"`)
-- `MATRIX_BOT_PASSWORD` : le mot de passe du bot Matrix
-- `ERRORS_ROOM_ID` : l'identifiant du salon Tchap où les erreurs seront envoyées (exemple : `ERRORS_ROOM_ID="!roomid:matrix.agent.ministere_example.tchap.gouv.fr"`). **Attention** : le bot doit être invité dans ce salon pour pouvoir y envoyer ses messages d'erreur !
-
-Pour que le bot se connecte à l'API d'Albert, il faut également renseigner les variables suivantes :
-- `USER_ALLOWED_DOMAINS` : liste des domaines d'email autorisés pour les utilisateurs Tchap pour qu'ils puissent interagir avec le bot (exemple : `USER_ALLOWED_DOMAINS='["ministere1.gouv.fr", "ministere2.gouv.fr"]'`. Par défaut : `["*"]` (tous les domaines sont autorisés))
-- `GROUPS_USED=['albert']` : permet, dans cet exemple, d'activer toutes les commandes qui font partie du groupe "albert"
-- `ALBERT_API_URL` : l'url de l'API Albert à consommer
-- `ALBERT_API_TOKEN` : le token API utilisé pour authoriser le bot a consommer l'API Albert. Pour plus d'informations, consultez la documentation de l'API Albert
-- `ALBERT_MODEL_NAME` : le nom du modèle Albert à utiliser pour le bot (exemple : `ALBERT_MODEL_NAME='AgentPublic/albertlight-7b'`). Pour plus d'informations, consultez la documentation de l'API Albert et le [hub des modèles Albert de HuggingFace](https://huggingface.co/collections/AgentPublic/albert-662a1d95c93a47aca5cecc82)
-- `ALBERT_MODE` : le mode d'Albert à utiliser pour le bot (exemple : `ALBERT_MODE='rag'`). Pour plus d'informations, consultez la documentation de l'API Albert
-- `CONVERSATION_OBSOLESCENCE` : le temps en secondes après lequel une conversation se remet automatiquement à zéro (exemple : `CONVERSATION_OBSOLESCENCE=3600` pour une heure). Par défaut : `3600` (une heure)
+L'ensemble des variables d'environements disponibles est documenté dans le fichier suivant : [app/config.py](./app/config.py)
 
 
-### Utilisation en dehors de Docker
+### Lancer le bot
 
-Pour lancer le bot en dehors de Docker :
+Pour lancer le bot executez :
 ```bash
-cd app
-./.venv/bin/python3 .
-```
-
-
-### Utilisation avec Docker
-
-1. Créez un fichier `.env` à la racine du projet avec les variables d'environnement mentionnées dans [app/.env.example](./app/.env.example) y compris celles mentionnées dans la section *"For docker-compose deployment"*
-
-2. Lancer le container du bot à la racine du projet :
-```bash
-docker compose up --detach
+python app
 ```
 
 
@@ -99,15 +72,7 @@ Le premier sync est assez long, et a priori non bloquant. Si vous avez une inter
 
 Le projet est en open source, sous [licence MIT](LICENSES/MIT.txt). Toutes les contributions sont bienvenues, sous forme de pull requests ou d'ouvertures d'issues sur le [repo officiel GitHub](https://github.com/etalab-ia/albert-tchapbot).
 
-Avant de contribuer au dépôt, il est nécessaire d'initialiser les _hooks_ de _pre-commit_ :
-```bash
-pre-commit install
-```
-
-Si vous ne pouvez pas utiliser de pre-commit, il est nécessaire de formatter, linter et trier les imports avec [Ruff](https://docs.astral.sh/ruff/) :
-```bash
-ruff check --fix --select I .
-```
+Pour commencer, consultez [CONTRIBUTING.md](CONTRIBUTING.md).
 
 
 ### Licence
@@ -137,7 +102,7 @@ The project is a fork of [tchap_bot](https://code.peren.fr/open-source/tchapbot)
 
 Contains:
 - `app/.`: the codebase for the Albert Tchap bot
-- `app/matrix_bot`: a library to be able to make Matrix bots
+- `app/matrix_bot`: a library that wraps [matrix-nio](https://github.com/matrix-nio/matrix-nio) to make Matrix bots
 
 
 ### Local Installation
@@ -165,40 +130,15 @@ Create the environment file `app/.env` with the connection information (or provi
 cp app/.env.example app/.env
 ```
 
-The following environment variables must be entered:
+The set of available environment variables is documented in the following file: [app/config.py](./app/config.py)
 
-- `JOIN_ON_INVITE`: optional boolean to enable or disable automatic acceptance of invitations to Tchap rooms (example: `JOIN_ON_INVITE=True`. Default: `False`).
-- `SALT`: it is advisable to change the salt value to avoid having the default one. However, it must not change between sessions.
-- `MATRIX_HOME_SERVER`: the URL of the Matrix server to be used (example: `MATRIX_HOME_SERVER=“https://matrix.agent.ministere_example.tchap.gouv.fr”`).
-- `MATRIX_BOT_USERNAME`: the Matrix bot username (example: `MATRIX_BOT_USERNAME=“tchapbot@ministere_example.gouv.fr”`)
-- `MATRIX_BOT_PASSWORD`: the Matrix bot user password
-- `ERRORS_ROOM_ID`: the Tchap room ID where errors will be sent (example: `ERRORS_ROOM_ID=“!roomid:matrix.agent.ministere_example.tchap.gouv.fr”`). **Warning**: the bot must be invited to this room to be able to send error messages!
+### Run the bot
 
-For the bot to connect to Albert API, you also need to provide the following variables:
-- `USER_ALLOWED_DOMAINS`: list of allowed email domains for Tchap users to interact with the bot (example: `USER_ALLOWED_DOMAINS='["ministere.gouv.fr"]'`. Default: `["*"]` (all domains are allowed))
-- `GROUPS_USED=['albert']`: allows, in this example, to activate all commands that are part of the albert group
-- `ALBERT_API_URL`: the URL of the Albert API to consume
-- `ALBERT_API_TOKEN`: the API token used to authorize the bot to consume the Albert API. For more info, check the Albert API documentation
-- `ALBERT_MODEL_NAME`: the name of the model to use for the bot (example: `ALBERT_MODEL_NAME='AgentPublic/albertlight-7b'`). For more info, check the Albert API documentation and the [Albert models hub on HuggingFace](https://huggingface.co/collections/AgentPublic/albert-662a1d95c93a47aca5cecc82).
-- `ALBERT_MODE`: the mode of Albert to use for the bot (example: `ALBERT_MODE='rag'`). For more info, check the Albert API documentation
-- `CONVERSATION_OBSOLESCENCE` : the time in seconds after which a conversation automatically resets (example: `CONVERSATION_OBSOLESCENCE=3600` for one hour). Default: `3600` (one hour)
-
-### Usage outside of Docker
-
-To launch the bot outside of Docker:
+To launch the bot:
 ```bash
-cd app
-./.venv/bin/python3 .
+python app
 ```
 
-### Usage with Docker
-
-1. Create a `.env` file at the root of the project with the environment variables mentioned in [app/.env.example](./app/.env.example), including those mentionned in the *"For docker-compose deployment"* section
-
-2. Launch the bot container at the root of the project:
-```bash
-docker compose up --detach
-```
 
 ### Troubleshooting
 
@@ -208,15 +148,7 @@ The first sync is quite long, and apparently non-blocking. If you interact with 
 
 This project is open source, under the [MIT license](LICENSES/MIT.txt). All contributions are welcome, in the form of pull requests or issue openings on the [repo officiel GitHub](https://github.com/etalab-ia/albert-tchapbot).
 
-Before contributing to the repository, it is necessary to initialize the pre-commit hooks:
-```bash
-pre-commit install
-```
-
-If you cannot use pre-commit, it is necessary to format, lint, and sort imports with [Ruff](https://docs.astral.sh/ruff/) before committing:
-```bash
-ruff check --fix --select I .
-```
+To get started, take a look at [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ### License
 
