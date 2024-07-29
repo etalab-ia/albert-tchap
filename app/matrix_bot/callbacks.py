@@ -2,6 +2,7 @@
 # SPDX-FileCopyrightText: 2023 Pôle d'Expertise de la Régulation Numérique <contact.peren@finances.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
+import traceback
 from functools import wraps
 
 from nio import (
@@ -14,6 +15,8 @@ from nio import (
     UnknownEvent,
 )
 
+from bot_msg import AlbertMsg
+
 from .client import MatrixClient
 from .config import bot_lib_config, logger
 from .eventparser import (
@@ -23,8 +26,9 @@ from .eventparser import (
 )
 
 
-def properly_fail(matrix_client):
-    """use this decorator so that your async callback never crash, log the error and return a message to the room"""
+def properly_fail(matrix_client, error_msg=AlbertMsg.failed):
+    """use this decorator so that your async callback never crash,
+    log the error and return a message to the room"""
 
     def decorator(func):
         @wraps(func)
@@ -32,8 +36,9 @@ def properly_fail(matrix_client):
             try:
                 return await func(room, event)
             except Exception as unexpected_exception:
-                await matrix_client.send_text_message(room.room_id, "failed to answer")
+                await matrix_client.send_text_message(room.room_id, error_msg, msgtype="m.notice")
                 logger.warning(f"command failed with exception: {unexpected_exception}")
+                traceback.print_exc()
             finally:
                 await matrix_client.room_typing(room.room_id, typing_state=False)
 
@@ -74,15 +79,13 @@ class Callbacks:
                 ep = MessageEventParser(
                     room=room, event=event, matrix_client=self.matrix_client, log_usage=True
                 )
-                if feature.get("command"):
-                    ep.command(feature["command"], prefix=feature["prefix"])
+                if feature.get("commands"):
+                    ep.parse_command(feature["commands"], prefix=feature["prefix"])
             else:
                 ep = EventParser(
                     room=room, event=event, matrix_client=self.matrix_client, log_usage=True
                 )
 
-            ep.do_not_accept_own_message()  # avoid infinite loop
-            await ep.only_allowed_sender()  # only allowed senders
             await func(ep=ep, matrix_client=self.matrix_client)
 
         self.client_callback.append((wrapped_func, onEvent))

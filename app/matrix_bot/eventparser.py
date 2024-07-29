@@ -3,10 +3,8 @@
 # SPDX-FileCopyrightText: 2024 Etalab <etalab@modernisation.gouv.fr>
 #
 # SPDX-License-Identifier: MIT
-import re
 from dataclasses import dataclass
 
-from config import env_config
 from nio import Event, MatrixRoom, RoomMessageText
 
 from .client import MatrixClient
@@ -40,11 +38,6 @@ class EventParser:
     def is_from_this_bot(self) -> bool:
         return self.is_from_userid(self.matrix_client.user_id)
 
-    def is_sender_allowed(self) -> bool:
-        if "*" in env_config.user_allowed_domains:
-            return True
-        return self.sender_domain() in env_config.user_allowed_domains
-
     def room_is_direct_message(self) -> bool:
         return room_is_direct_message(self.room)
 
@@ -53,18 +46,6 @@ class EventParser:
 
     def sender_username(self) -> str:
         return self.room.users[self.event.sender].name
-
-    def sender_domain(self) -> str | None:
-        """
-        Sender IDs are formatted like this: "@<mail_username>-<mail_domain>:<matrix_server>
-        e.g. @john.doe-ministere_example.gouv.fr1:agent.ministere_example.tchap.gouv.frmerci
-        """
-        match: re.Match[str] | None = re.search(
-            r"(?<=\-)[^\-\:]+[0-9]*(?=\:)", self.event.sender
-        )  # match the domain name (between the last "-" and ":", with optional numbers to ignore at the end of the domain) WARNING: this regex is not perfect and doesn't work for domain names with dashes in it like "developpement-durable.gouv.fr"
-        if match:
-            return match.group(0)
-        logger.warning("Could not extract domain from sender ID", sender_id=self.sender_id)
 
     def do_not_accept_own_message(self) -> None:
         """
@@ -94,46 +75,47 @@ class EventParser:
         if not self.event.source.get("content", {}).get("membership") == "invite":
             raise EventNotConcerned
 
-    async def only_allowed_sender(self) -> None:
-        """
-        :raise EventNotConcerned: if the sender is not allowed to send messages
-        """
-        if not self.is_sender_allowed():
-            await self.matrix_client.send_markdown_message(
-                self.room.room_id,
-                "Albert n'est pas encore disponible pour votre domaine. Merci de rester en contact, il sera disponible après un beta test !",
-            )
-            raise EventNotConcerned
+    def is_command(self):
+        return False
 
 
 class MessageEventParser(EventParser):
     event: RoomMessageText
+    command: list[str] | None = None
 
-    def _command(self, command: str, prefix: str, body=None, command_name: str = "") -> str:
-        command_prefix = f"{prefix}{command}"
-        if body.split()[0] != command_prefix:
-            raise EventNotConcerned
-        command_payload = body.removeprefix(command_prefix)
-        if self.log_usage:
-            logger.info(
-                "Handling command", command=command_name or command, command_payload=command_payload
-            )
-        return command_payload
-
-    def command(self, command: str, prefix: str, command_name: str = "") -> str:
+    def parse_command(self, commands: str | list[str], prefix: str, command_name: str = ""):
         """
-        if the event is concerned by the command, returns the text after the command. Raise EventNotConcerned otherwise
+        if the event is concerned by the command, returns the command line as a list.
+        Raise EventNotConcerned otherwise.
 
         :param command: the command that is to be recognized.
         :param prefix: the prefix for this command (default is !).
-        :param command_name: name of the command, for logging purposes.
+        :param command_name: name(s) of the command, for logging purposes.
         :return: the text after the command
         :raise EventNotConcerned: if the current event is not concerned by the command.
         """
-        return self._command(
-            command=command, prefix=prefix, command_name=command_name, body=self.event.body
-        )
+        commands = [commands] if isinstance(commands, str) else commands
+        body = self.event.body.strip()
+        user_command = body.split()
+        command = [commands[0]] + user_command[1:]
 
+        if not any([f"{prefix}{c}" == user_command[0] for c in commands]):
+            raise EventNotConcerned
+
+        if self.log_usage:
+            logger.info(
+                "Handling command", command=command_name or command[0], command_payload=command[1:]
+            )
+
+        self.command = command
+
+    def is_command(self, prefix: str) -> bool:
+        return self.event.body.strip().startswith(prefix)
+
+    def get_command(self) -> list[str] | None:
+        return self.command
+
+    # @deprecated: Not used/tested
     async def hl(self, consider_hl_when_direct_message=True) -> str:
         """
         if the event is a hl (highlight, i.e begins with the name of the bot),
@@ -145,10 +127,12 @@ class MessageEventParser(EventParser):
         """
         display_name = await self.matrix_client.get_display_name()
         if consider_hl_when_direct_message and self.room_is_direct_message():
-            return self._command(
+            return self.get_command_line(
                 "",
                 prefix="",
                 body=self.event.body.removeprefix(display_name).removeprefix(": "),
                 command_name="mention",
             )
-        return self.command(display_name, prefix="", command_name="mention").removeprefix(": ")
+        return self.get_command_line(display_name, prefix="", command_name="mention").removeprefix(
+            ": "
+        )

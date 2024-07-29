@@ -5,22 +5,16 @@
 
 import logging
 import time
-import tomllib
 from pathlib import Path
 
-from matrix_bot.config import bot_lib_config
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from _version import __version__
+
 COMMAND_PREFIX = "!"
 
-APP_VERSION = "unknown"
-try:
-    with open("pyproject.toml", "rb") as f:
-        pyproject: dict = tomllib.load(f)
-        APP_VERSION = pyproject["project"]["version"]
-except Exception as e:
-    logging.warning(f"Error while reading pyproject.toml: {e}")
+APP_VERSION = __version__
 
 
 class BaseConfig(BaseSettings):
@@ -32,7 +26,7 @@ class BaseConfig(BaseSettings):
 
 
 class Config(BaseConfig):
-    verbose: bool = Field(False, description="Enable / disable verbose logging")
+    # General
     systemd_logging: bool = Field(
         True, description="Enable / disable logging with systemd.journal.JournalHandler"
     )
@@ -46,27 +40,43 @@ class Config(BaseConfig):
     )
     groups_used: list[str] = Field(["basic"], description="List of commands groups to use")
     last_activity: int = Field(int(time.time()), description="Last activity timestamp")
+
+    # Grist Api Key
+    grist_api_server: str = Field("", description="Grist Api Server")
+    grist_api_key: str = Field("", description="Grist API Key")
+    grist_users_table_id: str = Field("", description="Grist Users doc ID")
+    grist_users_table_name: str = Field("", description="Grist Users table name/ID")
+
     # Albert API settings
-    albert_api_url: str = Field("http://localhost:8090/api/v2", description="Albert API base URL")
+    albert_api_url: str = Field("http://localhost:8090", description="Albert API base URL")
     albert_api_token: str = Field("", description="Albert API Token")
-    albert_model_name: str = Field(
+
+    # Albert Conversation settings
+    # ============================
+    # PER USER SETTINGS !
+    # ============================
+    albert_model: str = Field(
         "AgentPublic/albertlight-7b",
         description="Albert model name to use (see Albert models hub on HuggingFace)",
     )
     albert_mode: str = Field("rag", description="Albert API mode")
-    ## Albert Conversational settings
     albert_with_history: bool = Field(True, description="Conversational mode")
-    albert_chat_id: int | None = Field(None, description="Current chat id")
-    albert_stream_id: int | None = Field(None, description="Current stream id")
+    albert_history_lookup: int = Field(0, description="How far we lookup in the history")
+    albert_max_rewind: int = Field(20, description="Max history rewind for stability purposes")
+    conversation_obsolescence: int = Field(
+        15 * 60, description="time after which a conversation is considered obsolete, in seconds"
+    )
+    last_rag_references: list[dict] | None = Field(None, description="Last sources used for the RAG.")
 
     @property
     def is_conversation_obsolete(self) -> bool:
-        return int(time.time()) - self.last_activity > bot_lib_config.conversation_obsolescence
+        return int(time.time()) - self.last_activity > self.conversation_obsolescence
 
     def update_last_activity(self) -> None:
         self.last_activity = int(time.time())
 
 
+# Default config
 env_config = Config()
 
 
