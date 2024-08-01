@@ -402,7 +402,6 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         config.albert_history_lookup = 0
         obsolescence_in_minutes = str(config.conversation_obsolescence // 60)
         reset_message = AlbertMsg.reset_notif(obsolescence_in_minutes)
-        await matrix_client.room_typing(ep.room.room_id)
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
