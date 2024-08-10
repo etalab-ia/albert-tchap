@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2024-08-10
+
+### 🐛 Bug Fixes
+
+- Prevent conflicting typing await when showing auto-reset message.
+- Typo in matrix_bot error log
+- Update pyalbert version
+
+
 ## 0.2.0
 
 ### 🚀 Features
