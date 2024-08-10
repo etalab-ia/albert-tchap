@@ -134,7 +134,8 @@ class Callbacks:
         logger.error(
             f"Failed to decrypt message: {event.event_id} from {event.sender} in {room.room_id}. "
             "If this error persists despite verification, reset the crypto session by deleting "
-            f"{self.matrix_client.matrix_config.store_path} and {self.matrix_client.auth.session_stored_file_path}. "
+            f"{self.matrix_client.matrix_config.store_path} "
+            f"and {self.matrix_client.auth.credentials.session_stored_file_path}. "
             "You will have to verify any verified devices anew."
         )
         await self.matrix_client.send_text_message(
