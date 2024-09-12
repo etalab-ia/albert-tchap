@@ -12,6 +12,13 @@ UserRecord = namedtuple(
     "UserRecord", ["id", "tchap_user", "status", "domain", "n_questions", "last_activity"]
 )
 
+def to_record(_id: str, data: dict):
+    """Dict to a grist record"""
+    return UserRecord(
+        **{"id": _id, **{k: v for k, v in data.items() if k in UserRecord._fields}}
+    )
+
+
 
 # from grist_api import GristDocAPI => is not async
 class AsyncGristDocAPI:
@@ -45,7 +52,7 @@ class AsyncGristDocAPI:
 
         if not result["records"]:
             return []
-        records = [UserRecord(**{"id": r["id"], **r["fields"]}) for r in result["records"]]
+        records = [to_record(r["id"], r["fields"]) for r in result["records"]]
         return records
 
     async def add_records(self, table_id, records):
@@ -162,7 +169,8 @@ class TchapIam:
         results = await self.iam_client.add_records(self.users_table_name, [record])
 
         # Update the {not_allowed} table
-        records = [UserRecord(**{"id": results["records"][0]["id"], **record})]
+        records = [to_record(results["records"][0]["id"], record)]
+
         for r in records:
             self.users_not_allowed[r.tchap_user] = r
 
