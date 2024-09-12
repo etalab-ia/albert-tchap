@@ -1,6 +1,6 @@
 [project]
 name = "albert-tchap"
-version = "0.2.0"
+version = "0.2.1"
 description = "Albert Tchap"
 authors = [
     { name = "Pôle d'Expertise de la Régulation Numérique", email = "contact.peren@finances.gouv.fr" },
@@ -20,7 +20,7 @@ dependencies = [
     "cryptography==42.0.8",
     "structlog==24.2.0",
     "grist_api==0.1.0",
-    "pyalbert==0.6.20",
+    "pyalbert==0.7.4",
 ]
 
 # Packaging
