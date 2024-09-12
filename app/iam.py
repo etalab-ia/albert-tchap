@@ -3,7 +3,6 @@ import json
 import re
 from collections import namedtuple
 from datetime import datetime, timedelta, timezone
-from typing import NamedTuple
 
 import aiohttp
 
