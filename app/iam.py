@@ -9,15 +9,15 @@ import aiohttp
 from bot_msg import AlbertMsg
 
 UserRecord = namedtuple(
-    "UserRecord", ["id", "tchap_user", "status", "domain", "n_questions", "last_activity"]
+    "UserRecord",
+    ["id", "tchap_user", "status", "domain", "n_questions", "last_activity"],
+    defaults=(None,),  # default apply following the rightmost parameter first.
 )
 
-def to_record(_id: str, data: dict):
-    """Dict to a grist record"""
-    return UserRecord(
-        **{"id": _id, **{k: v for k, v in data.items() if k in UserRecord._fields}}
-    )
 
+def to_record(_id: str, data: dict) -> UserRecord:
+    """Dict to a grist record"""
+    return UserRecord(**{"id": _id, **{k: v for k, v in data.items() if k in UserRecord._fields}})
 
 
 # from grist_api import GristDocAPI => is not async
