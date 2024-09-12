@@ -52,7 +52,7 @@ class AlbertMsg:
 
     def commands(cmds):
         msg = "Les commandes spéciales suivantes sont disponibles :\n\n"
-        msg += "- " + "\n- ".join(cmds)
+        msg += "- " + "\n- ".join(cmds) # type: ignore
         return msg
 
     def unknown_command(cmds_msg):

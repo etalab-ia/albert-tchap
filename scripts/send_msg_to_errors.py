@@ -9,10 +9,10 @@ from nio import AsyncClient, LoginResponse
 config = {
     "server": os.getenv("MATRIX_HOME_SERVER"),
     "username": os.getenv("MATRIX_BOT_USERNAME"),
-    "password": os.getence("MATRIX_BOT_PASSWORD"),
-    "errors_room_id": os.getence("ERRORS_ROOM_ID"),
+    "password": os.getenv("MATRIX_BOT_PASSWORD"),
+    "errors_room_id": os.getenv("ERRORS_ROOM_ID"),
 }
-Config = namedtuple("Config", config.keys())
+Config = namedtuple("Config", list(config.keys()))
 config = Config(**config)
 
 message = "Hi, this is a test."
