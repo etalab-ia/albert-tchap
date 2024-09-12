@@ -3,11 +3,14 @@ import json
 import re
 from collections import namedtuple
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlencode
 
 import aiohttp
 
 from bot_msg import AlbertMsg
+
+UserRecord = namedtuple(
+    "UserRecord", ["id", "tchap_user", "status", "domain", "n_questions", "last_activity"]
+)
 
 
 # from grist_api import GristDocAPI => is not async
@@ -33,7 +36,7 @@ class AsyncGristDocAPI:
                 response.raise_for_status()
                 return await response.json()
 
-    async def fetch_table(self, table_id, filters=None) -> list[namedtuple]:
+    async def fetch_table(self, table_id, filters=None) -> list[UserRecord]:
         endpoint = f"/docs/{self.doc_id}/tables/{table_id}/records"
         data = {}
         if filters:
@@ -42,8 +45,7 @@ class AsyncGristDocAPI:
 
         if not result["records"]:
             return []
-        Record = namedtuple("Record", ["id"] + list(result["records"][0]["fields"].keys()))
-        records = [Record(**{"id": r["id"], **r["fields"]}) for r in result["records"]]
+        records = [UserRecord(**{"id": r["id"], **r["fields"]}) for r in result["records"]]
         return records
 
     async def add_records(self, table_id, records):
@@ -155,8 +157,15 @@ class TchapIam:
             "tchap_user": username,
             "status": "pending",
             "domain": self.domain_from_sender(username),
+            "n_questions": 0,
         }
-        await self.iam_client.add_records(self.users_table_name, [record])
+        results = await self.iam_client.add_records(self.users_table_name, [record])
+
+        # Update the {not_allowed} table
+        records = [UserRecord(**{"id": results["records"][0]["id"], **record})]
+        for r in records:
+            self.users_not_allowed[r.tchap_user] = r
+
         return True
 
     async def increment_user_question(self, username, n=1, update_last_activity=True):

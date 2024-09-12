@@ -38,7 +38,7 @@ async def get_thread_messages(
     event = ep.event
 
     # Build the conversation thread
-    messages = []
+    messages: list = []
     i = 0
     while isa_reply_to(event) and i < max_rewind:
         messages.insert(0, event)
@@ -67,7 +67,7 @@ async def get_previous_messages(
         direction=MessageDirection.back,
         message_filter={"types": ["m.room.message", "m.room.encrypted"]},
     )
-    messages = []
+    messages: list = []
     decr = 0
     for i, event in enumerate(roommessages.chunk):
         body = event.source["content"]["body"].strip()

@@ -45,8 +45,9 @@ def main():
     for i in range(n_tries):
         try:
             tchap_bot.run()
-        except Exception as err:
-            logger.error(f"Bot startup failed with error: {err}")
+        except Exception as e:
+            err = e
+            logger.error(f"Bot startup failed with error: {e}")
             time.sleep(3)
 
     if err:

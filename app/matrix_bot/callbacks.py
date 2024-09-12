@@ -65,8 +65,8 @@ class Callbacks:
 
     def __init__(self, matrix_client: MatrixClient):
         self.matrix_client = matrix_client
-        self.startup = []
-        self.client_callback = []
+        self.startup: list = []
+        self.client_callback: list = []
 
     def register_on_custom_event(self, func, onEvent: Event, feature: dict):
         @properly_fail(self.matrix_client)
