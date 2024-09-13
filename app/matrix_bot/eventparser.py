@@ -75,7 +75,7 @@ class EventParser:
         if not self.event.source.get("content", {}).get("membership") == "invite":
             raise EventNotConcerned
 
-    def is_command(self):
+    def is_command(self, *args) -> bool:
         return False
 
 
@@ -110,29 +110,9 @@ class MessageEventParser(EventParser):
         self.command = command
 
     def is_command(self, prefix: str) -> bool:
-        return self.event.body.strip().startswith(prefix)
+        text = self.event.body.strip()
+        return text.startswith(prefix) and len(text) > 1
 
     def get_command(self) -> list[str] | None:
         return self.command
 
-    # @deprecated: Not used/tested
-    async def hl(self, consider_hl_when_direct_message=True) -> str:
-        """
-        if the event is a hl (highlight, i.e begins with the name of the bot),
-        returns the text after the hl. Raise EventNotConcerned otherwise
-
-        :param consider_hl_when_direct_message: if True, consider a direct message as an highlight.
-        :return: the text after the highlight
-        :raise EventNotConcerned: if the current event is not concerned by the command.
-        """
-        display_name = await self.matrix_client.get_display_name()
-        if consider_hl_when_direct_message and self.room_is_direct_message():
-            return self.get_command_line(
-                "",
-                prefix="",
-                body=self.event.body.removeprefix(display_name).removeprefix(": "),
-                command_name="mention",
-            )
-        return self.get_command_line(display_name, prefix="", command_name="mention").removeprefix(
-            ": "
-        )

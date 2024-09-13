@@ -101,7 +101,7 @@ class CommandRegistry:
 # ================================================================================
 
 command_registry = CommandRegistry({}, set())
-user_configs = defaultdict(lambda: Config())
+user_configs: dict[str, Config] = defaultdict(lambda: Config())
 tiam = TchapIam(Config())
 
 
