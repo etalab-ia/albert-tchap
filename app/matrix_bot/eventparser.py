@@ -110,7 +110,8 @@ class MessageEventParser(EventParser):
         self.command = command
 
     def is_command(self, prefix: str) -> bool:
-        return self.event.body.strip().startswith(prefix)
+        text = self.event.body.strip()
+        return text.startswith(prefix) and len(text) > 1
 
     def get_command(self) -> list[str] | None:
         return self.command
