@@ -18,7 +18,6 @@ from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
     generate,
-    generate_sources,
     get_available_models,
     get_available_modes,
 )
@@ -296,8 +295,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     # Get all available models
-    all_models = get_available_models(config)
-    all_models = [k for k, v in all_models.items() if v["type"] == "text-generation"]
+    all_models = list(get_available_models(config))
     models_list = "\n\n- " + "\n- ".join(
         map(lambda x: x + (" *" if x == config.albert_model else ""), all_models)
     )
@@ -331,7 +329,6 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     command = ep.get_command()
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
-    all_modes += ["norag"]
     mode_list = "\n\n- " + "\n- ".join(
         map(lambda x: x + (" *" if x == config.albert_mode else ""), all_modes)
     )
@@ -361,9 +358,9 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
 
     try:
-        if config.last_rag_references:
+        if config.last_rag_sources:
             await matrix_client.room_typing(ep.room.room_id)
-            sources = generate_sources(config, config.last_rag_references)
+            sources = config.last_rag_sources
             sources_msg = ""
             for source in sources:
                 extra_context = ""
