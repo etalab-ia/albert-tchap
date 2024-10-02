@@ -18,7 +18,6 @@ from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
     generate,
-    generate_sources,
     get_available_models,
     get_available_modes,
 )
@@ -163,15 +162,17 @@ def only_allowed_user(func):
 
         config = user_configs[ep.sender]
         is_allowed, msg = await tiam.is_user_allowed(config, ep.sender, refresh=True)
-        if is_allowed:
-            return await func(ep, matrix_client)
+        if not is_allowed:
+            if not msg or ep.is_command(COMMAND_PREFIX):
+                # Only send back the message for the generic albert_answer method
+                # ignoring other callbacks.
+                raise EventNotConcerned
 
-        if not msg or ep.is_command(COMMAND_PREFIX):
-            # Only send back the message for the generic albert_answer method
-            # ignoring other callbacks.
-            raise EventNotConcerned
+            await log_not_allowed(msg, ep, matrix_client)
+            return
 
-        await log_not_allowed(msg, ep, matrix_client)
+        await func(ep, matrix_client)
+        await matrix_client.room_typing(ep.room.room_id, typing_state=False)
 
     return wrapper
 
@@ -296,8 +297,7 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     # Get all available models
-    all_models = get_available_models(config)
-    all_models = [k for k, v in all_models.items() if v["type"] == "text-generation"]
+    all_models = list(get_available_models(config))
     models_list = "\n\n- " + "\n- ".join(
         map(lambda x: x + (" *" if x == config.albert_model else ""), all_models)
     )
@@ -331,7 +331,6 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     command = ep.get_command()
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
-    all_modes += ["norag"]
     mode_list = "\n\n- " + "\n- ".join(
         map(lambda x: x + (" *" if x == config.albert_mode else ""), all_modes)
     )
@@ -361,9 +360,9 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
 
     try:
-        if config.last_rag_references:
+        if config.last_rag_sources:
             await matrix_client.room_typing(ep.room.room_id)
-            sources = generate_sources(config, config.last_rag_references)
+            sources = config.last_rag_sources
             sources_msg = ""
             for source in sources:
                 extra_context = ""
@@ -407,7 +406,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         )
 
     config.update_last_activity()
-    await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
+    await matrix_client.room_typing(ep.room.room_id)
     try:
         # Build the messages  history
         # --
