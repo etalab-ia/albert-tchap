@@ -107,7 +107,7 @@ class AlbertApiClient:
         chunks = self.semantic_search(model_embedding, query, limit, collections)
         prompt = self.format_albert_template(query, chunks)
         messages[-1]["content"] = prompt
-        return prompt
+        return messages
 
     def semantic_search(
         self, model: str, query: str, limit: int, collections: list[str]
