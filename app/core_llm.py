@@ -93,7 +93,7 @@ class AlbertApiClient:
         answer = result.choices[0].message.content
         return answer
 
-    def make_rag_prompt(self, model_embedding: str, messages: list[dict]):
+    def make_rag_prompt(self, model_embedding: str, messages: list[dict]) -> list[dict]:
         system_prompt = "Tu es Albert, un bot de l'état français en charge d'informer les agents."
         messages = [
             {
@@ -105,8 +105,9 @@ class AlbertApiClient:
         collections = [c["id"] for c in self.fetch_collections().values() if c["type"] == "public"]
         query = messages[-1]["content"]
         chunks = self.semantic_search(model_embedding, query, limit, collections)
-        answer = self.format_albert_template(query, chunks)
-        return answer
+        prompt = self.format_albert_template(query, chunks)
+        messages[-1]["content"] = prompt
+        return prompt
 
     def semantic_search(
         self, model: str, query: str, limit: int, collections: list[str]
