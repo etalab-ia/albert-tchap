@@ -105,6 +105,7 @@ class AlbertApiClient:
         collections = [c["id"] for c in self.fetch_collections().values() if c["type"] == "public"]
         query = messages[-1]["content"]
         chunks = self.semantic_search(model_embedding, query, limit, collections)
+        self._last_sources = chunks
         prompt = self.format_albert_template(query, chunks)
         messages[-1]["content"] = prompt
         return messages
