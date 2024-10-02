@@ -120,7 +120,7 @@ class AlbertApiClient:
             "collections": collections,
             "k": limit,
         }
-        response = requests.get(f"{url}/search", headers=headers, json=params)
+        response = requests.post(f"{url}/search", headers=headers, json=params)
         log_and_raise_for_status(response)
         data = response.json()
         chunks = [v["chunk"]["metadata"] for v in data["data"]]
