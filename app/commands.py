@@ -162,15 +162,17 @@ def only_allowed_user(func):
 
         config = user_configs[ep.sender]
         is_allowed, msg = await tiam.is_user_allowed(config, ep.sender, refresh=True)
-        if is_allowed:
-            return await func(ep, matrix_client)
+        if not is_allowed:
+            if not msg or ep.is_command(COMMAND_PREFIX):
+                # Only send back the message for the generic albert_answer method
+                # ignoring other callbacks.
+                raise EventNotConcerned
 
-        if not msg or ep.is_command(COMMAND_PREFIX):
-            # Only send back the message for the generic albert_answer method
-            # ignoring other callbacks.
-            raise EventNotConcerned
+            await log_not_allowed(msg, ep, matrix_client)
+            return
 
-        await log_not_allowed(msg, ep, matrix_client)
+        await func(ep, matrix_client)
+        await matrix_client.room_typing(ep.room.room_id, typing_state=False)
 
     return wrapper
 
@@ -404,7 +406,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         )
 
     config.update_last_activity()
-    await matrix_client.room_typing(ep.room.room_id, typing_state=True, timeout=180_000)
+    await matrix_client.room_typing(ep.room.room_id)
     try:
         # Build the messages  history
         # --

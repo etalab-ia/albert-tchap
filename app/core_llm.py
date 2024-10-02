@@ -2,12 +2,14 @@
 #
 # SPDX-License-Identifier: MIT
 
+import os
+
 import requests
 from jinja2 import BaseLoader, Environment, Template, meta
 from openai import OpenAI
-from utils import log_and_raise_for_status
 
 from config import Config
+from utils import log_and_raise_for_status
 
 API_PREFIX_V1 = "v1"
 
@@ -15,7 +17,7 @@ API_PREFIX_V1 = "v1"
 def get_available_models(config: Config) -> dict:
     """Fetch available models"""
     api_key = config.albert_api_token
-    url = config.albert_api_url + API_PREFIX_V1
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     headers = {"Authorization": f"Bearer {api_key}"}
     response = requests.get(f"{url}/models", headers=headers)
     log_and_raise_for_status(response)
@@ -31,7 +33,7 @@ def get_available_modes(config: Config) -> list[str]:
 
 def generate(config: Config, messages: list, limit=7) -> str:
     api_key = config.albert_api_token
-    url = config.albert_api_url + API_PREFIX_V1
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     model = config.albert_model
     mode = None if config.albert_mode == "norag" else config.albert_mode
     rag_sources = []
@@ -76,7 +78,7 @@ class AlbertApiClient:
         return self._last_sources
 
     def fetch_collections(self) -> dict:
-        url = self.base_url + API_PREFIX_V1
+        url = self.base_url
         headers = {"Authorization": f"Bearer {self.api_key}"}
         response = requests.get(f"{url}/collections", headers=headers)
         log_and_raise_for_status(response)
@@ -110,7 +112,7 @@ class AlbertApiClient:
         self, model: str, query: str, limit: int, collections: list[str]
     ) -> list[dict]:
         """Fetch available models"""
-        url = self.base_url + API_PREFIX_V1
+        url = self.base_url
         headers = {"Authorization": f"Bearer {self.api_key}"}
         params = {
             "prompt": query,
