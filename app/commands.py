@@ -8,11 +8,12 @@ import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
+import mimetypes
 
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
-from nio import Event, RoomMemberEvent, RoomMessageText
+from nio import Event, RoomMemberEvent, RoomMessageFile, RoomMessageText
 
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
@@ -378,6 +379,30 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
 
     await matrix_client.send_markdown_message(ep.room.room_id, sources_msg)
 
+@register_feature(
+    group="albert",
+    onEvent=RoomMessageFile
+)
+@only_allowed_user
+async def albert_document(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+
+    mime_type, _ = mimetypes.guess_type(ep.event.body)
+    if mime_type in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
+        config.update_last_activity()       
+        response = (
+            f"J'ai détecté que vous avez téléchargé un fichier {mime_type}. "
+            "Que souhaitez-vous que je fasse avec ce document ? "
+            "Je peux par exemple l'analyser ou répondre à des questions à son sujet."
+        )
+        await matrix_client.send_markdown_message(ep.room.room_id, response)
+    else:
+        response = (
+            f"J'ai détecté que vous avez téléchargé un fichier {mime_type}. "
+            "Ce fichier n'est pris en charge par Albert. "
+            "Veuillez téléverser un fichier PDF, DOCX ou JSON."
+        )
+        await matrix_client.send_markdown_message(ep.room.room_id, response)
 
 @register_feature(
     group="albert",
