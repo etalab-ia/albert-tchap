@@ -29,7 +29,6 @@ class MatrixBot:
         sync = await self.matrix_client.sync(timeout=bot_lib_config.timeout, full_state=True)  # Ignore prior messages
         self.print_sync_response(sync)
         await self.callbacks.setup_callbacks()
-
         for action in self.callbacks.startup:
             for room_id in self.matrix_client.rooms:
                 await action(room_id)

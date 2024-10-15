@@ -13,7 +13,7 @@ import mimetypes
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
-from nio import Event, RoomMemberEvent, RoomMessageFile, RoomMessageText
+from nio import Event, RoomMemberEvent, RoomEncryptedFile, RoomMessage, RoomMessageText
 
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
@@ -24,7 +24,6 @@ from core_llm import (
 )
 from iam import TchapIam
 from tchap_utils import get_cleanup_body, get_previous_messages, get_thread_messages, isa_reply_to
-
 
 @dataclass
 class CommandRegistry:
@@ -379,9 +378,11 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
 
     await matrix_client.send_markdown_message(ep.room.room_id, sources_msg)
 
+
 @register_feature(
     group="albert",
-    onEvent=RoomMessageFile
+    onEvent=RoomEncryptedFile,
+    help=None
 )
 @only_allowed_user
 async def albert_document(ep: EventParser, matrix_client: MatrixClient):
