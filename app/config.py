@@ -55,6 +55,7 @@ class Config(BaseConfig):
     # ============================
     # PER USER SETTINGS !
     # ============================
+    albert_collection_id: str | None = Field(None, description="Current Albert collection ID")
     albert_model: str = Field(
         "AgentPublic/albertlight-7b",
         description="Albert model name to use (see Albert models hub on HuggingFace)",

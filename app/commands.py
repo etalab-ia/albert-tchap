@@ -8,22 +8,30 @@ import traceback
 from collections import defaultdict
 from dataclasses import dataclass
 from functools import wraps
-import mimetypes
 
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
-from nio import Event, RoomMemberEvent, RoomEncryptedFile, RoomMessage, RoomMessageText
+from nio import Event, RoomEncryptedFile, RoomMemberEvent, RoomMessageText
 
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
+    delete_collection,
+    get_or_create_collection,
     generate,
     get_available_models,
     get_available_modes,
+    upload_file,
 )
 from iam import TchapIam
-from tchap_utils import get_cleanup_body, get_previous_messages, get_thread_messages, isa_reply_to
+from tchap_utils import (
+    get_cleanup_body, 
+    get_decrypted_file,
+    get_previous_messages, 
+    get_thread_messages, 
+    isa_reply_to
+)
 
 @dataclass
 class CommandRegistry:
@@ -346,6 +354,11 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
             old_mode = config.albert_mode
             config.albert_mode = mode
             message = f"Le mode a été modifié : {old_mode} -> {mode}"
+
+            if mode == "norag" and config.albert_collection_id:
+                delete_collection(config, config.albert_collection_id)
+                config.albert_collection_id = None
+
     await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
 
@@ -387,23 +400,25 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
 @only_allowed_user
 async def albert_document(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-
-    mime_type, _ = mimetypes.guess_type(ep.event.body)
-    if mime_type in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
+    if ep.event.mimetype in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
         config.update_last_activity()       
+        config.albert_mode = "rag"
+        collection = get_or_create_collection(config, ep.room.room_id)
+        file = await get_decrypted_file(ep)
+        upload_file(config, file, collection['id'])
         response = (
-            f"J'ai détecté que vous avez téléchargé un fichier {mime_type}. "
-            "Que souhaitez-vous que je fasse avec ce document ? "
-            "Je peux par exemple l'analyser ou répondre à des questions à son sujet."
+            f"Votre document a été chargé dans la collection temporaire {collection['id']}."
+            "Maintenant, si vous discutez avec moi, "
+            "je tiendrai compte de ce document pour répondre. "
+            "Vous pouvez taper '!mode norag' pour faire que la conversation ne tienne plus compte de ce document."
         )
-        await matrix_client.send_markdown_message(ep.room.room_id, response)
     else:
         response = (
-            f"J'ai détecté que vous avez téléchargé un fichier {mime_type}. "
+            f"J'ai détecté que vous avez téléchargé un fichier {ep.event.mimetype}. "
             "Ce fichier n'est pris en charge par Albert. "
             "Veuillez téléverser un fichier PDF, DOCX ou JSON."
         )
-        await matrix_client.send_markdown_message(ep.room.room_id, response)
+    await matrix_client.send_markdown_message(ep.room.room_id, response)
 
 @register_feature(
     group="albert",
@@ -430,6 +445,9 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
+        if config.albert_collection_id:
+            delete_collection(config, config.albert_collection_id)
+            config.albert_collection_id = None
 
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id)

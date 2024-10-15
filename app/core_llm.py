@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 import os
+from io import BytesIO
 
 import requests
 from jinja2 import BaseLoader, Environment, Template, meta
@@ -66,6 +67,32 @@ def generate(config: Config, messages: list, limit=7) -> str:
     return answer.strip()
 
 
+def get_or_create_collection(config: Config, collection_name: str) -> dict:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    collections_by_id = aclient.fetch_collections()
+    if config.albert_collection_id not in collections_by_id:
+        collection = aclient.create_collection(collection_name, config.albert_model_embedding)
+        config.albert_collection_id = collection["id"]
+        return collection
+    return collections_by_id[config.albert_collection_id]
+
+
+def delete_collection(config: Config, collection_id: str) -> None:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    aclient.delete_collection(collection_id)
+
+
+def upload_file(config: Config, file: BytesIO, collection_id: str) -> dict:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    return aclient.upload_file(file, collection_id)
+
+
 class AlbertApiClient:
     def __init__(self, base_url: str, api_key: str):
         self.base_url = base_url
@@ -77,14 +104,32 @@ class AlbertApiClient:
     def last_sources(self) -> list[dict]:
         return self._last_sources
 
+    def create_collection(self, collection_name: str, model_embedding: str) -> dict:
+        """Call the POST /collections endpoint of the Albert API"""
+        url = self.base_url
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        data = {"name": collection_name, "model": model_embedding, "type": "private"}
+        response = requests.post(f"{url}/collections", json=data, headers=headers)
+        log_and_raise_for_status(response)
+        data = response.json()
+        return data
+    
+    def delete_collection(self, collection_id: str) -> None:
+        """Call the DELETE /collections/{collection_id} endpoint of the Albert API"""
+        url = self.base_url
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        response = requests.delete(f"{url}/collections/{collection_id}", headers=headers)
+        log_and_raise_for_status(response)
+    
     def fetch_collections(self) -> dict:
+        """Call the GET /collections endpoint of the Albert API"""
         url = self.base_url
         headers = {"Authorization": f"Bearer {self.api_key}"}
         response = requests.get(f"{url}/collections", headers=headers)
         log_and_raise_for_status(response)
         data = response.json()
-        models = {v["id"]: v for v in data["data"]}
-        return models
+        collections_by_id = {v["id"]: v for v in data["data"]}
+        return collections_by_id
 
     def generate(self, model: str, messages: list[dict], **sampling_params) -> str:
         result = self.client.chat.completions.create(
@@ -113,7 +158,7 @@ class AlbertApiClient:
     def semantic_search(
         self, model: str, query: str, limit: int, collections: list[str]
     ) -> list[dict]:
-        """Fetch available models"""
+        """Call the /search endpoint of the Albert API"""
         url = self.base_url
         headers = {"Authorization": f"Bearer {self.api_key}"}
         params = {
@@ -127,6 +172,19 @@ class AlbertApiClient:
         data = response.json()
         chunks = [v["chunk"]["metadata"] for v in data["data"]]
         return chunks
+    
+    def upload_file(
+        self, 
+        file: BytesIO, 
+        collection_id: str
+    ) -> list[dict]:
+        """Call the /files endpoint of the Albert API"""
+        url = self.base_url
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        files = {"file": (file.name, file.getvalue(), file.type)}
+        data = {"request": '{"collection": "%s"}' % collection_id}
+        response = requests.post(f"{url}/files", data=data, files=files, headers=headers)
+        log_and_raise_for_status(response)
 
     def format_albert_template(self, query: str, chunks: list[dict]) -> str:
         # Template configuration
