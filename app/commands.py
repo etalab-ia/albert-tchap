@@ -374,15 +374,11 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
 
     try:
-        if config.last_rag_sources:
+        if config.last_rag_chunks:
             await matrix_client.room_typing(ep.room.room_id)
-            sources = config.last_rag_sources
             sources_msg = ""
-            for source in sources:
-                extra_context = ""
-                if source.get("context"):
-                    extra_context = f'({source["context"]})'
-                sources_msg += f'- {source["title"]} {extra_context}: {source["url"]} \n'
+            for chunk in config.last_rag_chunks:
+                sources_msg += f'- {chunk["metadata"]["document_name"]}: chunk{chunk["id"]} \n'
         else:
             sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
     except Exception:
