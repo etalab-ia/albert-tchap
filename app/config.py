@@ -68,7 +68,7 @@ class Config(BaseConfig):
     conversation_obsolescence: int = Field(
         15 * 60, description="time after which a conversation is considered obsolete, in seconds"
     )
-    last_rag_sources: list[dict] | None = Field(None, description="Last sources used for the RAG.")
+    last_rag_chunks: list[dict] | None = Field(None, description="Last chunks used for the RAG.")
 
     @property
     def is_conversation_obsolete(self) -> bool:

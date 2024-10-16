@@ -41,7 +41,7 @@ def generate(
     model = config.albert_model
     mode = None if config.albert_mode == "norag" else config.albert_mode
     collections = list(config.albert_collections_by_id.keys())
-    rag_sources = []
+    rag_chunks = []
     if not config.albert_with_history:
         messages = messages[-1:]
 
@@ -55,7 +55,7 @@ def generate(
             collections=collections,
             limit=7
         )
-        rag_sources = aclient.last_sources
+        rag_chunks = aclient.last_chunks
     else:
         system_prompt = "Tu es Albert, un bot de l'état français en charge d'informer les agents."
         messages = [
@@ -66,11 +66,10 @@ def generate(
         ] + messages
 
     # Generate answer
-    print(messages)
     answer = aclient.generate(model=model, messages=messages, **sampling_params)
 
-    # Set the sources used by the rag of empty list.
-    config.last_rag_sources = rag_sources
+    # Set the chunks used by the rag or empty list.
+    config.last_rag_chunks = rag_chunks
 
     return answer.strip()
 
@@ -120,11 +119,11 @@ class AlbertApiClient:
         self.base_url = base_url
         self.api_key = api_key
         self.client = OpenAI(base_url=base_url, api_key=api_key)
-        self._last_sources: list[dict] = []  # stores last sources used by a RAG generation.
+        self._last_chunks: list[dict] = []  # stores last sources used by a RAG generation.
 
     @property
-    def last_sources(self) -> list[dict]:
-        return self._last_sources
+    def last_chunks(self) -> list[dict]:
+        return self._last_chunks
 
     def create_collection(self, collection_name: str, model_embedding: str) -> dict:
         """Call the POST /collections endpoint of the Albert API"""
@@ -175,7 +174,7 @@ class AlbertApiClient:
         ] + messages
         query = messages[-1]["content"]
         chunks = self.semantic_search(model_embedding, query, limit, collections)
-        self._last_sources = chunks
+        self._last_chunks = chunks
         prompt = self.format_albert_template(query, chunks)
         messages[-1]["content"] = prompt
         return messages
@@ -199,7 +198,7 @@ class AlbertApiClient:
         response = requests.post(f"{url}/search", headers=headers, json=params)
         log_and_raise_for_status(response)
         data = response.json()
-        chunks = [v["chunk"]["metadata"] for v in data["data"]]
+        chunks = [v["chunk"]for v in data["data"]]
         return chunks
     
     def upload_file(
@@ -221,9 +220,9 @@ class AlbertApiClient:
 
 <context>
 {% for chunk in chunks %}
-url: {{chunk.url}}
-title: {{chunk.title}} {% if chunk.context %}({{chunk.context}}){% endif %}
-text: {{chunk.text}} {% if not loop.last %}{{"\n"}}{% endif %}
+id: {{chunk.id}}
+document: {{chunk.metadata.document_name}}
+content: {{chunk.content}} {% if not loop.last %}{{"\n"}}{% endif %}
 {% endfor %}
 </context>
 
