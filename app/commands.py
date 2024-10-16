@@ -17,8 +17,9 @@ from nio import Event, RoomEncryptedFile, RoomMemberEvent, RoomMessageText
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
-    delete_collection,
-    get_or_create_collection,
+    delete_collections_with_name,
+    get_all_public_collections,
+    get_or_create_collection_with_name,
     generate,
     get_available_models,
     get_available_modes,
@@ -355,9 +356,9 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
             config.albert_mode = mode
             message = f"Le mode a été modifié : {old_mode} -> {mode}"
 
-            if mode == "norag" and config.albert_collection_id:
-                delete_collection(config, config.albert_collection_id)
-                config.albert_collection_id = None
+            if mode == "norag":
+                delete_collections_with_name(config, ep.room.room_id)
+                config.albert_collections_by_id = {}
 
     await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
@@ -394,16 +395,61 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
 
 @register_feature(
     group="albert",
+    onEvent=RoomMessageText,
+    command="collections",
+    help=AlbertMsg.shorts["collections"],
+)
+@only_allowed_user
+async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
+    command = ep.get_command()
+    if len(command) <= 1:
+        message = "La commande !collection nécessite de donner list/use/unuse puis <nom_de_collection>/all :"
+        message += "\n\nExemple: `!collection use ma_collection`"
+    elif command[1] != 'list' and len(command) <= 2:
+        if command[1] not in ['use', 'unuse']:
+            message = f"La commande !collection {command[1]} n'est pas reconnue, seul list/use/unuse sont autorisés"
+        else:
+            message = f"La commande !collection {command[1]} nécessite de donner en plus COLLECTION_NAME/all :"
+            message += "\n\nExemple: `!collection use ma_collection`"
+    else:
+        method = command[1]
+        if method == 'list':
+            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
+            if collection_names == '':
+                message = "Vous n'avez pas de collections enregistrées pour le moment qui pourraient m'aider à répondre à vos questions."
+            else:
+                message = f"Les collections {collection_names} sont disponibles pour vos questions."
+        elif method == 'use':
+            collections = get_all_public_collections(config) if (command[2] == 'all') else \
+                    [get_or_create_collection_with_name(config, command[2])]
+            for collection in collections:
+                config.albert_collections_by_id[collection["id"]] = collection
+            message = f"Les collections {collection_names} sont ajoutées à vos collections."
+        else:
+            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
+            config.albert_collections_by_id = {}
+            if collection_names == '':
+                message = "Il n'y avait pas de collections à retirer."
+            else:
+                message = f"Les collections {collection_names} sont retirées de vos collections."
+    await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
+    
+@register_feature(
+    group="albert",
     onEvent=RoomEncryptedFile,
     help=None
 )
 @only_allowed_user
 async def albert_document(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
     if ep.event.mimetype in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
         config.update_last_activity()       
         config.albert_mode = "rag"
-        collection = get_or_create_collection(config, ep.room.room_id)
+        collection = get_or_create_collection_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id[collection["id"]] = collection
         file = await get_decrypted_file(ep)
         upload_file(config, file, collection['id'])
         response = (
@@ -418,7 +464,8 @@ async def albert_document(ep: EventParser, matrix_client: MatrixClient):
             "Ce fichier n'est pris en charge par Albert. "
             "Veuillez téléverser un fichier PDF, DOCX ou JSON."
         )
-    await matrix_client.send_markdown_message(ep.room.room_id, response)
+    await matrix_client.send_markdown_message(ep.room.room_id, response, msgtype="m.notice")
+
 
 @register_feature(
     group="albert",
@@ -445,9 +492,8 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
-        if config.albert_collection_id:
-            delete_collection(config, config.albert_collection_id)
-            config.albert_collection_id = None
+        delete_collections_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id = {}
 
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id)
