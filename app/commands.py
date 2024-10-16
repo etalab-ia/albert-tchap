@@ -336,7 +336,6 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
 @only_allowed_user
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
@@ -355,12 +354,17 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
             old_mode = config.albert_mode
             config.albert_mode = mode
             message = f"Le mode a été modifié : {old_mode} -> {mode}"
-
-            if mode == "norag":
-                delete_collections_with_name(config, ep.room.room_id)
-                config.albert_collections_by_id = {}
-
+        
     await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
+
+    if mode == "norag":
+        message = "Nettoyage des collections RAG propres à cette conversation..."
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
+        await matrix_client.room_typing(ep.room.room_id)
+        delete_collections_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id = {}
+        message = "Nettoyage des collections RAG terminé."
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
 
 
 @register_feature(

@@ -133,6 +133,7 @@ class AlbertApiClient:
         response = requests.post(f"{url}/collections", json=data, headers=headers)
         log_and_raise_for_status(response)
         data = response.json()
+        data["name"] = collection_name
         return data
     
     def delete_collection(self, collection_id: str) -> None:
