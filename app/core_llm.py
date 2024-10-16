@@ -32,11 +32,15 @@ def get_available_modes(config: Config) -> list[str]:
     return ["norag", "rag"]
 
 
-def generate(config: Config, messages: list, limit=7) -> str:
+def generate(
+    config: Config, 
+    messages: list
+) -> str:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     model = config.albert_model
     mode = None if config.albert_mode == "norag" else config.albert_mode
+    collections = list(config.albert_collections_by_id.keys())
     rag_sources = []
     if not config.albert_with_history:
         messages = messages[-1:]
@@ -46,7 +50,10 @@ def generate(config: Config, messages: list, limit=7) -> str:
     aclient = AlbertApiClient(base_url=url, api_key=api_key)
     if mode == "rag":
         messages = aclient.make_rag_prompt(
-            model_embedding=config.albert_model_embedding, messages=messages
+            model_embedding=config.albert_model_embedding, 
+            messages=messages,
+            collections=collections,
+            limit=7
         )
         rag_sources = aclient.last_sources
     else:
@@ -59,6 +66,7 @@ def generate(config: Config, messages: list, limit=7) -> str:
         ] + messages
 
     # Generate answer
+    print(messages)
     answer = aclient.generate(model=model, messages=messages, **sampling_params)
 
     # Set the sources used by the rag of empty list.
@@ -67,23 +75,37 @@ def generate(config: Config, messages: list, limit=7) -> str:
     return answer.strip()
 
 
-def get_or_create_collection(config: Config, collection_name: str) -> dict:
+def get_all_public_collections(config: Config) -> dict:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     aclient = AlbertApiClient(base_url=url, api_key=api_key)
-    collections_by_id = aclient.fetch_collections()
-    if config.albert_collection_id not in collections_by_id:
-        collection = aclient.create_collection(collection_name, config.albert_model_embedding)
-        config.albert_collection_id = collection["id"]
-        return collection
-    return collections_by_id[config.albert_collection_id]
+    return [
+        collection
+        for collection in aclient.fetch_collections().values()
+        if collection['type'] == 'public'
+    ]
 
 
-def delete_collection(config: Config, collection_id: str) -> None:
+def get_or_create_collection_with_name(config: Config, collection_name: str) -> dict:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     aclient = AlbertApiClient(base_url=url, api_key=api_key)
-    aclient.delete_collection(collection_id)
+    # TODO : wait for fetch_collections to be faster
+    collections = [] #aclient.fetch_collections().values()
+    for collection in collections:
+        if collection['name'] == collection_name:
+            return collection
+    return aclient.create_collection(collection_name, config.albert_model_embedding)
+
+
+def delete_collections_with_name(config: Config, collection_name: str) -> None:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    collections = aclient.fetch_collections().values()
+    for collection in collections:
+        if collection["name"] == collection_name:
+            aclient.delete_collection(collection['id'])
 
 
 def upload_file(config: Config, file: BytesIO, collection_id: str) -> dict:
@@ -138,7 +160,12 @@ class AlbertApiClient:
         answer = result.choices[0].message.content
         return answer
 
-    def make_rag_prompt(self, model_embedding: str, messages: list[dict]) -> list[dict]:
+    def make_rag_prompt(self, 
+        model_embedding: str, 
+        messages: list[dict],
+        collections: list[str],
+        limit: int = 7
+    ) -> list[dict]:
         system_prompt = "Tu es Albert, un bot de l'état français en charge d'informer les agents."
         messages = [
             {
@@ -146,8 +173,6 @@ class AlbertApiClient:
                 "content": system_prompt,
             }
         ] + messages
-        limit = 7
-        collections = [c["id"] for c in self.fetch_collections().values() if c["type"] == "public"]
         query = messages[-1]["content"]
         chunks = self.semantic_search(model_embedding, query, limit, collections)
         self._last_sources = chunks
@@ -156,7 +181,11 @@ class AlbertApiClient:
         return messages
 
     def semantic_search(
-        self, model: str, query: str, limit: int, collections: list[str]
+        self, 
+        model: str, 
+        query: str, 
+        limit: int, 
+        collections: list[str]
     ) -> list[dict]:
         """Call the /search endpoint of the Albert API"""
         url = self.base_url
