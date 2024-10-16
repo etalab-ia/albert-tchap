@@ -314,9 +314,13 @@ class MatrixClient(AsyncClient):
             The event id of the message acting as a thread root for the message.
         """
 
+        message = markdown.markdown(message, extensions=["fenced_code", "nl2br"])
+        if bot_lib_config.message_prefix:
+            message = bot_lib_config.message_prefix + "\n\n" + message
+
         return await self.send_html_message(
             room_id=room_id,
-            message=markdown.markdown(message, extensions=["fenced_code", "nl2br"]),
+            message=message,
             msgtype=msgtype,
             reply_to=reply_to,
             thread_root=thread_root,

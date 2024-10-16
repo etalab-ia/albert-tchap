@@ -80,6 +80,13 @@ Si vous voulez développez tout en faisant que le bot reload automatiquement, vo
 nodemon --watch app --ext py --exec "export STORE_PATH='./data/store/' && export SESSION_PATH='./data/session.txt' && python app"
 ```
 
+#### NOTE 3
+
+Si vous voulez que vos messages engendrés par le bot se distinguent des autres messages, possiblement envoyé par d'autres bots (comme celui de staging):
+
+```bash
+nodemon --watch app --ext py --exec "export MESSAGE_PREFIX='[DEV]' && export STORE_PATH='./data/store/' && export SESSION_PATH='./data/session.txt' && python app"
+```
 
 
 ### Troubleshooting
