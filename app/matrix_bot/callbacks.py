@@ -87,7 +87,6 @@ class Callbacks:
                 )
 
             await func(ep=ep, matrix_client=self.matrix_client)
-
         self.client_callback.append((wrapped_func, onEvent))
 
     def register_on_reaction_event(self, func):
@@ -108,7 +107,6 @@ class Callbacks:
             self.matrix_client.add_event_callback(self.invite_callback, InviteMemberEvent)
 
         self.matrix_client.add_event_callback(self.decryption_failure, MegolmEvent)
-
         for function, event in self.client_callback:
             if issubclass(event, ToDeviceEvent):
                 self.matrix_client.add_to_device_callback(function, event)

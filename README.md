@@ -62,6 +62,41 @@ Pour lancer le bot executez :
 python app
 ```
 
+#### NOTE 1
+
+Cette commande stoppera surement si vous ne la lancez pas en mode sudo car
+elle installe par défault le data/store et le data/session.txt à la racine "/".
+Vous pouvez lancer l'application pour qu'elle crée ces fichiers dans le dossier du projet directement avec la commande :
+
+```bash
+export STORE_PATH='./data/store/' && export SESSION_PATH='./data/session.txt' && python app
+```
+
+#### NOTE 2
+
+Si vous voulez développez tout en faisant que le bot reload automatiquement, vous pouvez utiliser par exemple [nodemon](https://github.com/python-nodemon/nodemon) en module global python et lancer la commande suivante dans un terminal :
+
+```bash
+nodemon --watch app --ext py --exec "export STORE_PATH='./data/store/' && export SESSION_PATH='./data/session.txt' && python app"
+```
+
+#### NOTE 3
+
+Si vous voulez que vos messages engendrés par le bot se distinguent des autres messages, possiblement envoyé par d'autres bots (comme celui de staging):
+
+```bash
+nodemon --watch app --ext py --exec "export MESSAGE_PREFIX='[DEV]' && export STORE_PATH='./data/store/' && export SESSION_PATH='./data/session.txt' && python app"
+```
+
+#### NOTE 4
+
+Si vous voulez merger votre branche de dev pour la tester sur beta.tchap (branche staging) :
+
+```bash
+git checkout staging
+git merge <your-branch>
+git push origin staging
+```
 
 ### Troubleshooting
 

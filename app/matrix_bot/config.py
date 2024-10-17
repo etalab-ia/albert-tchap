@@ -37,7 +37,7 @@ class BotLibConfig(BaseSettings):
         default=b"\xce,\xa1\xc6lY\x80\xe3X}\x91\xa60m\xa8N",
         description="Salt to store your session credentials. Should not change between two runs",
     )
-
+    message_prefix: str = Field(default="", description="Prefix to add at the beginning of the bot messages")
     model_config = SettingsConfigDict(env_file=Path(".matrix_bot_env"))
 
 

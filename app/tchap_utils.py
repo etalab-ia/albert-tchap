@@ -4,9 +4,11 @@
 # SPDX-License-Identifier: MIT
 
 from typing import Optional
+from io import BytesIO
 
 from matrix_bot.eventparser import EventParser
 from nio import Event, MatrixRoom, MessageDirection
+from nio.crypto.attachments import decrypt_attachment
 
 from bot_msg import AlbertMsg
 from config import Config
@@ -102,6 +104,19 @@ def get_cleanup_body(event: Event) -> str:
 
     return body.strip()
 
+
+async def get_decrypted_file(ep: EventParser) -> BytesIO:
+    response = await ep.matrix_client.download(ep.event.url)
+    content = decrypt_attachment(
+        response.body, 
+        ep.event.key.get('k'), 
+        ep.event.hashes['sha256'], 
+        ep.event.iv
+    )
+    file = BytesIO(content)
+    file.name = ep.event.source['content']['body']
+    file.type = ep.event.source['content']['info']['mimetype']
+    return file
 
 #
 # User management
