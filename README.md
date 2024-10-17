@@ -88,6 +88,15 @@ Si vous voulez que vos messages engendrés par le bot se distinguent des autres 
 nodemon --watch app --ext py --exec "export MESSAGE_PREFIX='[DEV]' && export STORE_PATH='./data/store/' && export SESSION_PATH='./data/session.txt' && python app"
 ```
 
+#### NOTE 4
+
+Si vous voulez merger votre branche de dev pour la tester sur beta.tchap (branche staging) :
+
+```bash
+git checkout staging
+git merge <your-branch>
+git push origin staging
+```
 
 ### Troubleshooting
 
