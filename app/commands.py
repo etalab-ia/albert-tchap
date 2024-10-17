@@ -405,7 +405,7 @@ async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     if len(command) <= 1:
-        message = "La commande !collection nécessite de donner list/use/unuse puis <nom_de_collection>/all :"
+        message = "La commande !collection nécessite de donner list/use/unuse puis <nom_de_collection>/all-public :"
         message += "\n\nExemple: `!collection use ma_collection`"
     elif command[1] != 'list' and len(command) <= 2:
         if command[1] not in ['use', 'unuse']:
@@ -444,28 +444,34 @@ async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
 @only_allowed_user
 async def albert_document(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
-    if ep.event.mimetype in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
-        config.update_last_activity()       
-        config.albert_mode = "rag"
-        collection = get_or_create_collection_with_name(config, ep.room.room_id)
-        config.albert_collections_by_id[collection["id"]] = collection
-        file = await get_decrypted_file(ep)
-        upload_file(config, file, collection['id'])
-        response = (
-            f"Votre document a été chargé dans la collection temporaire {collection['id']}."
-            "Maintenant, si vous discutez avec moi, "
-            "je tiendrai compte de ce document pour répondre. "
-            "Vous pouvez taper '!mode norag' pour faire que la conversation ne tienne plus compte de ce document."
-        )
-    else:
-        response = (
-            f"J'ai détecté que vous avez téléchargé un fichier {ep.event.mimetype}. "
-            "Ce fichier n'est pris en charge par Albert. "
-            "Veuillez téléverser un fichier PDF, DOCX ou JSON."
-        )
-    await matrix_client.send_markdown_message(ep.room.room_id, response, msgtype="m.notice")
 
+    try:
+        await matrix_client.room_typing(ep.room.room_id)
+        if ep.event.mimetype in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
+            config.update_last_activity()       
+            config.albert_mode = "rag"
+            collection = get_or_create_collection_with_name(config, ep.room.room_id)
+            config.albert_collections_by_id[collection["id"]] = collection
+            file = await get_decrypted_file(ep)
+            upload_file(config, file, collection['id'])
+            response = (
+                f"Votre document a été chargé dans la collection temporaire {collection['id']}."
+                "Maintenant, si vous discutez avec moi, "
+                "je tiendrai compte de ce document pour répondre. "
+                "Vous pouvez taper '!mode norag' pour faire que la conversation ne tienne plus compte de ce document."
+            )
+        else:
+            response = (
+                f"J'ai détecté que vous avez téléchargé un fichier {ep.event.mimetype}. "
+                "Ce fichier n'est pris en charge par Albert. "
+                "Veuillez téléverser un fichier PDF, DOCX ou JSON."
+            )
+        await matrix_client.send_markdown_message(ep.room.room_id, response, msgtype="m.notice")
+    
+    except Exception:
+        traceback.print_exc()
+        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")  # fmt: off
+        return
 
 @register_feature(
     group="albert",
