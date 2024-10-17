@@ -381,8 +381,10 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
         if config.last_rag_chunks:
             await matrix_client.room_typing(ep.room.room_id)
             sources_msg = ""
-            for chunk in config.last_rag_chunks:
-                sources_msg += f'- {chunk["metadata"]["document_name"]}: chunk{chunk["id"]} \n'
+            for chunk in config.last_rag_chunks[:max(30, len(config.last_rag_chunks))]:
+                sources_msg += f'________________________________________\n'
+                sources_msg += f'####{chunk["metadata"]["document_name"]}\n'
+                sources_msg += f'{chunk["content"]}\n'
         else:
             sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
     except Exception:
