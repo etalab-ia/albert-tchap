@@ -470,10 +470,15 @@ async def albert_document(ep: EventParser, matrix_client: MatrixClient):
             )
         await matrix_client.send_markdown_message(ep.room.room_id, response, msgtype="m.notice")
     
-    except Exception:
+    except Exception as albert_err:
+        logger.error(f"{albert_err}")
         traceback.print_exc()
-        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")  # fmt: off
-        return
+        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")
+        if config.errors_room_id:
+            try:
+                await matrix_client.send_markdown_message(config.errors_room_id, AlbertMsg.error_debug(albert_err, config))
+            except:
+                print("Failed to find error room ?!")
 
 @register_feature(
     group="albert",
