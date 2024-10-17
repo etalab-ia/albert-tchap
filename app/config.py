@@ -65,6 +65,7 @@ class Config(BaseConfig):
     albert_with_history: bool = Field(True, description="Conversational mode")
     albert_history_lookup: int = Field(0, description="How far we lookup in the history")
     albert_max_rewind: int = Field(20, description="Max history rewind for stability purposes")
+    albert_all_public_command: str = Field("__all_public__", description="Command to use to get all public collections")
     conversation_obsolescence: int = Field(
         15 * 60, description="time after which a conversation is considered obsolete, in seconds"
     )
