@@ -426,6 +426,7 @@ async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
         elif method == 'use':
             collections = get_all_public_collections(config) if (command[2] == config.albert_all_public_command) else \
                     [get_or_create_collection_with_name(config, command[2])]
+            collection_names = ','.join([c['name'] for c in collections])
             for collection in collections:
                 config.albert_collections_by_id[collection["id"]] = collection
             message = f"Les collections {collection_names} sont ajoutées à vos collections."
