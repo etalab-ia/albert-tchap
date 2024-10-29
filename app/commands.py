@@ -231,7 +231,6 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     )  # wait for the room to be ready - otherwise the encryption seems to be not ready
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
-
 @register_feature(
     group="albert",
     onEvent=RoomMessageText,
@@ -249,6 +248,15 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
+
+        message = AlbertMsg.flush_start
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
+        await matrix_client.room_typing(ep.room.room_id)
+        delete_collections_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id = {}
+        message = AlbertMsg.flush_end
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
+
     else:
         await matrix_client.send_markdown_message(
             ep.room.room_id,
@@ -358,12 +366,12 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
     if mode == "norag":
-        message = "Nettoyage des collections RAG propres à cette conversation..."
+        message = AlbertMsg.flush_start
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
         await matrix_client.room_typing(ep.room.room_id)
         delete_collections_with_name(config, ep.room.room_id)
         config.albert_collections_by_id = {}
-        message = "Nettoyage des collections RAG terminé."
+        message = AlbertMsg.flush_end
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
 
 

@@ -23,6 +23,10 @@ class AlbertMsg:
 
     failed = "🤖 Albert a échoué à répondre. Veuillez réessayez dans un moment."
 
+    flush_start = "Nettoyage des collections RAG propres à cette conversation..."
+
+    flush_end = "Nettoyage des collections RAG terminé."
+
     reset = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion."
 
     user_not_allowed = "Albert est en phase de test et n'est pas encore disponible pour votre utilisateur. Contactez albert-contact@data.gouv.fr pour demander un accès."
