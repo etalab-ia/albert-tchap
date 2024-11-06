@@ -417,14 +417,14 @@ async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     if len(command) <= 1:
-        message = f"La commande !collection nécessite de donner list/use/unuse puis <nom_de_collection>/{config.albert_all_public_command} :"
-        message += "\n\nExemple: `!collection use ma_collection`"
+        message = f"La commande !collections nécessite de donner list/use/unuse puis <nom_de_collection>/{config.albert_all_public_command} :"
+        message += "\n\nExemple: `!collections use ma_collection`"
     elif command[1] != 'list' and len(command) <= 2:
         if command[1] not in ['use', 'unuse']:
-            message = f"La commande !collection {command[1]} n'est pas reconnue, seul list/use/unuse sont autorisés"
+            message = f"La commande !collections {command[1]} n'est pas reconnue, seul list/use/unuse sont autorisés"
         else:
-            message = f"La commande !collection {command[1]} nécessite de donner en plus COLLECTION_NAME/{config.albert_all_public_command} :"
-            message += "\n\nExemple: `!collection use ma_collection`"
+            message = f"La commande !collections {command[1]} nécessite de donner en plus COLLECTION_NAME/{config.albert_all_public_command} :"
+            message += "\n\nExemple: `!collections use decisions-adlc`"
     else:
         method = command[1]
         if method == 'list':
