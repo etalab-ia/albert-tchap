@@ -17,9 +17,10 @@ from nio import Event, RoomEncryptedFile, RoomMemberEvent, RoomMessageText
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
-    delete_collections_with_name,
+    flush_collections_with_name,
     get_all_public_collections,
     get_or_create_collection_with_name,
+    get_document_names,
     generate,
     get_available_models,
     get_available_modes,
@@ -231,6 +232,7 @@ async def albert_welcome(ep: EventParser, matrix_client: MatrixClient):
     )  # wait for the room to be ready - otherwise the encryption seems to be not ready
     await matrix_client.send_markdown_message(ep.room.room_id, command_registry.get_help(config))
 
+
 @register_feature(
     group="albert",
     onEvent=RoomMessageText,
@@ -252,7 +254,7 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         message = AlbertMsg.flush_start
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
         await matrix_client.room_typing(ep.room.room_id)
-        delete_collections_with_name(config, ep.room.room_id)
+        flush_collections_with_name(config, ep.room.room_id)
         config.albert_collections_by_id = {}
         message = AlbertMsg.flush_end
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
@@ -369,7 +371,7 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
         message = AlbertMsg.flush_start
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
         await matrix_client.room_typing(ep.room.room_id)
-        delete_collections_with_name(config, ep.room.room_id)
+        flush_collections_with_name(config, ep.room.room_id)
         config.albert_collections_by_id = {}
         message = AlbertMsg.flush_end
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
@@ -426,7 +428,7 @@ async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
     else:
         method = command[1]
         if method == 'list':
-            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
+            collection_names = ','.join([c['name'] if c['name'] != ep.room.room_id else 'ma_collection_privée' for c in config.albert_collections_by_id.values()])
             if collection_names == '':
                 message = "Vous n'avez pas de collections enregistrées pour le moment qui pourraient m'aider à répondre à vos questions."
             else:
@@ -462,14 +464,19 @@ async def albert_document(ep: EventParser, matrix_client: MatrixClient):
             config.update_last_activity()       
             config.albert_mode = "rag"
             collection = get_or_create_collection_with_name(config, ep.room.room_id)
-            config.albert_collections_by_id[collection["id"]] = collection
+            config.albert_collections_by_id[collection['id']] = collection
             file = await get_decrypted_file(ep)
             upload_file(config, file, collection['id'])
+            private_documents_names = get_document_names(config, collection['id'])
             response = (
-                f"Votre document a été chargé dans la collection temporaire {collection['id']}."
-                "Maintenant, si vous discutez avec moi, "
-                "je tiendrai compte de ce document pour répondre. "
-                "Vous pouvez taper '!mode norag' pour faire que la conversation ne tienne plus compte de ce document."
+                "Votre document : \n\n"
+                f"\"{file.name}\"\n\n"
+                "a été chargé dans votre collection privée.\n\n"
+                "Voici les documents actuellement présents dans votre collection privée : \n\n"
+                f"{private_documents_names}"
+                "\n\n"
+                "Je tiendrai compte de tous ces documents pour répondre. \n\n"
+                "Vous pouvez taper \"!mode norag\" pour vider votre collection privée de tous ces documents."
             )
         else:
             response = (
@@ -514,7 +521,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
-        delete_collections_with_name(config, ep.room.room_id)
+        flush_collections_with_name(config, ep.room.room_id)
         config.albert_collections_by_id = {}
 
     config.update_last_activity()
