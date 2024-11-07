@@ -96,6 +96,17 @@ def get_all_public_collections(config: Config) -> dict:
     ]
 
 
+def get_or_not_collection_with_name(config: Config, collection_name: str) -> dict | None:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    collections = aclient.fetch_collections().values()
+    for collection in collections:
+        if collection['name'] == collection_name:
+            return collection
+    return None
+
+
 def get_or_create_collection_with_name(config: Config, collection_name: str) -> dict:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
@@ -136,12 +147,11 @@ def upload_file(config: Config, file: BytesIO, collection_id: str) -> dict:
     return aclient.upload_file(file, collection_id)
 
 
-def get_document_names(config: Config, collection_id: str) -> list[str]:
+def get_documents(config: Config, collection_id: str) -> list[dict]:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     aclient = AlbertApiClient(base_url=url, api_key=api_key)
-    documents = aclient.fetch_documents(collection_id)
-    return "\n".join([f"- {document['name']}" for document in documents])
+    return aclient.fetch_documents(collection_id)
 
 
 class AlbertApiClient:
