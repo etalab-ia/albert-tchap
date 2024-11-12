@@ -13,7 +13,7 @@ class AlbertMsg:
     shorts = {
         "help": f"Pour retrouver ce message informatif, tapez `{COMMAND_PREFIX}aide`. Pour les geek tapez `{COMMAND_PREFIX}aide -v`.",
         "reset": f"Pour ré-initialiser notre conversation, tapez `{COMMAND_PREFIX}reset`",
-        "collections": f"Pour modifier l'ensemble des collections utilisées quand vous me posez une question, tapez `{COMMAND_PREFIX}collections list/use/unuse COLLECTION_NAME/all`",
+        "collections": f"Pour modifier l'ensemble des collections utilisées quand vous me posez une question, tapez `{COMMAND_PREFIX}collections list/use/unuse/info COLLECTION_NAME/{Config().albert_all_public_command}`",
         "conversation": f"Pour activer/désactiver le mode conversation, tapez `{COMMAND_PREFIX}conversation`",
         "debug": f"Pour afficher des informations sur la configuration actuelle, `{COMMAND_PREFIX}debug`",
         "model": f"Pour modifier le modèle, tapez `{COMMAND_PREFIX}model MODEL_NAME`",
@@ -22,6 +22,10 @@ class AlbertMsg:
     }
 
     failed = "🤖 Albert a échoué à répondre. Veuillez réessayez dans un moment."
+
+    flush_start = "Nettoyage des collections RAG propres à cette conversation..."
+
+    flush_end = "Nettoyage des collections RAG terminé."
 
     reset = "**La conversation a été remise à zéro**. Vous pouvez néanmoins toujours répondre dans un fil de discussion."
 

@@ -96,12 +96,22 @@ def get_all_public_collections(config: Config) -> dict:
     ]
 
 
+def get_or_not_collection_with_name(config: Config, collection_name: str) -> dict | None:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    collections = aclient.fetch_collections().values()
+    for collection in collections:
+        if collection['name'] == collection_name:
+            return collection
+    return None
+
+
 def get_or_create_collection_with_name(config: Config, collection_name: str) -> dict:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     aclient = AlbertApiClient(base_url=url, api_key=api_key)
-    # TODO : wait for fetch_collections to be faster
-    collections = [] #aclient.fetch_collections().values()
+    collections = aclient.fetch_collections().values()
     for collection in collections:
         if collection['name'] == collection_name:
             return collection
@@ -118,11 +128,30 @@ def delete_collections_with_name(config: Config, collection_name: str) -> None:
             aclient.delete_collection(collection['id'])
 
 
+def flush_collections_with_name(config: Config, collection_name: str) -> None:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    collections = aclient.fetch_collections().values()
+    for collection in collections:
+        if collection["name"] == collection_name:
+            documents = aclient.fetch_documents(collection['id'])
+            for document in documents:
+                aclient.delete_document(collection['id'], document['id'])
+
+
 def upload_file(config: Config, file: BytesIO, collection_id: str) -> dict:
     api_key = config.albert_api_token
     url = os.path.join(config.albert_api_url, API_PREFIX_V1)
     aclient = AlbertApiClient(base_url=url, api_key=api_key)
     return aclient.upload_file(file, collection_id)
+
+
+def get_documents(config: Config, collection_id: str) -> list[dict]:
+    api_key = config.albert_api_token
+    url = os.path.join(config.albert_api_url, API_PREFIX_V1)
+    aclient = AlbertApiClient(base_url=url, api_key=api_key)
+    return aclient.fetch_documents(collection_id)
 
 
 class AlbertApiClient:
@@ -163,6 +192,13 @@ class AlbertApiClient:
         data = response.json()
         collections_by_id = {v["id"]: v for v in data["data"]}
         return collections_by_id
+    
+    def delete_document(self, collection_id: str, document_id: str) -> None:
+        """Call the DELETE /documents/{collection_id}/{document_id} endpoint of the Albert API"""
+        url = self.base_url
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        response = requests.delete(f"{url}/documents/{collection_id}/{document_id}", headers=headers)
+        log_and_raise_for_status(response)
 
     def generate(self, model: str, messages: list[dict], **sampling_params) -> str:
         result = self.client.chat.completions.create(
@@ -224,6 +260,14 @@ class AlbertApiClient:
         data = {"request": '{"collection": "%s"}' % collection_id}
         response = requests.post(f"{url}/files", data=data, files=files, headers=headers)
         log_and_raise_for_status(response)
+
+    def fetch_documents(self, collection_id: str) -> list[dict]:
+        """Call the /documents endpoint of the Albert API"""
+        url = self.base_url
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        response = requests.get(f"{url}/documents/{collection_id}", headers=headers)
+        log_and_raise_for_status(response)
+        return response.json()['data']
 
     def format_albert_template(self, query: str, chunks: list[dict]) -> str:
         # Template configuration

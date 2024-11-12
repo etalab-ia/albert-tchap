@@ -17,9 +17,11 @@ from nio import Event, RoomEncryptedFile, RoomMemberEvent, RoomMessageText
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
-    delete_collections_with_name,
+    flush_collections_with_name,
     get_all_public_collections,
     get_or_create_collection_with_name,
+    get_or_not_collection_with_name,
+    get_documents,
     generate,
     get_available_models,
     get_available_modes,
@@ -249,6 +251,15 @@ async def albert_reset(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
+
+        message = AlbertMsg.flush_start
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
+        await matrix_client.room_typing(ep.room.room_id)
+        flush_collections_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id = {}
+        message = AlbertMsg.flush_end
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
+
     else:
         await matrix_client.send_markdown_message(
             ep.room.room_id,
@@ -358,12 +369,12 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
 
     if mode == "norag":
-        message = "Nettoyage des collections RAG propres à cette conversation..."
+        message = AlbertMsg.flush_start
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
         await matrix_client.room_typing(ep.room.room_id)
-        delete_collections_with_name(config, ep.room.room_id)
+        flush_collections_with_name(config, ep.room.room_id)
         config.albert_collections_by_id = {}
-        message = "Nettoyage des collections RAG terminé."
+        message = AlbertMsg.flush_end
         await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
 
 
@@ -407,33 +418,79 @@ async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
     await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     if len(command) <= 1:
-        message = f"La commande !collection nécessite de donner list/use/unuse puis <nom_de_collection>/{config.albert_all_public_command} :"
-        message += "\n\nExemple: `!collection use ma_collection`"
+        message = f"La commande !collections nécessite de donner list/use/unuse/info puis éventuellement <nom_de_collection>/{config.albert_all_public_command} :"
+        message += "\n\nExemple: `!collections use decisions-adlc`"
     elif command[1] != 'list' and len(command) <= 2:
         if command[1] not in ['use', 'unuse']:
-            message = f"La commande !collection {command[1]} n'est pas reconnue, seul list/use/unuse sont autorisés"
+            message = f"La commande !collections {command[1]} n'est pas reconnue, seul list/use/unuse sont autorisés"
         else:
-            message = f"La commande !collection {command[1]} nécessite de donner en plus COLLECTION_NAME/{config.albert_all_public_command} :"
-            message += "\n\nExemple: `!collection use ma_collection`"
+            message = f"La commande !collections {command[1]} nécessite de donner en plus COLLECTION_NAME/{config.albert_all_public_command} :"
+            message += "\n\nExemple: `!collections use decisions-adlc`"
     else:
         method = command[1]
         if method == 'list':
-            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
-            if collection_names == '':
+            collections = config.albert_collections_by_id.values()
+            collection_display_names = [c['name'] if c['name'] != ep.room.room_id else config.albert_my_private_collection_name for c in collections]
+            collection_ids = [c['id'] for c in collections]
+            collection_infos = '\n - ' + '\n - '.join([f"{display_name}" for display_name, collection_id in zip(collection_display_names, collection_ids)])
+            if not collections:
                 message = "Vous n'avez pas de collections enregistrées pour le moment qui pourraient m'aider à répondre à vos questions."
             else:
-                message = f"Les collections {collection_names} sont disponibles pour vos questions."
+                message = (
+                    "Les collections :\n"
+                    f"{collection_infos}\n\n"
+                    "sont prises en compte pour m'aider à répondre à vos questions."
+                )
+            collections = get_all_public_collections(config)
+            message += "\n\nNotez que les collections publiques à votre disposition sont:\n"
+            message += '\n - ' + '\n - '.join([f"{c['name']}" for c in collections])
+            message += f"\n\nVous pouvez toutes les ajouter d'un coup en utilisant la commande `!collections use {config.albert_all_public_command}`"
+        elif method == 'info':
+            collection_name = command[2] if command[2] != config.albert_my_private_collection_name else ep.room.room_id
+            collection = get_or_not_collection_with_name(config, collection_name)
+            if not collection:
+                message = f"La collection {collection_name} n'existe pas."
+            else:
+                document_infos = [f"{d['name']} ({d['id']})" for d in get_documents(config, collection['id'])]
+                if not document_infos:
+                    message = (
+                        f"Collection '{command[2]}' ({collection['id']}) : \n\n"
+                        f"Aucun document n'est présent dans cette collection ({collection['id']})."
+                    )
+                else:
+                    document_infos_message = '\n - ' + '\n - '.join(document_infos)
+                    message = (
+                        f"Collection '{command[2]}' ({collection['id']}) : \n\n"
+                        "Voici les documents actuellement présents dans la collection : \n\n"
+                        f"{document_infos_message}"
+                        "\n\n"
+                    )
         elif method == 'use':
-            collections = get_all_public_collections(config) if (command[2] == config.albert_all_public_command) else \
-                    [get_or_create_collection_with_name(config, command[2])]
-            collection_names = ','.join([c['name'] for c in collections])
-            for collection in collections:
-                config.albert_collections_by_id[collection["id"]] = collection
-            message = f"Les collections {collection_names} sont ajoutées à vos collections."
+            if command[2] == config.albert_all_public_command:
+                collections = get_all_public_collections(config)
+            else:
+                collection = get_or_not_collection_with_name(config, command[2])
+                if not collection:
+                    message = f"La collection {command[2]} n'existe pas."
+                    collections = []
+                else:
+                    collections = [collection]
+            if collections:
+                collection_names = ','.join([c['name'] for c in collections])
+                for collection in collections:
+                    config.albert_collections_by_id[collection["id"]] = collection
+                collection_infos = '\n - ' + '\n - '.join([f"{c['name']}" for c in config.albert_collections_by_id.values()])
+                message = (
+                    f"Les collections {collection_names} sont ajoutées à vos collections.\n\n" if len(collections) > 1 else f"La collection {command[2]} est ajoutée à vos collections.\n\n"
+                    "Maintenant, les collections :\n"
+                    f"{collection_infos}\n\n"
+                    "sont disponibles pour m'aider à répondre à vos questions."
+                )
         else:
-            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
+            collections = config.albert_collections_by_id.values()
+            collection_names = ','.join([c['name'] for c in collections])
             config.albert_collections_by_id = {}
-            if collection_names == '':
+            if not collections:
                 message = "Il n'y avait pas de collections à retirer."
             else:
                 message = f"Les collections {collection_names} sont retirées de vos collections."
@@ -454,14 +511,20 @@ async def albert_document(ep: EventParser, matrix_client: MatrixClient):
             config.update_last_activity()       
             config.albert_mode = "rag"
             collection = get_or_create_collection_with_name(config, ep.room.room_id)
-            config.albert_collections_by_id[collection["id"]] = collection
+            config.albert_collections_by_id[collection['id']] = collection
             file = await get_decrypted_file(ep)
             upload_file(config, file, collection['id'])
+            private_document_infos = [d['name'] for d in get_documents(config, collection['id'])]
+            private_document_infos_message = '\n - ' + '\n - '.join(private_document_infos)
             response = (
-                f"Votre document a été chargé dans la collection temporaire {collection['id']}."
-                "Maintenant, si vous discutez avec moi, "
-                "je tiendrai compte de ce document pour répondre. "
-                "Vous pouvez taper '!mode norag' pour faire que la conversation ne tienne plus compte de ce document."
+                "Votre document : \n\n"
+                f"\"{file.name}\"\n\n"
+                "a été chargé dans votre collection privée.\n\n"
+                "Voici les documents actuellement présents dans votre collection privée : \n\n"
+                f"{private_document_infos_message}"
+                "\n\n"
+                "Je tiendrai compte de tous ces documents pour répondre. \n\n"
+                "Vous pouvez taper \"!mode norag\" pour vider votre collection privée de tous ces documents."
             )
         else:
             response = (
@@ -506,7 +569,7 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
-        delete_collections_with_name(config, ep.room.room_id)
+        flush_collections_with_name(config, ep.room.room_id)
         config.albert_collections_by_id = {}
 
     config.update_last_activity()
