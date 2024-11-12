@@ -12,18 +12,27 @@ from functools import wraps
 from matrix_bot.client import MatrixClient
 from matrix_bot.config import logger
 from matrix_bot.eventparser import EventNotConcerned, EventParser
-from nio import Event, RoomMemberEvent, RoomMessageText
+from nio import Event, RoomEncryptedFile, RoomMemberEvent, RoomMessageText
 
 from bot_msg import AlbertMsg
 from config import COMMAND_PREFIX, Config
 from core_llm import (
+    delete_collections_with_name,
+    get_all_public_collections,
+    get_or_create_collection_with_name,
     generate,
     get_available_models,
     get_available_modes,
+    upload_file,
 )
 from iam import TchapIam
-from tchap_utils import get_cleanup_body, get_previous_messages, get_thread_messages, isa_reply_to
-
+from tchap_utils import (
+    get_cleanup_body, 
+    get_decrypted_file,
+    get_previous_messages, 
+    get_thread_messages, 
+    isa_reply_to
+)
 
 @dataclass
 class CommandRegistry:
@@ -327,7 +336,6 @@ async def albert_model(ep: EventParser, matrix_client: MatrixClient):
 @only_allowed_user
 async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
-    await matrix_client.room_typing(ep.room.room_id)
     command = ep.get_command()
     # Get all available mode for the current model
     all_modes = get_available_modes(config)
@@ -346,7 +354,17 @@ async def albert_mode(ep: EventParser, matrix_client: MatrixClient):
             old_mode = config.albert_mode
             config.albert_mode = mode
             message = f"Le mode a été modifié : {old_mode} -> {mode}"
+        
     await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
+
+    if mode == "norag":
+        message = "Nettoyage des collections RAG propres à cette conversation..."
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
+        await matrix_client.room_typing(ep.room.room_id)
+        delete_collections_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id = {}
+        message = "Nettoyage des collections RAG terminé."
+        await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")  
 
 
 @register_feature(
@@ -360,15 +378,13 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
     config = user_configs[ep.sender]
 
     try:
-        if config.last_rag_sources:
+        if config.last_rag_chunks:
             await matrix_client.room_typing(ep.room.room_id)
-            sources = config.last_rag_sources
             sources_msg = ""
-            for source in sources:
-                extra_context = ""
-                if source.get("context"):
-                    extra_context = f'({source["context"]})'
-                sources_msg += f'- {source["title"]} {extra_context}: {source["url"]} \n'
+            for chunk in config.last_rag_chunks[:max(30, len(config.last_rag_chunks))]:
+                sources_msg += f'________________________________________\n'
+                sources_msg += f'####{chunk["metadata"]["document_name"]}\n'
+                sources_msg += f'{chunk["content"]}\n'
         else:
             sources_msg = "Aucune source trouvée, veuillez me poser une question d'abord."
     except Exception:
@@ -378,6 +394,91 @@ async def albert_sources(ep: EventParser, matrix_client: MatrixClient):
 
     await matrix_client.send_markdown_message(ep.room.room_id, sources_msg)
 
+
+@register_feature(
+    group="albert",
+    onEvent=RoomMessageText,
+    command="collections",
+    help=AlbertMsg.shorts["collections"],
+)
+@only_allowed_user
+async def albert_collection(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+    await matrix_client.room_typing(ep.room.room_id)
+    command = ep.get_command()
+    if len(command) <= 1:
+        message = f"La commande !collection nécessite de donner list/use/unuse puis <nom_de_collection>/{config.albert_all_public_command} :"
+        message += "\n\nExemple: `!collection use ma_collection`"
+    elif command[1] != 'list' and len(command) <= 2:
+        if command[1] not in ['use', 'unuse']:
+            message = f"La commande !collection {command[1]} n'est pas reconnue, seul list/use/unuse sont autorisés"
+        else:
+            message = f"La commande !collection {command[1]} nécessite de donner en plus COLLECTION_NAME/{config.albert_all_public_command} :"
+            message += "\n\nExemple: `!collection use ma_collection`"
+    else:
+        method = command[1]
+        if method == 'list':
+            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
+            if collection_names == '':
+                message = "Vous n'avez pas de collections enregistrées pour le moment qui pourraient m'aider à répondre à vos questions."
+            else:
+                message = f"Les collections {collection_names} sont disponibles pour vos questions."
+        elif method == 'use':
+            collections = get_all_public_collections(config) if (command[2] == config.albert_all_public_command) else \
+                    [get_or_create_collection_with_name(config, command[2])]
+            for collection in collections:
+                config.albert_collections_by_id[collection["id"]] = collection
+            message = f"Les collections {collection_names} sont ajoutées à vos collections."
+        else:
+            collection_names = ','.join([c['name'] for c in config.albert_collections_by_id.values()])
+            config.albert_collections_by_id = {}
+            if collection_names == '':
+                message = "Il n'y avait pas de collections à retirer."
+            else:
+                message = f"Les collections {collection_names} sont retirées de vos collections."
+    await matrix_client.send_markdown_message(ep.room.room_id, message, msgtype="m.notice")
+    
+@register_feature(
+    group="albert",
+    onEvent=RoomEncryptedFile,
+    help=None
+)
+@only_allowed_user
+async def albert_document(ep: EventParser, matrix_client: MatrixClient):
+    config = user_configs[ep.sender]
+
+    try:
+        await matrix_client.room_typing(ep.room.room_id)
+        if ep.event.mimetype in ['application/json', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']:
+            config.update_last_activity()       
+            config.albert_mode = "rag"
+            collection = get_or_create_collection_with_name(config, ep.room.room_id)
+            config.albert_collections_by_id[collection["id"]] = collection
+            file = await get_decrypted_file(ep)
+            upload_file(config, file, collection['id'])
+            response = (
+                f"Votre document a été chargé dans la collection temporaire {collection['id']}."
+                "Maintenant, si vous discutez avec moi, "
+                "je tiendrai compte de ce document pour répondre. "
+                "Vous pouvez taper '!mode norag' pour faire que la conversation ne tienne plus compte de ce document."
+            )
+        else:
+            response = (
+                f"J'ai détecté que vous avez téléchargé un fichier {ep.event.mimetype}. "
+                "Ce fichier n'est pris en charge par Albert. "
+                "Veuillez téléverser un fichier PDF, DOCX ou JSON."
+            )
+        await matrix_client.send_markdown_message(ep.room.room_id, response, msgtype="m.notice")
+    
+    except Exception as albert_err:
+        logger.error(f"{albert_err}")
+        traceback.print_exc()
+        await matrix_client.send_markdown_message(ep.room.room_id, AlbertMsg.failed, msgtype="m.notice")
+        if config.errors_room_id:
+            try:
+                await matrix_client.send_markdown_message(config.errors_room_id, AlbertMsg.error_debug(albert_err, config))
+            except:
+                print("Failed to find error room ?!")
 
 @register_feature(
     group="albert",
@@ -404,6 +505,8 @@ async def albert_answer(ep: EventParser, matrix_client: MatrixClient):
         await matrix_client.send_markdown_message(
             ep.room.room_id, reset_message, msgtype="m.notice"
         )
+        delete_collections_with_name(config, ep.room.room_id)
+        config.albert_collections_by_id = {}
 
     config.update_last_activity()
     await matrix_client.room_typing(ep.room.room_id)
