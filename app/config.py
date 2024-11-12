@@ -59,6 +59,7 @@ class Config(BaseConfig):
         "AgentPublic/albertlight-7b",
         description="Albert model name to use (see Albert models hub on HuggingFace)",
     )
+    albert_model_embedding: str = Field("BAAI/bge-m3", description="Embedding model (Rag, COT, etc)")
     albert_mode: str = Field("rag", description="Albert API mode")
     albert_with_history: bool = Field(True, description="Conversational mode")
     albert_history_lookup: int = Field(0, description="How far we lookup in the history")
@@ -66,7 +67,7 @@ class Config(BaseConfig):
     conversation_obsolescence: int = Field(
         15 * 60, description="time after which a conversation is considered obsolete, in seconds"
     )
-    last_rag_references: list[dict] | None = Field(None, description="Last sources used for the RAG.")
+    last_rag_sources: list[dict] | None = Field(None, description="Last sources used for the RAG.")
 
     @property
     def is_conversation_obsolete(self) -> bool:
