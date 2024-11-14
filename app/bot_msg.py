@@ -41,7 +41,7 @@ class AlbertMsg:
         msg = "👋 Bonjour, je suis **Albert**, votre **assistant automatique dédié aux questions légales et administratives** mis à disposition par la **DINUM**. Je suis actuellement en phase de **test**.\n\n"
         msg += f"J'utilise le modèle de langage _[{model_short_name}]({model_url})_ et j'ai été alimenté par des bases de connaissances gouvernementales, comme les fiches pratiques de service-public.fr éditées par la Direction de l'information légale et administrative (DILA).\n\n"
         msg += "Maintenant que nous avons fait plus connaissance, quelques **règles pour m'utiliser** :\n\n"
-        msg += "Vous pouvez m'attacher en pièces jointes des documents pdf pour que cela m'aide à répondre à vos questions.\n\n"
+        msg += "✅ Vous pouvez m'attacher en pièces jointes des documents pdf qui m'aideront à répondre plus efficacement.\n\n"
         msg += "🔮 Ne m'utilisez pas pour élaborer une décision administrative individuelle.\n\n"
         msg += "❌ **Ne me transmettez pas** :\n"
         msg += "- des fichiers autres que pdf, ni des images;\n"
